@@ -1,0 +1,18 @@
+<h3>Novo Pedido</h3>
+<select id="tipo">
+  <option>Lavanderia</option>
+  <option>Sapataria</option>
+  <option>Costura</option>
+  <option>Bordado</option>
+</select>
+
+<label>
+  <input type="checkbox" id="orcamento"> Orçamento
+</label>
+
+<h3>Fotos Antes</h3>
+<input type="file" id="fotoAntes" accept="image/*" multiple>
+<button onclick="uploadAntes()">Enviar Fotos Antes</button>
+<button onclick="criarPedido()">Criar Pedido</button>
+
+<script type="module" src="js/pedidos.js"></script>

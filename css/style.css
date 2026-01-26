@@ -1,0 +1,4 @@
+body { font-family: Arial; margin: 20px; }
+input, select, button { margin: 5px; padding: 5px; }
+button { cursor: pointer; }
+h2,h3 { color: #0055aa; }

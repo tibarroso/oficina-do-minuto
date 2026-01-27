@@ -1,75 +1,72 @@
 import { supabase } from "./supabase.js";
 
 // =======================
+// Verificar login
+// =======================
+async function verificarLogin() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    alert("Usuário não logado!");
+    window.location.href = "login.html";
+    return null;
+  }
+  return user;
+}
+
+// =======================
 // Criar pedido
 // =======================
-window.criarPedido = async function() {
+async function criarPedido() {
   const tipo = document.getElementById("tipo").value;
   const orcamento = document.getElementById("orcamento").checked;
 
-  // Pegar usuário logado
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError || !user) {
-    console.error(userError);
-    return alert("Usuário não logado");
+  const user = await verificarLogin();
+  if (!user) return;
+
+  const { data, error } = await supabase.from("pedidos").insert([{
+    loja_origem: user.email,
+    tipo_servico: tipo,
+    eh_orcamento: orcamento,
+    status: orcamento ? "Aguardando avaliação" : "Aguardando coleta",
+    criado_em: new Date()
+  }]);
+
+  if (error) {
+    console.error(error);
+    alert("Erro ao criar pedido: " + error.message);
+    return;
   }
 
-  try {
-    const { data, error } = await supabase.from("pedidos").insert([
-      {
-        loja_origem: user.email,
-        tipo_servico: tipo,
-        eh_orcamento: orcamento,
-        status: orcamento ? "Aguardando avaliação" : "Aguardando coleta",
-        criado_em: new Date()
-      }
-    ]);
-
-    if (error) throw error;
-
-    alert(`Pedido criado com sucesso! ID: ${data[0].id}`);
-    // Limpar campos
-    document.getElementById("orcamento").checked = false;
-    document.getElementById("tipo").selectedIndex = 0;
-
-  } catch (err) {
-    console.error(err);
-    alert("Erro ao criar pedido: " + err.message);
-  }
-};
+  alert("Pedido criado com sucesso! ID: " + data[0].id);
+}
 
 // =======================
-// Upload múltiplo fotos ANTES
+// Upload fotos
 // =======================
-window.uploadAntes = async function(){
-  const files = document.getElementById("fotoAntes")?.files;
-  if(!files || files.length === 0) return alert("Selecione fotos antes");
+async function uploadFotos(tipo) {
+  const input = document.getElementById(tipo === "antes" ? "fotoAntes" : "fotoDepois");
+  const files = input.files;
+  if (!files || files.length === 0) return alert("Selecione arquivos");
 
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
 
-  for(const file of files){
-    const path = `antes_${user.id}_${Date.now()}_${file.name}`;
-    const { error } = await supabase.storage.from("fotos").upload(path,file);
-    if(error){ console.error(error); continue; }
+  for (const file of files) {
+    const path = `${tipo}_${Date.now()}_${file.name}`;
+    const { error } = await supabase.storage.from("fotos").upload(path, file);
+    if (error) {
+      console.error(error);
+      alert("Erro ao enviar foto: " + error.message);
+      continue;
+    }
   }
 
-  alert("Fotos antes enviadas!");
-};
+  alert("Fotos enviadas com sucesso!");
+}
 
 // =======================
-// Upload múltiplo fotos DEPOIS
+// Event listeners
 // =======================
-window.uploadDepois = async function(){
-  const files = document.getElementById("fotoDepois")?.files;
-  if(!files || files.length === 0) return alert("Selecione fotos depois");
-
-  const { data: { user } } = await supabase.auth.getUser();
-
-  for(const file of files){
-    const path = `depois_${user.id}_${Date.now()}_${file.name}`;
-    const { error } = await supabase.storage.from("fotos").upload(path,file);
-    if(error){ console.error(error); continue; }
-  }
-
-  alert("Fotos depois enviadas!");
-};
+document.getElementById("btnCriarPedido").addEventListener("click", criarPedido);
+document.getElementById("btnUploadAntes").addEventListener("click", () => uploadFotos("antes"));
+document.getElementById("btnUploadDepois").addEventListener("click", () => uploadFotos("depois"));

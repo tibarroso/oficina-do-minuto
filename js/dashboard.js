@@ -1,27 +1,4 @@
 import { supabase } from "./supabase.js";
-
-// 🔹 Verifica se o usuário está logado
-async function verificarLogin() {
-  const { data: { user }, error } = await supabase.auth.getUser();
-
-  if (error) {
-    console.error("Erro ao verificar usuário:", error);
-    alert("Erro de autenticação");
-    window.location.href = "login.html"; // Redireciona para login
-    return null;
-  }
-
-  if (!user) {
-    alert("Usuário não logado!");
-    window.location.href = "login.html"; // Redireciona para login
-    return null;
-  }
-
-  return user; // retorna usuário logado
-}
-
-
-import { supabase } from "./supabase.js";
 import Chart from "chart.js/auto";
 
 const container = document.getElementById("containerPedidos");

@@ -5,14 +5,19 @@ window.criarPedido = async function () {
   const tipo = document.getElementById("tipo").value;
   const orcamento = document.getElementById("orcamento").checked;
 
-  // Pega o usuário logado
-  const user = supabase.auth.user();
-
+  // Pega o usuário logado corretamente (Supabase v2)
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError) {
+    console.error(userError);
+    alert("Erro ao verificar usuário logado");
+    return;
+  }
   if (!user) {
     alert("Usuário não logado!");
     return;
   }
 
+  // Inserir pedido no Supabase
   const { data, error } = await supabase
     .from("pedidos")
     .insert([{
@@ -25,7 +30,7 @@ window.criarPedido = async function () {
 
   if (error) {
     console.error(error);
-    alert("Erro ao criar pedido");
+    alert("Erro ao criar pedido: " + error.message);
     return;
   }
 
@@ -41,7 +46,8 @@ window.uploadAntes = async function () {
     return;
   }
 
-  const path = `fotos/antes_${Date.now()}_${file.name}`;
+  // Corrige o caminho do upload
+  const path = `antes_${Date.now()}_${file.name}`;
 
   const { error } = await supabase.storage
     .from("fotos")
@@ -49,7 +55,7 @@ window.uploadAntes = async function () {
 
   if (error) {
     console.error(error);
-    alert("Erro ao enviar foto antes");
+    alert("Erro ao enviar foto antes: " + error.message);
     return;
   }
 
@@ -65,7 +71,8 @@ window.uploadDepois = async function () {
     return;
   }
 
-  const path = `fotos/depois_${Date.now()}_${file.name}`;
+  // Corrige o caminho do upload
+  const path = `depois_${Date.now()}_${file.name}`;
 
   const { error } = await supabase.storage
     .from("fotos")
@@ -73,7 +80,7 @@ window.uploadDepois = async function () {
 
   if (error) {
     console.error(error);
-    alert("Erro ao enviar foto depois");
+    alert("Erro ao enviar foto depois: " + error.message);
     return;
   }
 

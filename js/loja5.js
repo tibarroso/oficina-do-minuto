@@ -17,7 +17,7 @@ async function carregarPedidos() {
   const container = document.getElementById("pedidos");
   container.innerHTML = "";
 
-  if (data.length === 0) {
+  if (!data || data.length === 0) {
     container.innerHTML = "<p>Nenhum pedido disponível.</p>";
     return;
   }
@@ -45,41 +45,66 @@ async function carregarPedidos() {
   });
 }
 
+// 🔹 Upload foto ANTES (CORRIGIDO)
 window.uploadAntes = async function (id) {
   const fileInput = document.getElementById(`antes-${id}`);
-  const file = fileInput.files[0];
+  const file = fileInput?.files[0];
   if (!file) return alert("Selecione uma foto antes");
 
-  const path = `fotos/antes_${id}_${Date.now()}_${file.name}`;
-  const { error } = await supabase.storage.from("fotos").upload(path, file);
+  // ⚠️ NÃO colocar "fotos/" aqui
+  const path = `antes_${id}_${Date.now()}_${file.name}`;
 
-  if (error) return alert("Erro ao enviar foto antes");
+  const { error } = await supabase.storage
+    .from("fotos")
+    .upload(path, file);
+
+  if (error) {
+    console.error(error);
+    alert("Erro ao enviar foto antes: " + error.message);
+    return;
+  }
+
   alert("Foto antes enviada!");
 };
 
+// 🔹 Upload foto DEPOIS (CORRIGIDO)
 window.uploadDepois = async function (id) {
   const fileInput = document.getElementById(`depois-${id}`);
-  const file = fileInput.files[0];
+  const file = fileInput?.files[0];
   if (!file) return alert("Selecione uma foto depois");
 
-  const path = `fotos/depois_${id}_${Date.now()}_${file.name}`;
-  const { error } = await supabase.storage.from("fotos").upload(path, file);
+  // ⚠️ NÃO colocar "fotos/" aqui
+  const path = `depois_${id}_${Date.now()}_${file.name}`;
 
-  if (error) return alert("Erro ao enviar foto depois");
+  const { error } = await supabase.storage
+    .from("fotos")
+    .upload(path, file);
+
+  if (error) {
+    console.error(error);
+    alert("Erro ao enviar foto depois: " + error.message);
+    return;
+  }
+
   alert("Foto depois enviada!");
 };
 
+// 🔹 Finalizar pedido
 window.finalizarPedido = async function (id) {
   const { error } = await supabase
     .from("pedidos")
     .update({ status: "Finalizado" })
     .eq("id", id);
 
-  if (error) return alert("Erro ao finalizar pedido");
+  if (error) {
+    console.error(error);
+    alert("Erro ao finalizar pedido: " + error.message);
+    return;
+  }
+
   alert("Pedido finalizado com sucesso!");
-  carregarPedidos(); // Recarrega lista
+  carregarPedidos();
 };
 
 // Carrega pedidos ao abrir a página
 carregarPedidos();
-

@@ -5,14 +5,15 @@ const container = document.getElementById("containerPedidos");
 const filtroStatus = document.getElementById("filtroStatus");
 const pesquisaOS = document.getElementById("pesquisaOS");
 const btnFiltrar = document.getElementById("btnFiltrar");
+const btnCriarPedidoContainer = document.getElementById("btnCriarPedidoContainer");
 
-let pedidosGlobais = []; // Para gráficos
+let pedidosGlobais = [];
 let usuarioLogado = null;
 
 // ===============================
 // Verificar login
 // ===============================
-export async function verificarLogin() {
+async function verificarLogin() {
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error) {
     console.error("Erro ao verificar usuário:", error);
@@ -29,6 +30,19 @@ export async function verificarLogin() {
 }
 
 // ===============================
+// Criar botão Criar Pedido se for loja
+// ===============================
+function criarBotaoPedido() {
+  if (usuarioLogado.email.includes("loja")) {
+    const btn = document.createElement("button");
+    btn.textContent = "Criar Pedido";
+    btn.style.marginBottom = "20px";
+    btn.onclick = () => window.location.href = "pedidos.html";
+    btnCriarPedidoContainer.appendChild(btn);
+  }
+}
+
+// ===============================
 // Carregar pedidos
 // ===============================
 async function carregarPedidos() {
@@ -36,16 +50,16 @@ async function carregarPedidos() {
 
   let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false });
 
-  // 🔹 Filtrar por loja se for usuário loja
+  // Filtrar por loja
   if (usuarioLogado.email.includes("loja")) {
     query = query.eq("loja_origem", usuarioLogado.email);
   }
 
-  // 🔹 Filtrar por status
+  // Filtrar status
   const status = filtroStatus.value;
   if (status) query = query.eq("status", status);
 
-  // 🔹 Filtrar por pesquisa OS ou loja
+  // Pesquisa por OS ou loja
   const pesquisa = pesquisaOS.value.trim();
   if (pesquisa) {
     query = query.or(`id.ilike.%${pesquisa}%,loja_origem.ilike.%${pesquisa}%`);
@@ -141,7 +155,6 @@ window.uploadFoto = async function(id,tipo){
     img.className = "preview";
     previewDiv.appendChild(img);
 
-    // Atualizar tabela
     const field = tipo==='antes'?'foto_antes':'foto_depois';
     await supabase.from("pedidos").update({[field]:data.publicUrl}).eq("id",id);
   }
@@ -201,7 +214,10 @@ function atualizarGraficos(){
   usuarioLogado = await verificarLogin();
   if(!usuarioLogado) return;
 
-  // Filtro
+  // Botão Criar Pedido se for loja
+  criarBotaoPedido();
+
+  // Filtrar pedidos
   btnFiltrar.addEventListener("click", carregarPedidos);
 
   // Carregar pedidos

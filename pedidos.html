@@ -1,37 +1,38 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Criar Pedido - Oficina do Minuto</title>
-<link rel="stylesheet" href="./css/style.css">
+  <meta charset="UTF-8">
+  <title>Criar Pedido - Oficina do Minuto</title>
+  <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
-<h2>Criar Pedido</h2>
+  <h2>Criar Pedido</h2>
 
-<label for="tipo">Tipo de serviço:</label>
-<select id="tipo">
-  <option value="Lavanderia">Lavanderia</option>
-  <option value="Sapataria">Sapataria</option>
-  <option value="Costura">Costura</option>
-  <option value="Bordado">Bordado</option>
-</select>
-<br><br>
+  <label for="tipo">Tipo de serviço:</label>
+  <select id="tipo">
+    <option value="Lavanderia">Lavanderia</option>
+    <option value="Sapataria">Sapataria</option>
+    <option value="Costura">Costura</option>
+    <option value="Bordado">Bordado</option>
+  </select>
+  <br><br>
 
-<label for="orcamento">Orçamento?</label>
-<input type="checkbox" id="orcamento">
-<br><br>
+  <label for="orcamento">Orçamento?</label>
+  <input type="checkbox" id="orcamento">
+  <br><br>
 
-<button id="btnCriarPedido">Criar Pedido</button>
+  <button id="btnCriarPedido">Criar Pedido</button>
 
-<h3>Upload de Fotos</h3>
-<label>Antes:</label>
-<input type="file" id="fotoAntes" multiple>
-<button id="btnUploadAntes">Enviar Foto Antes</button>
-<br><br>
-<label>Depois:</label>
-<input type="file" id="fotoDepois" multiple>
-<button id="btnUploadDepois">Enviar Foto Depois</button>
+  <h3>Upload de Fotos</h3>
+  <label>Antes:</label>
+  <input type="file" id="fotoAntes">
+  <button id="btnUploadAntes">Enviar Foto Antes</button>
+  <br><br>
 
-<script type="module" src="./js/pedidos.js"></script>
+  <label>Depois:</label>
+  <input type="file" id="fotoDepois">
+  <button id="btnUploadDepois">Enviar Foto Depois</button>
+
+  <script type="module" src="./js/pedidos.js"></script>
 </body>
 </html>

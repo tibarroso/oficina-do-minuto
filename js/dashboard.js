@@ -9,16 +9,16 @@ const btnCriarPedidoContainer = document.getElementById("btnCriarPedidoContainer
 
 let pedidosGlobais = [];
 let usuarioLogado = null;
-let usuarioTipo = "admin"; // padrão admin
+let usuarioTipo = "admin"; // admin ou loja
+let chartStatus, chartServico;
 
 // ===============================
 // Verificar login
 // ===============================
 async function verificarLogin() {
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) {
-    console.error(error);
-    alert("Usuário não logado");
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    alert("Usuário não logado!");
     window.location.href = "login.html";
     return null;
   }
@@ -32,7 +32,6 @@ function criarBotaoPedido() {
   if (usuarioTipo === "loja") {
     const btn = document.createElement("button");
     btn.textContent = "Criar Pedido";
-    btn.className = "btn-primary";
     btn.style.marginBottom = "20px";
     btn.onclick = () => window.location.href = "pedidos.html";
     btnCriarPedidoContainer.appendChild(btn);
@@ -47,7 +46,9 @@ async function carregarPedidos() {
 
   let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false });
 
-  if (usuarioTipo === "loja") query = query.eq("loja_origem", usuarioLogado.email);
+  if (usuarioTipo === "loja") {
+    query = query.eq("loja_origem", usuarioLogado.email);
+  }
 
   const status = filtroStatus.value;
   if (status) query = query.eq("status", status);
@@ -68,134 +69,57 @@ async function carregarPedidos() {
 // ===============================
 function renderizarPedidos(pedidos) {
   container.innerHTML = "";
-  if (!pedidos || pedidos.length === 0) {
-    container.innerHTML = "<p>Nenhum pedido encontrado.</p>";
-    return;
-  }
+  if (!pedidos || pedidos.length === 0) return container.innerHTML = "<p>Nenhum pedido encontrado.</p>";
 
   pedidos.forEach(p => {
     const card = document.createElement("div");
     card.className = "card";
 
-    const timelineHTML = `
-      <div class="timeline">
-        <div class="timeline-step ${p.status==='Aguardando coleta'?'step-Aguardando':''}${p.status==='Entregue na Loja 5'?'step-Entregue':''}${p.status==='Finalizado'?'step-Finalizado':''}">Aguardando</div>
-        <div class="timeline-step ${p.status==='Entregue na Loja 5'?'step-Entregue':''}${p.status==='Finalizado'?'step-Finalizado':''}">Entregue</div>
-        <div class="timeline-step ${p.status==='Finalizado'?'step-Finalizado':''}">Finalizado</div>
-      </div>
-    `;
-
     card.innerHTML = `
       <h3>OS: ${p.id}</h3>
-      <span class="status-tag ${p.status==='Aguardando coleta'?'status-Aguardando':p.status==='Entregue na Loja 5'?'status-Entregue':'status-Finalizado'}">${p.status}</span>
-      <p><strong>Loja:</strong> ${p.loja_origem}</p>
-      <p><strong>Serviço:</strong> ${p.tipo_servico}</p>
-      <p><strong>Orçamento:</strong> ${p.eh_orcamento?"Sim":"Não"}</p>
-      ${timelineHTML}
-      <label>Observações:</label>
-      <textarea id="obs-${p.id}" rows="3">${p.obs_loja5||""}</textarea>
-      <button onclick="salvarObservacao('${p.id}')" class="btn-primary">Salvar Observação</button><br><br>
-
-      <label>Fotos:</label><br>
-      <input type="file" id="antes-${p.id}" multiple>
-      <button onclick="uploadFoto('${p.id}','antes')" class="btn-primary">Enviar Antes</button>
-      <div id="preview-antes-${p.id}" class="preview"></div><br>
-
-      <input type="file" id="depois-${p.id}" multiple>
-      <button onclick="uploadFoto('${p.id}','depois')" class="btn-primary">Enviar Depois</button>
-      <div id="preview-depois-${p.id}" class="preview"></div><br>
-
-      ${p.status!=='Finalizado'?`<button onclick="finalizarPedido('${p.id}')" class="btn-primary">Finalizar Serviço</button>`:''}
+      <span>Status: ${p.status}</span><br>
+      <strong>Loja:</strong> ${p.loja_origem}<br>
+      <strong>Serviço:</strong> ${p.tipo_servico}<br>
+      <strong>Orçamento:</strong> ${p.eh_orcamento ? "Sim" : "Não"}<br><br>
     `;
-
     container.appendChild(card);
   });
 }
 
 // ===============================
-// Salvar observações
-// ===============================
-window.salvarObservacao = async function(id){
-  const texto = document.getElementById(`obs-${id}`).value;
-  const { error } = await supabase.from("pedidos").update({obs_loja5:texto}).eq("id",id);
-  if(error){ console.error(error); return alert("Erro ao salvar observação"); }
-  alert("Observação salva!");
-}
-
-// ===============================
-// Upload múltiplo de fotos
-// ===============================
-window.uploadFoto = async function(id,tipo){
-  const fileInput = document.getElementById(`${tipo}-${id}`);
-  const files = fileInput?.files;
-  if(!files || files.length===0) return alert(`Selecione fotos (${tipo})`);
-
-  const previewDiv = document.getElementById(`preview-${tipo}-${id}`);
-  previewDiv.innerHTML = "";
-
-  for(const file of files){
-    const path = `${tipo}_${id}_${Date.now()}_${file.name}`;
-    const { error } = await supabase.storage.from("fotos").upload(path, file);
-    if(error){ console.error(error); continue; }
-
-    const { data } = supabase.storage.from("fotos").getPublicUrl(path);
-    const img = document.createElement("img");
-    img.src = data.publicUrl;
-    img.className = "preview";
-    previewDiv.appendChild(img);
-
-    const field = tipo==='antes'?'foto_antes':'foto_depois';
-    await supabase.from("pedidos").update({[field]:data.publicUrl}).eq("id",id);
-  }
-
-  alert("Fotos enviadas e preview atualizado!");
-}
-
-// ===============================
-// Finalizar pedido
-// ===============================
-window.finalizarPedido = async function(id){
-  const { error } = await supabase.from("pedidos").update({status:"Finalizado"}).eq("id",id);
-  if(error){ console.error(error); return alert("Erro ao finalizar pedido"); }
-  alert("Pedido finalizado!");
-  carregarPedidos();
-}
-
-// ===============================
 // Gráficos
 // ===============================
-let chartStatus, chartServico;
-function atualizarGraficos(){
+function atualizarGraficos() {
   const statusCount = {};
   const servicoCount = {};
 
-  pedidosGlobais.forEach(p=>{
-    statusCount[p.status] = (statusCount[p.status]||0)+1;
-    servicoCount[p.tipo_servico] = (servicoCount[p.tipo_servico]||0)+1;
+  pedidosGlobais.forEach(p => {
+    statusCount[p.status] = (statusCount[p.status] || 0) + 1;
+    servicoCount[p.tipo_servico] = (servicoCount[p.tipo_servico] || 0) + 1;
   });
 
   const ctxStatus = document.getElementById("graficoStatus").getContext("2d");
-  if(chartStatus) chartStatus.destroy();
-  chartStatus = new Chart(ctxStatus,{
-    type:"doughnut",
-    data:{ labels:Object.keys(statusCount), datasets:[{data:Object.values(statusCount), backgroundColor:["#f0ad4e","#5bc0de","#5cb85c"]}] }
+  if (chartStatus) chartStatus.destroy();
+  chartStatus = new Chart(ctxStatus, {
+    type: "doughnut",
+    data: { labels: Object.keys(statusCount), datasets: [{ data: Object.values(statusCount), backgroundColor: ["#f0ad4e","#5bc0de","#5cb85c"] }] }
   });
 
   const ctxServico = document.getElementById("graficoServico").getContext("2d");
-  if(chartServico) chartServico.destroy();
-  chartServico = new Chart(ctxServico,{
-    type:"bar",
-    data:{ labels:Object.keys(servicoCount), datasets:[{label:"Pedidos por Serviço", data:Object.values(servicoCount), backgroundColor:"#337ab7"}] },
-    options:{ scales:{y:{beginAtZero:true}} }
+  if (chartServico) chartServico.destroy();
+  chartServico = new Chart(ctxServico, {
+    type: "bar",
+    data: { labels: Object.keys(servicoCount), datasets: [{ label: "Pedidos por Serviço", data: Object.values(servicoCount), backgroundColor: "#337ab7" }] },
+    options: { scales: { y: { beginAtZero: true } } }
   });
 }
 
 // ===============================
 // Inicialização
 // ===============================
-(async ()=>{
+(async () => {
   usuarioLogado = await verificarLogin();
-  if(!usuarioLogado) return;
+  if (!usuarioLogado) return;
 
   usuarioTipo = usuarioLogado.email.includes("loja") ? "loja" : "admin";
   criarBotaoPedido();

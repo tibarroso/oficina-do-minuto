@@ -30,22 +30,47 @@ const pesquisaOS = document.getElementById("pesquisaOS");
 const btnFiltrar = document.getElementById("btnFiltrar");
 
 let pedidosGlobais = []; // Para gráficos
+let usuarioLogado = null;
+
+// ===============================
+// Verificar login
+// ===============================
+async function verificarLogin() {
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error) {
+    console.error("Erro ao verificar usuário:", error);
+    alert("Erro de autenticação");
+    window.location.href = "login.html";
+    return null;
+  }
+  if (!user) {
+    alert("Usuário não logado!");
+    window.location.href = "login.html";
+    return null;
+  }
+  return user;
+}
 
 // ===============================
 // Carregar pedidos
 // ===============================
 async function carregarPedidos() {
+  if (!usuarioLogado) return;
+
   let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false });
 
-  // Filtrar status
+  // Filtrar por loja do usuário
+  query = query.eq("loja_origem", usuarioLogado.email);
+
+  // Filtrar por status
   const status = filtroStatus.value;
   if (status) query = query.eq("status", status);
 
+  // Pesquisa por OS ou loja
   const pesquisa = pesquisaOS.value.trim();
   if (pesquisa) query = query.or(`id.ilike.%${pesquisa}%,loja_origem.ilike.%${pesquisa}%`);
 
   const { data, error } = await query;
-
   if (error) { console.error(error); return alert("Erro ao carregar pedidos"); }
 
   pedidosGlobais = data || [];
@@ -188,5 +213,9 @@ function atualizarGraficos(){
 // ===============================
 // Inicialização
 // ===============================
-btnFiltrar.addEventListener("click", carregarPedidos);
-carregarPedidos();
+(async ()=>{
+  usuarioLogado = await verificarLogin();
+  if(!usuarioLogado) return;
+  btnFiltrar.addEventListener("click", carregarPedidos);
+  carregarPedidos();
+})();

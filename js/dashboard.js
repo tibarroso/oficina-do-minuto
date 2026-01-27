@@ -30,6 +30,12 @@ async function verificarLogin() {
 <!-- Botão para criar pedidos -->
 <button id="btnCriarPedido">Criar Pedido</button>
 
+
+// Redireciona para pedidos.html
+document.getElementById("btnCriarPedido").addEventListener("click", () => {
+  window.location.href = "pedidos.html";
+});
+
 // ===============================
 // Carregar pedidos
 // ===============================

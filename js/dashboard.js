@@ -1,30 +1,46 @@
 import { supabase } from "./supabase.js";
+import Chart from "chart.js/auto";
+
+const container = document.getElementById("containerPedidos");
+const filtroStatus = document.getElementById("filtroStatus");
+const pesquisaOS = document.getElementById("pesquisaOS");
+const btnFiltrar = document.getElementById("btnFiltrar");
+
+let pedidosGlobais = []; // Para gráficos
 
 // ===============================
 // Carregar pedidos
 // ===============================
-export async function carregarPedidos() {
-  const status = document.getElementById("filtroStatus").value;
-  const pesquisa = document.getElementById("pesquisaOS").value.trim();
+async function carregarPedidos() {
+  let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false });
 
-  let query = supabase.from("pedidos").select("*").order("criado_em",{ascending:false});
+  // Filtrar status
+  const status = filtroStatus.value;
+  if (status) query = query.eq("status", status);
 
-  if(status) query = query.eq("status", status);
-  if(pesquisa) query = query.ilike("id", `%${pesquisa}%`).or(`loja_origem.ilike.%${pesquisa}%`);
+  const pesquisa = pesquisaOS.value.trim();
+  if (pesquisa) query = query.or(`id.ilike.%${pesquisa}%,loja_origem.ilike.%${pesquisa}%`);
 
   const { data, error } = await query;
 
-  const container = document.getElementById("containerPedidos");
+  if (error) { console.error(error); return alert("Erro ao carregar pedidos"); }
+
+  pedidosGlobais = data || [];
+  renderizarPedidos(pedidosGlobais);
+  atualizarGraficos();
+}
+
+// ===============================
+// Renderizar pedidos
+// ===============================
+function renderizarPedidos(pedidos) {
   container.innerHTML = "";
+  if (!pedidos || pedidos.length === 0) return container.innerHTML = "<p>Nenhum pedido encontrado.</p>";
 
-  if(error) { console.error(error); return alert("Erro ao carregar pedidos"); }
-  if(!data || data.length === 0) return container.innerHTML="<p>Nenhum pedido encontrado.</p>";
-
-  data.forEach(p => {
+  pedidos.forEach(p => {
     const card = document.createElement("div");
     card.className = "card";
 
-    // Timeline de status
     const timelineHTML = `
       <div class="timeline">
         <div class="timeline-step ${p.status==='Aguardando coleta'?'step-Aguardando':''}${p.status==='Entregue na Loja 5'?'step-Entregue':''}${p.status==='Finalizado'?'step-Finalizado':''}">Aguardando</div>
@@ -45,24 +61,19 @@ export async function carregarPedidos() {
       <textarea id="obs-${p.id}" rows="3">${p.obs_loja5||""}</textarea>
       <button onclick="salvarObservacao('${p.id}')">Salvar Observação</button><br><br>
 
-      <label>Foto Antes:</label><br>
-      <input type="file" id="antes-${p.id}">
+      <label>Fotos:</label><br>
+      <input type="file" id="antes-${p.id}" multiple>
       <button onclick="uploadFoto('${p.id}','antes')">Enviar Antes</button>
-      <img id="preview-antes-${p.id}" class="preview"><br>
+      <div id="preview-antes-${p.id}"></div><br>
 
-      <label>Foto Depois:</label><br>
-      <input type="file" id="depois-${p.id}">
+      <input type="file" id="depois-${p.id}" multiple>
       <button onclick="uploadFoto('${p.id}','depois')">Enviar Depois</button>
-      <img id="preview-depois-${p.id}" class="preview"><br>
+      <div id="preview-depois-${p.id}"></div><br>
 
       ${p.status!=='Finalizado'?`<button onclick="finalizarPedido('${p.id}')">Finalizar Serviço</button>`:''}
     `;
 
     container.appendChild(card);
-
-    // Previsualizar fotos existentes (se houver)
-    if(p.foto_antes) document.getElementById(`preview-antes-${p.id}`).src = p.foto_antes;
-    if(p.foto_depois) document.getElementById(`preview-depois-${p.id}`).src = p.foto_depois;
   });
 }
 
@@ -77,26 +88,33 @@ window.salvarObservacao = async function(id){
 }
 
 // ===============================
-// Upload foto com preview
+// Upload múltiplo de fotos
 // ===============================
 window.uploadFoto = async function(id,tipo){
   const fileInput = document.getElementById(`${tipo}-${id}`);
-  const file = fileInput?.files[0];
-  if(!file) return alert(`Selecione uma foto (${tipo})`);
+  const files = fileInput?.files;
+  if(!files || files.length===0) return alert(`Selecione fotos (${tipo})`);
 
-  const path = `${tipo}_${id}_${Date.now()}_${file.name}`;
-  const { error } = await supabase.storage.from("fotos").upload(path, file);
-  if(error){ console.error(error); return alert("Erro ao enviar foto: "+error.message); }
+  const previewDiv = document.getElementById(`preview-${tipo}-${id}`);
+  previewDiv.innerHTML = "";
 
-  // Gerar URL pública e mostrar preview
-  const { data } = supabase.storage.from("fotos").getPublicUrl(path);
-  document.getElementById(`preview-${tipo}-${id}`).src = data.publicUrl;
+  for(const file of files){
+    const path = `${tipo}_${id}_${Date.now()}_${file.name}`;
+    const { error } = await supabase.storage.from("fotos").upload(path,file);
+    if(error){ console.error(error); continue; }
 
-  // Atualizar tabela pedidos
-  const field = tipo==='antes'?'foto_antes':'foto_depois';
-  await supabase.from("pedidos").update({[field]:data.publicUrl}).eq("id",id);
+    const { data } = supabase.storage.from("fotos").getPublicUrl(path);
+    const img = document.createElement("img");
+    img.src = data.publicUrl;
+    img.className = "preview";
+    previewDiv.appendChild(img);
 
-  alert("Foto enviada e preview atualizado!");
+    // Atualizar tabela
+    const field = tipo==='antes'?'foto_antes':'foto_depois';
+    await supabase.from("pedidos").update({[field]:data.publicUrl}).eq("id",id);
+  }
+
+  alert("Fotos enviadas e preview atualizado!");
 }
 
 // ===============================
@@ -110,6 +128,42 @@ window.finalizarPedido = async function(id){
 }
 
 // ===============================
+// Gráficos
+// ===============================
+let chartStatus, chartServico;
+function atualizarGraficos(){
+  const statusCount = {};
+  const servicoCount = {};
+
+  pedidosGlobais.forEach(p=>{
+    statusCount[p.status] = (statusCount[p.status]||0)+1;
+    servicoCount[p.tipo_servico] = (servicoCount[p.tipo_servico]||0)+1;
+  });
+
+  const ctxStatus = document.getElementById("graficoStatus").getContext("2d");
+  if(chartStatus) chartStatus.destroy();
+  chartStatus = new Chart(ctxStatus,{
+    type:"doughnut",
+    data:{
+      labels:Object.keys(statusCount),
+      datasets:[{data:Object.values(statusCount), backgroundColor:["#f0ad4e","#5bc0de","#5cb85c"]}]
+    }
+  });
+
+  const ctxServico = document.getElementById("graficoServico").getContext("2d");
+  if(chartServico) chartServico.destroy();
+  chartServico = new Chart(ctxServico,{
+    type:"bar",
+    data:{
+      labels:Object.keys(servicoCount),
+      datasets:[{label:"Pedidos por Serviço", data:Object.values(servicoCount), backgroundColor:"#337ab7"}]
+    },
+    options:{scales:{y:{beginAtZero:true}}}
+  });
+}
+
+// ===============================
 // Inicialização
 // ===============================
+btnFiltrar.addEventListener("click", carregarPedidos);
 carregarPedidos();

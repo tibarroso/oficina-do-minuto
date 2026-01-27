@@ -6,8 +6,7 @@
 <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
-
-<h1>Criar Pedido</h1>
+<h2>Criar Pedido</h2>
 
 <label for="tipo">Tipo de serviço:</label>
 <select id="tipo">
@@ -18,20 +17,20 @@
 </select>
 <br><br>
 
-<label>Orçamento?</label>
+<label for="orcamento">Orçamento?</label>
 <input type="checkbox" id="orcamento">
 <br><br>
 
-<button onclick="criarPedido()" class="btn-primary">Criar Pedido</button>
+<button id="btnCriarPedido">Criar Pedido</button>
 
-<h2>Upload de Fotos</h2>
+<h3>Upload de Fotos</h3>
 <label>Antes:</label>
 <input type="file" id="fotoAntes" multiple>
-<button onclick="uploadAntes()" class="btn-primary">Enviar Foto Antes</button>
+<button id="btnUploadAntes">Enviar Foto Antes</button>
 <br><br>
 <label>Depois:</label>
 <input type="file" id="fotoDepois" multiple>
-<button onclick="uploadDepois()" class="btn-primary">Enviar Foto Depois</button>
+<button id="btnUploadDepois">Enviar Foto Depois</button>
 
 <script type="module" src="./js/pedidos.js"></script>
 </body>

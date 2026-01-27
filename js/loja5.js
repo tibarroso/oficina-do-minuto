@@ -1,26 +1,85 @@
-import { db, storage } from "./firebase.js";
-import { addDoc, collection } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { ref, uploadBytes } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
+import { supabase } from "./supabase.js";
 
-window.uploadAntes = async function() {
-  const files = document.getElementById("fotoAntes").files;
-  if(files.length === 0) return alert("Selecione ao menos 1 foto");
-  for(let i=0; i<files.length; i++){
-    const storageRef = ref(storage, `pedidos/OS000123/antes_${i}.jpg`);
-    await uploadBytes(storageRef, files[i]);
+// Função para carregar pedidos
+async function carregarPedidos() {
+  const { data, error } = await supabase
+    .from("pedidos")
+    .select("*")
+    .in("tipo_servico", ["Lavanderia", "Sapataria"])
+    .order("criado_em", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    alert("Erro ao carregar pedidos");
+    return;
   }
-  alert("Fotos enviadas!");
-}
 
-window.criarPedido = async function(){
-  const tipo = document.getElementById("tipo").value;
-  const orc = document.getElementById("orcamento").checked;
+  const container = document.getElementById("pedidos");
+  container.innerHTML = "";
 
-  await addDoc(collection(db,"pedidos"), {
-    tipoServico: tipo,
-    ehOrcamento: orc,
-    status: orc ? "Aguardando avaliação" : "Aguardando coleta",
-    criadoEm: new Date()
+  if (data.length === 0) {
+    container.innerHTML = "<p>Nenhum pedido disponível.</p>";
+    return;
+  }
+
+  data.forEach(p => {
+    container.innerHTML += `
+      <div style="border:1px solid #ccc; padding:8px; margin-bottom:8px;">
+        <strong>OS:</strong> ${p.id}<br>
+        <strong>Loja origem:</strong> ${p.loja_origem}<br>
+        <strong>Serviço:</strong> ${p.tipo_servico}<br>
+        <strong>Status:</strong> ${p.status}<br>
+        <strong>Orçamento:</strong> ${p.eh_orcamento ? "Sim" : "Não"}<br><br>
+
+        <label>Foto Antes:</label>
+        <input type="file" id="antes-${p.id}">
+        <button onclick="uploadAntes('${p.id}')">Enviar Antes</button><br><br>
+
+        <label>Foto Depois:</label>
+        <input type="file" id="depois-${p.id}">
+        <button onclick="uploadDepois('${p.id}')">Enviar Depois</button><br><br>
+
+        <button onclick="finalizarPedido('${p.id}')">Finalizar Serviço</button>
+      </div>
+    `;
   });
-  alert("Pedido criado");
 }
+
+window.uploadAntes = async function (id) {
+  const fileInput = document.getElementById(`antes-${id}`);
+  const file = fileInput.files[0];
+  if (!file) return alert("Selecione uma foto antes");
+
+  const path = `fotos/antes_${id}_${Date.now()}_${file.name}`;
+  const { error } = await supabase.storage.from("fotos").upload(path, file);
+
+  if (error) return alert("Erro ao enviar foto antes");
+  alert("Foto antes enviada!");
+};
+
+window.uploadDepois = async function (id) {
+  const fileInput = document.getElementById(`depois-${id}`);
+  const file = fileInput.files[0];
+  if (!file) return alert("Selecione uma foto depois");
+
+  const path = `fotos/depois_${id}_${Date.now()}_${file.name}`;
+  const { error } = await supabase.storage.from("fotos").upload(path, file);
+
+  if (error) return alert("Erro ao enviar foto depois");
+  alert("Foto depois enviada!");
+};
+
+window.finalizarPedido = async function (id) {
+  const { error } = await supabase
+    .from("pedidos")
+    .update({ status: "Finalizado" })
+    .eq("id", id);
+
+  if (error) return alert("Erro ao finalizar pedido");
+  alert("Pedido finalizado com sucesso!");
+  carregarPedidos(); // Recarrega lista
+};
+
+// Carrega pedidos ao abrir a página
+carregarPedidos();
+

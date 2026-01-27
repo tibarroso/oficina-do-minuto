@@ -12,7 +12,7 @@ let usuarioLogado = null;
 // ===============================
 // Verificar login
 // ===============================
-async function verificarLogin() {
+export async function verificarLogin() {
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error) {
     console.error("Erro ao verificar usuário:", error);
@@ -36,19 +36,26 @@ async function carregarPedidos() {
 
   let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false });
 
-  // Filtrar por loja do usuário
-  query = query.eq("loja_origem", usuarioLogado.email);
+  // 🔹 Filtrar por loja se for usuário loja
+  if (usuarioLogado.email.includes("loja")) {
+    query = query.eq("loja_origem", usuarioLogado.email);
+  }
 
-  // Filtrar por status
+  // 🔹 Filtrar por status
   const status = filtroStatus.value;
   if (status) query = query.eq("status", status);
 
-  // Pesquisa por OS ou loja
+  // 🔹 Filtrar por pesquisa OS ou loja
   const pesquisa = pesquisaOS.value.trim();
-  if (pesquisa) query = query.or(`id.ilike.%${pesquisa}%,loja_origem.ilike.%${pesquisa}%`);
+  if (pesquisa) {
+    query = query.or(`id.ilike.%${pesquisa}%,loja_origem.ilike.%${pesquisa}%`);
+  }
 
   const { data, error } = await query;
-  if (error) { console.error(error); return alert("Erro ao carregar pedidos"); }
+  if (error) { 
+    console.error(error); 
+    return alert("Erro ao carregar pedidos"); 
+  }
 
   pedidosGlobais = data || [];
   renderizarPedidos(pedidosGlobais);
@@ -193,6 +200,10 @@ function atualizarGraficos(){
 (async ()=>{
   usuarioLogado = await verificarLogin();
   if(!usuarioLogado) return;
+
+  // Filtro
   btnFiltrar.addEventListener("click", carregarPedidos);
+
+  // Carregar pedidos
   carregarPedidos();
 })();

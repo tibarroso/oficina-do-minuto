@@ -1,7 +1,33 @@
-<script>
-  const perfil = localStorage.getItem("perfil");
-  if (perfil === "loja") location.href = "pedidos.html";
-  if (perfil === "loja5") location.href = "loja5.html";
-  if (perfil === "transporte") location.href = "transporte.html";
-  if (perfil === "admin") location.href = "admin.html";
-</script>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard Admin - Oficina do Minuto</title>
+<style>
+body { font-family: Arial, sans-serif; margin:20px; }
+table { width: 100%; border-collapse: collapse; margin-top: 10px;}
+th, td { border: 1px solid #ccc; padding: 8px; text-align:left;}
+th { background:#f4f4f4;}
+button { margin:2px; padding:4px 8px;}
+</style>
+</head>
+<body>
+<h2>Dashboard Administrativo</h2>
+
+<label>Filtrar por status:</label>
+<select id="filtroStatus">
+  <option value="">Todos</option>
+  <option value="Aguardando coleta">Aguardando coleta</option>
+  <option value="Entregue na Loja 5">Entregue na Loja 5</option>
+  <option value="Finalizado">Finalizado</option>
+</select>
+<button onclick="carregarPedidos()">Filtrar</button>
+
+<input type="text" id="pesquisaOS" placeholder="Pesquisar por OS ou loja">
+<button onclick="carregarPedidos()">Pesquisar</button>
+
+<div id="containerPedidos"></div>
+
+<script type="module" src="./js/dashboard.js"></script>
+</body>
+</html>

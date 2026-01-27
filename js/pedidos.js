@@ -1,32 +1,29 @@
 import { supabase } from "./supabase.js";
 
+// =======================
 // Criar pedido
+// =======================
 window.criarPedido = async function () {
   const tipo = document.getElementById("tipo").value;
   const orcamento = document.getElementById("orcamento").checked;
 
-  // Pega o usuário logado corretamente (Supabase v2)
+  // Usuário logado (Supabase v2)
   const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError) {
+  if (userError || !user) {
     console.error(userError);
-    alert("Erro ao verificar usuário logado");
-    return;
-  }
-  if (!user) {
-    alert("Usuário não logado!");
+    alert("Usuário não logado");
     return;
   }
 
-  // Inserir pedido no Supabase
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from("pedidos")
-    .insert([{
+    .insert({
       loja_origem: user.email,
       tipo_servico: tipo,
       eh_orcamento: orcamento,
       status: orcamento ? "Aguardando avaliação" : "Aguardando coleta",
       criado_em: new Date()
-    }]);
+    });
 
   if (error) {
     console.error(error);
@@ -37,16 +34,15 @@ window.criarPedido = async function () {
   alert("Pedido criado com sucesso!");
 };
 
-// Upload foto antes
+// =======================
+// Upload foto ANTES
+// =======================
 window.uploadAntes = async function () {
   const fileInput = document.getElementById("fotoAntes");
-  const file = fileInput.files[0];
-  if (!file) {
-    alert("Selecione uma foto antes");
-    return;
-  }
+  const file = fileInput?.files[0];
+  if (!file) return alert("Selecione uma foto antes");
 
-  // Corrige o caminho do upload
+  // ⚠️ NÃO colocar "fotos/" aqui
   const path = `antes_${Date.now()}_${file.name}`;
 
   const { error } = await supabase.storage
@@ -62,16 +58,15 @@ window.uploadAntes = async function () {
   alert("Foto antes enviada!");
 };
 
-// Upload foto depois
+// =======================
+// Upload foto DEPOIS
+// =======================
 window.uploadDepois = async function () {
   const fileInput = document.getElementById("fotoDepois");
-  const file = fileInput.files[0];
-  if (!file) {
-    alert("Selecione uma foto depois");
-    return;
-  }
+  const file = fileInput?.files[0];
+  if (!file) return alert("Selecione uma foto depois");
 
-  // Corrige o caminho do upload
+  // ⚠️ NÃO colocar "fotos/" aqui
   const path = `depois_${Date.now()}_${file.name}`;
 
   const { error } = await supabase.storage

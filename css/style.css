@@ -1,7 +1,7 @@
 body {
   font-family: Arial, sans-serif;
   margin: 20px;
-  background: #f5f5f5;
+  background: #f0f2f5;
 }
 
 h1 {
@@ -24,11 +24,11 @@ h1 {
 
 .card {
   background: #fff;
-  border: 1px solid #ccc;
+  border-radius: 8px;
   padding: 12px;
-  border-radius: 6px;
-  width: 300px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  width: 320px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  position: relative;
 }
 
 .card h3 {
@@ -45,6 +45,7 @@ h1 {
   width: 100%;
   border-radius: 4px;
   padding: 4px;
+  resize: vertical;
 }
 
 .card button {
@@ -52,3 +53,50 @@ h1 {
   padding: 4px 8px;
   cursor: pointer;
 }
+
+.status-tag {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.status-Aguardando {
+  background-color: #f0ad4e;
+}
+
+.status-Entregue {
+  background-color: #5bc0de;
+}
+
+.status-Finalizado {
+  background-color: #5cb85c;
+}
+
+img.preview {
+  max-width: 100%;
+  margin-top: 5px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+.timeline {
+  display: flex;
+  gap: 5px;
+  margin: 8px 0;
+}
+
+.timeline-step {
+  flex: 1;
+  padding: 4px;
+  border-radius: 4px;
+  font-size: 12px;
+  text-align: center;
+  color: #fff;
+}
+
+.step-Aguardando { background-color: #f0ad4e; }
+.step-Entregue { background-color: #5bc0de; }
+.step-Finalizado { background-color: #5cb85c; }

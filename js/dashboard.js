@@ -27,6 +27,8 @@ async function verificarLogin() {
   }
   return user;
 }
+<!-- Botão para criar pedidos -->
+<button id="btnCriarPedido">Criar Pedido</button>
 
 // ===============================
 // Carregar pedidos

@@ -27,12 +27,15 @@ async function carregarPedidos() {
 
   data.forEach(p => {
     container.innerHTML += `
-      <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px;">
+      <div style="border:1px solid #ccc; padding:12px; margin-bottom:12px;">
         <strong>OS:</strong> ${p.id}<br>
         <strong>Loja origem:</strong> ${p.loja_origem}<br>
         <strong>Serviço:</strong> ${p.tipo_servico}<br>
         <strong>Status:</strong> ${p.status}<br>
         <strong>Orçamento:</strong> ${p.eh_orcamento ? "Sim" : "Não"}<br><br>
+
+        <label>Observações da Loja 5:</label><br>
+        <textarea id="obs-${p.id}" rows="3" style="width:100%;">${p.obs_loja5 || ""}</textarea><br><br>
 
         <label>Foto Antes:</label><br>
         <input type="file" id="antes-${p.id}">
@@ -42,13 +45,32 @@ async function carregarPedidos() {
         <input type="file" id="depois-${p.id}">
         <button onclick="uploadDepois('${p.id}')">Enviar Depois</button><br><br>
 
-        <button onclick="finalizarPedido('${p.id}')">
-          Finalizar Serviço
-        </button>
+        <button onclick="salvarObservacao('${p.id}')">Salvar Observação</button>
+        <button onclick="finalizarPedido('${p.id}')">Finalizar Serviço</button>
       </div>
     `;
   });
 }
+
+// ===============================
+// Salvar observação Loja 5
+// ===============================
+window.salvarObservacao = async function (id) {
+  const texto = document.getElementById(`obs-${id}`).value;
+
+  const { error } = await supabase
+    .from("pedidos")
+    .update({ obs_loja5: texto })
+    .eq("id", id);
+
+  if (error) {
+    console.error(error);
+    alert("Erro ao salvar observação");
+    return;
+  }
+
+  alert("Observação salva com sucesso!");
+};
 
 // ===============================
 // Upload foto ANTES
@@ -107,7 +129,7 @@ window.finalizarPedido = async function (id) {
 
   if (error) {
     console.error(error);
-    alert("Erro ao finalizar pedido: " + error.message);
+    alert("Erro ao finalizar pedido");
     return;
   }
 
@@ -115,7 +137,5 @@ window.finalizarPedido = async function (id) {
   carregarPedidos();
 };
 
-// ===============================
 // Inicialização
-// ===============================
 carregarPedidos();

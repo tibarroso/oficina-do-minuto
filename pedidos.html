@@ -1,48 +1,38 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Pedidos - Oficina do Minuto</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    h2, h3 { color: #333; }
-    .pedido-card { border: 1px solid #ccc; padding: 12px; margin-bottom: 15px; border-radius: 6px; }
-    textarea { width: 100%; padding: 6px; margin-top: 4px; }
-    input[type=file] { margin-top: 4px; }
-    button { margin-top: 6px; margin-right: 6px; padding: 6px 12px; cursor: pointer; }
-    .preview img { width: 100px; margin: 4px; border-radius: 4px; }
-    .status-tag { padding: 2px 6px; border-radius: 4px; color: #fff; font-size: 0.9em; }
-    .status-Aguardando { background-color: #f0ad4e; }
-    .status-Entregue { background-color: #5bc0de; }
-    .status-Finalizado { background-color: #5cb85c; }
-    label { font-weight: bold; display: block; margin-top: 8px; }
-  </style>
+<meta charset="UTF-8">
+<title>Criar Pedido - Oficina do Minuto</title>
+<link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
-  <h2>Criar Pedido</h2>
 
-  <div>
-    <label for="tipo">Tipo de serviço:</label>
-    <select id="tipo">
-      <option value="Lavanderia">Lavanderia</option>
-      <option value="Sapataria">Sapataria</option>
-      <option value="Costura">Costura</option>
-      <option value="Bordado">Bordado</option>
-    </select>
+<h1>Criar Pedido</h1>
 
-    <label for="orcamento">Orçamento?</label>
-    <input type="checkbox" id="orcamento">
+<label for="tipo">Tipo de serviço:</label>
+<select id="tipo">
+  <option value="Lavanderia">Lavanderia</option>
+  <option value="Sapataria">Sapataria</option>
+  <option value="Costura">Costura</option>
+  <option value="Bordado">Bordado</option>
+</select>
+<br><br>
 
-    <button id="btnCriar">Criar Pedido</button>
-  </div>
+<label>Orçamento?</label>
+<input type="checkbox" id="orcamento">
+<br><br>
 
-  <hr>
+<button onclick="criarPedido()" class="btn-primary">Criar Pedido</button>
 
-  <h3>Meus Pedidos</h3>
-  <div id="pedidos">
-    <!-- Aqui serão carregados os pedidos da loja -->
-  </div>
+<h2>Upload de Fotos</h2>
+<label>Antes:</label>
+<input type="file" id="fotoAntes" multiple>
+<button onclick="uploadAntes()" class="btn-primary">Enviar Foto Antes</button>
+<br><br>
+<label>Depois:</label>
+<input type="file" id="fotoDepois" multiple>
+<button onclick="uploadDepois()" class="btn-primary">Enviar Foto Depois</button>
 
-  <script type="module" src="js/pedidos.js"></script>
+<script type="module" src="./js/pedidos.js"></script>
 </body>
 </html>

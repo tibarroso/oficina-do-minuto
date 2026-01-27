@@ -1,23 +1,57 @@
-import { db } from "./firebase.js";
-import { collection, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { supabase } from "./supabase.js";
 
-async function carregarTransporte(){
-  const snap = await getDocs(collection(db,"pedidos"));
-  const lista = document.getElementById("listaTransporte");
-  lista.innerHTML="";
-  snap.forEach(p=>{
-    const data=p.data();
-    if(["Aguardando coleta","Pronto para devolução"].includes(data.status)){
-      const div=document.createElement("div");
-      div.innerHTML=`OS:${p.id} | Status:${data.status}
-        <button onclick="coletar('${p.id}')">Coletado</button>
-        <button onclick="entregar('${p.id}')">Entregue</button>`;
-      lista.appendChild(div);
-    }
+// Carregar pedidos aguardando coleta
+async function carregarPedidos() {
+  const { data, error } = await supabase
+    .from("pedidos")
+    .select("*")
+    .eq("status", "Aguardando coleta")
+    .order("criado_em", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    alert("Erro ao carregar pedidos");
+    return;
+  }
+
+  const lista = document.getElementById("listaPedidos");
+  lista.innerHTML = "";
+
+  if (!data || data.length === 0) {
+    lista.innerHTML = "<p>Nenhum pedido aguardando coleta.</p>";
+    return;
+  }
+
+  data.forEach(p => {
+    lista.innerHTML += `
+      <div style="border:1px solid #ccc; padding:8px; margin-bottom:8px;">
+        <strong>OS:</strong> ${p.id}<br>
+        <strong>Loja origem:</strong> ${p.loja_origem}<br>
+        <strong>Serviço:</strong> ${p.tipo_servico}<br>
+        <strong>Status:</strong> ${p.status}<br><br>
+
+        <button onclick="iniciarTransporte('${p.id}')">Iniciar Transporte</button>
+      </div>
+    `;
   });
 }
 
-window.coletar = async id => { await updateDoc(doc(db,"pedidos",id),{status:"Em transporte"}); carregarTransporte();}
-window.entregar = async id => { await updateDoc(doc(db,"pedidos",id),{status:"Pronto para retirada"}); carregarTransporte(); }
+// Marcar como em transporte
+window.iniciarTransporte = async function (id) {
+  const { error } = await supabase
+    .from("pedidos")
+    .update({ status: "Em transporte" })
+    .eq("id", id);
 
-carregarTransporte();
+  if (error) {
+    console.error(error);
+    alert("Erro ao iniciar transporte");
+    return;
+  }
+
+  alert("Pedido em transporte!");
+  carregarPedidos();
+};
+
+// Carregar ao abrir a página
+carregarPedidos();

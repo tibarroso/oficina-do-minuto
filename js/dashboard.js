@@ -9,6 +9,7 @@ const btnCriarPedidoContainer = document.getElementById("btnCriarPedidoContainer
 
 let pedidosGlobais = [];
 let usuarioLogado = null;
+let usuarioTipo = "admin"; // padrão admin, muda se for loja
 
 // ===============================
 // Verificar login
@@ -33,7 +34,7 @@ async function verificarLogin() {
 // Criar botão Criar Pedido se for loja
 // ===============================
 function criarBotaoPedido() {
-  if (usuarioLogado.email.includes("loja")) {
+  if (usuarioTipo === "loja") {
     const btn = document.createElement("button");
     btn.textContent = "Criar Pedido";
     btn.style.marginBottom = "20px";
@@ -50,8 +51,8 @@ async function carregarPedidos() {
 
   let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false });
 
-  // Filtrar por loja
-  if (usuarioLogado.email.includes("loja")) {
+  // Se for loja, filtrar apenas seus pedidos
+  if (usuarioTipo === "loja") {
     query = query.eq("loja_origem", usuarioLogado.email);
   }
 
@@ -214,12 +215,12 @@ function atualizarGraficos(){
   usuarioLogado = await verificarLogin();
   if(!usuarioLogado) return;
 
-  // Botão Criar Pedido se for loja
+  // Determinar tipo de usuário
+  usuarioTipo = usuarioLogado.email.includes("loja") ? "loja" : "admin";
+
+  // Criar botão Criar Pedido se for loja
   criarBotaoPedido();
 
-  // Filtrar pedidos
   btnFiltrar.addEventListener("click", carregarPedidos);
-
-  // Carregar pedidos
   carregarPedidos();
 })();

@@ -5,13 +5,6 @@
 <title>Dashboard - Oficina do Minuto</title>
 <link rel="stylesheet" href="./css/style.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-  .cards-container { display: flex; flex-wrap: wrap; gap: 20px; }
-  .card { border: 1px solid #ccc; border-radius: 8px; padding: 15px; width: 300px; background: #f9f9f9; }
-  .preview img { width: 80px; height: 80px; object-fit: cover; margin: 5px; border-radius: 5px; border: 1px solid #ddd; }
-  .btn-primary { background-color: #337ab7; color: white; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; }
-  .btn-primary:hover { background-color: #286090; }
-</style>
 </head>
 <body>
 
@@ -20,7 +13,6 @@
 <!-- Botão Criar Pedido para lojas -->
 <div id="btnCriarPedidoContainer"></div>
 
-<!-- Filtros -->
 <div class="filtros">
   <label>Status:</label>
   <select id="filtroStatus">
@@ -36,12 +28,10 @@
   <button id="btnFiltrar">Filtrar</button>
 </div>
 
-<!-- Gráficos -->
 <h2>Gráficos de Pedidos</h2>
 <canvas id="graficoStatus" width="400" height="150"></canvas>
 <canvas id="graficoServico" width="400" height="150"></canvas>
 
-<!-- Lista de pedidos -->
 <h2>Lista de Pedidos</h2>
 <div id="containerPedidos" class="cards-container"></div>
 

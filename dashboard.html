@@ -1,14 +1,33 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Dashboard Profissional - Oficina do Minuto</title>
-<link rel="stylesheet" href="./css/style.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8">
+  <title>Dashboard Profissional - Oficina do Minuto</title>
+  <link rel="stylesheet" href="./css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* Estilo rápido para botão criar pedido */
+    #btnCriarPedido {
+      background-color: #337ab7;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      margin: 10px 0;
+      cursor: pointer;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    #btnCriarPedido:hover {
+      background-color: #286090;
+    }
+  </style>
 </head>
 <body>
 
 <h1>Dashboard Administrativo - Oficina do Minuto</h1>
+
+<!-- Botão Criar Pedido -->
+<button id="btnCriarPedido">Criar Pedido</button>
 
 <div class="filtros">
   <label>Status:</label>
@@ -31,6 +50,25 @@
 
 <h2>Lista de Pedidos</h2>
 <div id="containerPedidos" class="cards-container"></div>
+
+<script type="module">
+  import { verificarLogin } from "./js/dashboard.js";
+
+  // Redireciona para pedidos.html
+  document.getElementById("btnCriarPedido").addEventListener("click", () => {
+    window.location.href = "pedidos.html";
+  });
+
+  // Mostrar o botão apenas para lojas
+  (async () => {
+    const user = await verificarLogin();
+    if (!user) return; // usuário não logado já é redirecionado
+    if (!user.email.includes("loja")) {
+      // Admin não precisa criar pedidos
+      document.getElementById("btnCriarPedido").style.display = "none";
+    }
+  })();
+</script>
 
 <script type="module" src="./js/dashboard.js"></script>
 </body>

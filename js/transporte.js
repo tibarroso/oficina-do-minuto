@@ -1,57 +1,96 @@
 import { supabase } from "./supabase.js";
 
-// Carregar pedidos aguardando coleta
 async function carregarPedidos() {
+  await carregarAguardando();
+  await carregarEmTransporte();
+}
+
+// =====================
+// Aguardando coleta
+// =====================
+async function carregarAguardando() {
   const { data, error } = await supabase
     .from("pedidos")
     .select("*")
     .eq("status", "Aguardando coleta")
     .order("criado_em", { ascending: false });
 
-  if (error) {
-    console.error(error);
-    alert("Erro ao carregar pedidos");
-    return;
-  }
-
-  const lista = document.getElementById("listaPedidos");
-  lista.innerHTML = "";
+  const div = document.getElementById("aguardando");
+  div.innerHTML = "";
 
   if (!data || data.length === 0) {
-    lista.innerHTML = "<p>Nenhum pedido aguardando coleta.</p>";
+    div.innerHTML = "<p>Nenhum pedido aguardando coleta.</p>";
     return;
   }
 
   data.forEach(p => {
-    lista.innerHTML += `
+    div.innerHTML += `
       <div style="border:1px solid #ccc; padding:8px; margin-bottom:8px;">
         <strong>OS:</strong> ${p.id}<br>
-        <strong>Loja origem:</strong> ${p.loja_origem}<br>
-        <strong>Serviço:</strong> ${p.tipo_servico}<br>
-        <strong>Status:</strong> ${p.status}<br><br>
+        <strong>Loja:</strong> ${p.loja_origem}<br>
+        <strong>Serviço:</strong> ${p.tipo_servico}<br><br>
 
-        <button onclick="iniciarTransporte('${p.id}')">Iniciar Transporte</button>
+        <button onclick="iniciarTransporte('${p.id}')">
+          Iniciar Transporte
+        </button>
       </div>
     `;
   });
 }
 
-// Marcar como em transporte
+// =====================
+// Em transporte
+// =====================
+async function carregarEmTransporte() {
+  const { data, error } = await supabase
+    .from("pedidos")
+    .select("*")
+    .eq("status", "Em transporte")
+    .order("criado_em", { ascending: false });
+
+  const div = document.getElementById("transporte");
+  div.innerHTML = "";
+
+  if (!data || data.length === 0) {
+    div.innerHTML = "<p>Nenhum pedido em transporte.</p>";
+    return;
+  }
+
+  data.forEach(p => {
+    div.innerHTML += `
+      <div style="border:1px solid #ccc; padding:8px; margin-bottom:8px;">
+        <strong>OS:</strong> ${p.id}<br>
+        <strong>Loja:</strong> ${p.loja_origem}<br>
+        <strong>Serviço:</strong> ${p.tipo_servico}<br><br>
+
+        <button onclick="entregarLoja5('${p.id}')">
+          Entregar na Loja 5
+        </button>
+      </div>
+    `;
+  });
+}
+
+// =====================
+// Ações
+// =====================
 window.iniciarTransporte = async function (id) {
-  const { error } = await supabase
+  await supabase
     .from("pedidos")
     .update({ status: "Em transporte" })
     .eq("id", id);
 
-  if (error) {
-    console.error(error);
-    alert("Erro ao iniciar transporte");
-    return;
-  }
-
-  alert("Pedido em transporte!");
   carregarPedidos();
 };
 
-// Carregar ao abrir a página
+window.entregarLoja5 = async function (id) {
+  await supabase
+    .from("pedidos")
+    .update({ status: "Entregue na Loja 5" })
+    .eq("id", id);
+
+  carregarPedidos();
+};
+
+// Inicialização
 carregarPedidos();

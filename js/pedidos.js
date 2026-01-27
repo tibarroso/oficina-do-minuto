@@ -1,11 +1,20 @@
 import { supabase } from "./supabase.js";
 
-// =======================
+// Elementos
+const tipoInput = document.getElementById("tipo");
+const orcamentoInput = document.getElementById("orcamento");
+const btnCriarPedido = document.getElementById("btnCriarPedido");
+const fotoAntesInput = document.getElementById("fotoAntes");
+const btnUploadAntes = document.getElementById("btnUploadAntes");
+const fotoDepoisInput = document.getElementById("fotoDepois");
+const btnUploadDepois = document.getElementById("btnUploadDepois");
+
+let usuarioLogado = null;
+
 // Verificar login
-// =======================
 async function verificarLogin() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) {
     alert("Usuário não logado!");
     window.location.href = "login.html";
     return null;
@@ -13,60 +22,50 @@ async function verificarLogin() {
   return user;
 }
 
-// =======================
 // Criar pedido
-// =======================
-async function criarPedido() {
-  const tipo = document.getElementById("tipo").value;
-  const orcamento = document.getElementById("orcamento").checked;
+btnCriarPedido.addEventListener("click", async () => {
+  if (!usuarioLogado) return;
 
-  const user = await verificarLogin();
-  if (!user) return;
+  const tipo = tipoInput.value;
+  const orcamento = orcamentoInput.checked;
 
-  const { data, error } = await supabase.from("pedidos").insert([{
-    loja_origem: user.email,
+  const { error } = await supabase.from("pedidos").insert({
+    loja_origem: usuarioLogado.email,
     tipo_servico: tipo,
     eh_orcamento: orcamento,
     status: orcamento ? "Aguardando avaliação" : "Aguardando coleta",
     criado_em: new Date()
-  }]);
+  });
 
   if (error) {
     console.error(error);
     alert("Erro ao criar pedido: " + error.message);
+  } else {
+    alert("Pedido criado com sucesso!");
+  }
+});
+
+// Upload de foto
+async function uploadFoto(fileInput, tipo) {
+  const file = fileInput.files[0];
+  if (!file) return alert("Selecione uma foto!");
+
+  const path = `${tipo}_${Date.now()}_${file.name}`;
+  const { error } = await supabase.storage.from("fotos").upload(path, file);
+  if (error) {
+    console.error(error);
+    alert("Erro ao enviar foto: " + error.message);
     return;
   }
 
-  alert("Pedido criado com sucesso! ID: " + data[0].id);
+  const { data } = supabase.storage.from("fotos").getPublicUrl(path);
+  alert("Foto enviada com sucesso!\nURL: " + data.publicUrl);
 }
 
-// =======================
-// Upload fotos
-// =======================
-async function uploadFotos(tipo) {
-  const input = document.getElementById(tipo === "antes" ? "fotoAntes" : "fotoDepois");
-  const files = input.files;
-  if (!files || files.length === 0) return alert("Selecione arquivos");
+btnUploadAntes.addEventListener("click", () => uploadFoto(fotoAntesInput, "antes"));
+btnUploadDepois.addEventListener("click", () => uploadFoto(fotoDepoisInput, "depois"));
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
-
-  for (const file of files) {
-    const path = `${tipo}_${Date.now()}_${file.name}`;
-    const { error } = await supabase.storage.from("fotos").upload(path, file);
-    if (error) {
-      console.error(error);
-      alert("Erro ao enviar foto: " + error.message);
-      continue;
-    }
-  }
-
-  alert("Fotos enviadas com sucesso!");
-}
-
-// =======================
-// Event listeners
-// =======================
-document.getElementById("btnCriarPedido").addEventListener("click", criarPedido);
-document.getElementById("btnUploadAntes").addEventListener("click", () => uploadFotos("antes"));
-document.getElementById("btnUploadDepois").addEventListener("click", () => uploadFotos("depois"));
+// Inicialização
+(async () => {
+  usuarioLogado = await verificarLogin();
+})();

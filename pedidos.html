@@ -1,18 +1,36 @@
-<h3>Novo Pedido</h3>
-<select id="tipo">
-  <option>Lavanderia</option>
-  <option>Sapataria</option>
-  <option>Costura</option>
-  <option>Bordado</option>
-</select>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Pedidos - Oficina do Minuto</title>
+</head>
+<body>
+  <h2>Criar Pedido</h2>
 
-<label>
-  <input type="checkbox" id="orcamento"> Orçamento
-</label>
+  <label for="tipo">Tipo de serviço:</label>
+  <select id="tipo">
+    <option value="Lavanderia">Lavanderia</option>
+    <option value="Sapataria">Sapataria</option>
+    <option value="Costura">Costura</option>
+    <option value="Bordado">Bordado</option>
+  </select>
+  <br><br>
 
-<h3>Fotos Antes</h3>
-<input type="file" id="fotoAntes" accept="image/*" multiple>
-<button onclick="uploadAntes()">Enviar Fotos Antes</button>
-<button onclick="criarPedido()">Criar Pedido</button>
+  <label for="orcamento">Orçamento?</label>
+  <input type="checkbox" id="orcamento">
+  <br><br>
 
-<script type="module" src="js/pedidos.js"></script>
+  <button onclick="criarPedido()">Criar Pedido</button>
+
+  <h3>Upload de Fotos</h3>
+  <label>Antes:</label>
+  <input type="file" id="fotoAntes">
+  <button onclick="uploadAntes()">Enviar Foto Antes</button>
+  <br><br>
+  <label>Depois:</label>
+  <input type="file" id="fotoDepois">
+  <button onclick="uploadDepois()">Enviar Foto Depois</button>
+
+  <script type="module" src="js/pedidos.js"></script>
+</body>
+</html>

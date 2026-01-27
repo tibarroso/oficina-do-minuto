@@ -1,13 +1,18 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Criar Pedido - Oficina do Minuto</title>
-  <link rel="stylesheet" href="./css/style.css">
+<meta charset="UTF-8">
+<title>Pedidos - Oficina do Minuto</title>
+<link rel="stylesheet" href="./css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <h2>Criar Pedido</h2>
 
+<h1>Pedidos - Oficina do Minuto</h1>
+
+<!-- Criar novo pedido -->
+<section>
+  <h2>Criar Pedido</h2>
   <label for="tipo">Tipo de serviço:</label>
   <select id="tipo">
     <option value="Lavanderia">Lavanderia</option>
@@ -16,23 +21,31 @@
     <option value="Bordado">Bordado</option>
   </select>
   <br><br>
-
   <label for="orcamento">Orçamento?</label>
   <input type="checkbox" id="orcamento">
   <br><br>
-
   <button id="btnCriarPedido">Criar Pedido</button>
+</section>
 
-  <h3>Upload de Fotos</h3>
-  <label>Antes:</label>
-  <input type="file" id="fotoAntes">
-  <button id="btnUploadAntes">Enviar Foto Antes</button>
-  <br><br>
+<hr>
 
-  <label>Depois:</label>
-  <input type="file" id="fotoDepois">
-  <button id="btnUploadDepois">Enviar Foto Depois</button>
+<!-- Lista de pedidos da loja -->
+<section>
+  <h2>Meus Pedidos</h2>
+  <div class="filtros">
+    <label>Status:</label>
+    <select id="filtroStatus">
+      <option value="">Todos</option>
+      <option value="Aguardando coleta">Aguardando coleta</option>
+      <option value="Entregue na Loja 5">Entregue na Loja 5</option>
+      <option value="Finalizado">Finalizado</option>
+    </select>
+    <button id="btnFiltrar">Filtrar</button>
+  </div>
 
-  <script type="module" src="./js/pedidos.js"></script>
+  <div id="containerPedidos" class="cards-container"></div>
+</section>
+
+<script type="module" src="./js/pedidos_loja.js"></script>
 </body>
 </html>

@@ -9,38 +9,33 @@ const btnCriarPedidoContainer = document.getElementById("btnCriarPedidoContainer
 
 let pedidosGlobais = [];
 let usuarioLogado = null;
-let usuarioTipo = "admin"; // padrão admin, muda se for loja
+let usuarioTipo = "admin"; // admin | loja
 
 // ===============================
 // Verificar login
 // ===============================
 async function verificarLogin() {
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error) {
-    console.error("Erro ao verificar usuário:", error);
-    alert("Erro de autenticação");
+  const { data, error } = await supabase.auth.getUser();
+
+  if (error || !data.user) {
     window.location.href = "login.html";
     return null;
   }
-  if (!user) {
-    alert("Usuário não logado!");
-    window.location.href = "login.html";
-    return null;
-  }
-  return user;
+
+  return data.user;
 }
 
 // ===============================
-// Criar botão Criar Pedido se for loja
+// Criar botão Criar Pedido (LOJA)
 // ===============================
 function criarBotaoPedido() {
-  if (usuarioTipo === "loja") {
-    const btn = document.createElement("button");
-    btn.textContent = "Criar Pedido";
-    btn.style.marginBottom = "20px";
-    btn.onclick = () => window.location.href = "pedidos.html";
-    btnCriarPedidoContainer.appendChild(btn);
-  }
+  if (usuarioTipo !== "loja") return;
+
+  btnCriarPedidoContainer.innerHTML = `
+    <button class="btn-primary" onclick="window.location.href='pedidos.html'">
+      ➕ Criar Pedido
+    </button>
+  `;
 }
 
 // ===============================
@@ -49,27 +44,33 @@ function criarBotaoPedido() {
 async function carregarPedidos() {
   if (!usuarioLogado) return;
 
-  let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false });
+  let query = supabase
+    .from("pedidos")
+    .select("*")
+    .order("criado_em", { ascending: false });
 
-  // Se for loja, filtrar apenas seus pedidos
+  // Loja vê só os próprios pedidos
   if (usuarioTipo === "loja") {
     query = query.eq("loja_origem", usuarioLogado.email);
   }
 
-  // Filtrar status
-  const status = filtroStatus.value;
-  if (status) query = query.eq("status", status);
+  // Filtro status
+  if (filtroStatus.value) {
+    query = query.eq("status", filtroStatus.value);
+  }
 
-  // Pesquisa por OS ou loja
-  const pesquisa = pesquisaOS.value.trim();
-  if (pesquisa) {
-    query = query.or(`id.ilike.%${pesquisa}%,loja_origem.ilike.%${pesquisa}%`);
+  // Pesquisa
+  if (pesquisaOS.value.trim()) {
+    const p = pesquisaOS.value.trim();
+    query = query.or(`id.ilike.%${p}%,loja_origem.ilike.%${p}%`);
   }
 
   const { data, error } = await query;
-  if (error) { 
-    console.error(error); 
-    return alert("Erro ao carregar pedidos"); 
+
+  if (error) {
+    console.error(error);
+    alert("Erro ao carregar pedidos");
+    return;
   }
 
   pedidosGlobais = data || [];
@@ -82,42 +83,43 @@ async function carregarPedidos() {
 // ===============================
 function renderizarPedidos(pedidos) {
   container.innerHTML = "";
-  if (!pedidos || pedidos.length === 0) return container.innerHTML = "<p>Nenhum pedido encontrado.</p>";
+
+  if (!pedidos.length) {
+    container.innerHTML = "<p>Nenhum pedido encontrado.</p>";
+    return;
+  }
 
   pedidos.forEach(p => {
     const card = document.createElement("div");
     card.className = "card";
 
-    const timelineHTML = `
-      <div class="timeline">
-        <div class="timeline-step ${p.status==='Aguardando coleta'?'step-Aguardando':''}${p.status==='Entregue na Loja 5'?'step-Entregue':''}${p.status==='Finalizado'?'step-Finalizado':''}">Aguardando</div>
-        <div class="timeline-step ${p.status==='Entregue na Loja 5'?'step-Entregue':''}${p.status==='Finalizado'?'step-Finalizado':''}">Entregue</div>
-        <div class="timeline-step ${p.status==='Finalizado'?'step-Finalizado':''}">Finalizado</div>
-      </div>
-    `;
-
     card.innerHTML = `
       <h3>OS: ${p.id}</h3>
-      <span class="status-tag ${p.status==='Aguardando coleta'?'status-Aguardando':p.status==='Entregue na Loja 5'?'status-Entregue':'status-Finalizado'}">${p.status}</span>
       <p><strong>Loja:</strong> ${p.loja_origem}</p>
       <p><strong>Serviço:</strong> ${p.tipo_servico}</p>
-      <p><strong>Orçamento:</strong> ${p.eh_orcamento?"Sim":"Não"}</p>
-      ${timelineHTML}
+      <p><strong>Status:</strong> ${p.status}</p>
 
       <label>Observações:</label>
-      <textarea id="obs-${p.id}" rows="3">${p.obs_loja5||""}</textarea>
-      <button onclick="salvarObservacao('${p.id}')">Salvar Observação</button><br><br>
+      <textarea id="obs-${p.id}" rows="3">${p.obs_loja5 || ""}</textarea>
+      <button onclick="salvarObservacao('${p.id}')">Salvar Observação</button>
 
-      <label>Fotos:</label><br>
+      <hr>
+
+      <label>Foto Antes:</label>
       <input type="file" id="antes-${p.id}" multiple>
       <button onclick="uploadFoto('${p.id}','antes')">Enviar Antes</button>
-      <div id="preview-antes-${p.id}"></div><br>
+      <div id="preview-antes-${p.id}"></div>
 
+      <label>Foto Depois:</label>
       <input type="file" id="depois-${p.id}" multiple>
       <button onclick="uploadFoto('${p.id}','depois')">Enviar Depois</button>
-      <div id="preview-depois-${p.id}"></div><br>
+      <div id="preview-depois-${p.id}"></div>
 
-      ${p.status!=='Finalizado'?`<button onclick="finalizarPedido('${p.id}')">Finalizar Serviço</button>`:''}
+      ${
+        p.status !== "Finalizado" && usuarioTipo === "admin"
+          ? `<button onclick="finalizarPedido('${p.id}')">Finalizar Serviço</button>`
+          : ""
+      }
     `;
 
     container.appendChild(card);
@@ -125,102 +127,117 @@ function renderizarPedidos(pedidos) {
 }
 
 // ===============================
-// Salvar observações
+// Salvar observação
 // ===============================
-window.salvarObservacao = async function(id){
+window.salvarObservacao = async (id) => {
   const texto = document.getElementById(`obs-${id}`).value;
-  const { error } = await supabase.from("pedidos").update({obs_loja5:texto}).eq("id",id);
-  if(error){ console.error(error); return alert("Erro ao salvar observação"); }
+
+  const { error } = await supabase
+    .from("pedidos")
+    .update({ obs_loja5: texto })
+    .eq("id", id);
+
+  if (error) return alert("Erro ao salvar observação");
   alert("Observação salva!");
-}
+};
 
 // ===============================
-// Upload múltiplo de fotos
+// Upload de fotos (CORRIGIDO)
 // ===============================
-window.uploadFoto = async function(id,tipo){
-  const fileInput = document.getElementById(`${tipo}-${id}`);
-  const files = fileInput?.files;
-  if(!files || files.length===0) return alert(`Selecione fotos (${tipo})`);
+window.uploadFoto = async (id, tipo) => {
+  const input = document.getElementById(`${tipo}-${id}`);
+  const files = input.files;
+  if (!files.length) return alert("Selecione fotos");
 
-  const previewDiv = document.getElementById(`preview-${tipo}-${id}`);
-  previewDiv.innerHTML = "";
+  const preview = document.getElementById(`preview-${tipo}-${id}`);
+  preview.innerHTML = "";
 
-  for(const file of files){
-    const path = `${tipo}_${id}_${Date.now()}_${file.name}`;
-    const { error } = await supabase.storage.from("fotos").upload(path,file);
-    if(error){ console.error(error); continue; }
+  for (const file of files) {
+    const fileName = `${tipo}_${id}_${Date.now()}_${file.name}`;
 
-    const { data } = supabase.storage.from("fotos").getPublicUrl(path);
+    const { error: uploadError } = await supabase.storage
+      .from("fotos")
+      .upload(fileName, file, { upsert: true });
+
+    if (uploadError) {
+      console.error(uploadError);
+      continue;
+    }
+
+    const { data } = supabase.storage
+      .from("fotos")
+      .getPublicUrl(fileName);
+
     const img = document.createElement("img");
     img.src = data.publicUrl;
     img.className = "preview";
-    previewDiv.appendChild(img);
+    preview.appendChild(img);
 
-    const field = tipo==='antes'?'foto_antes':'foto_depois';
-    await supabase.from("pedidos").update({[field]:data.publicUrl}).eq("id",id);
+    const campo = tipo === "antes" ? "foto_antes" : "foto_depois";
+    await supabase.from("pedidos").update({ [campo]: data.publicUrl }).eq("id", id);
   }
 
-  alert("Fotos enviadas e preview atualizado!");
-}
+  alert("Fotos enviadas com sucesso!");
+};
 
 // ===============================
-// Finalizar pedido
+// Finalizar pedido (ADMIN)
 // ===============================
-window.finalizarPedido = async function(id){
-  const { error } = await supabase.from("pedidos").update({status:"Finalizado"}).eq("id",id);
-  if(error){ console.error(error); return alert("Erro ao finalizar pedido"); }
+window.finalizarPedido = async (id) => {
+  const { error } = await supabase
+    .from("pedidos")
+    .update({ status: "Finalizado" })
+    .eq("id", id);
+
+  if (error) return alert("Erro ao finalizar pedido");
+
   alert("Pedido finalizado!");
   carregarPedidos();
-}
+};
 
 // ===============================
 // Gráficos
 // ===============================
 let chartStatus, chartServico;
-function atualizarGraficos(){
-  const statusCount = {};
-  const servicoCount = {};
 
-  pedidosGlobais.forEach(p=>{
-    statusCount[p.status] = (statusCount[p.status]||0)+1;
-    servicoCount[p.tipo_servico] = (servicoCount[p.tipo_servico]||0)+1;
+function atualizarGraficos() {
+  const status = {};
+  const servico = {};
+
+  pedidosGlobais.forEach(p => {
+    status[p.status] = (status[p.status] || 0) + 1;
+    servico[p.tipo_servico] = (servico[p.tipo_servico] || 0) + 1;
   });
 
-  const ctxStatus = document.getElementById("graficoStatus").getContext("2d");
-  if(chartStatus) chartStatus.destroy();
-  chartStatus = new Chart(ctxStatus,{
-    type:"doughnut",
-    data:{
-      labels:Object.keys(statusCount),
-      datasets:[{data:Object.values(statusCount), backgroundColor:["#f0ad4e","#5bc0de","#5cb85c"]}]
+  if (chartStatus) chartStatus.destroy();
+  chartStatus = new Chart(document.getElementById("graficoStatus"), {
+    type: "doughnut",
+    data: {
+      labels: Object.keys(status),
+      datasets: [{ data: Object.values(status) }]
     }
   });
 
-  const ctxServico = document.getElementById("graficoServico").getContext("2d");
-  if(chartServico) chartServico.destroy();
-  chartServico = new Chart(ctxServico,{
-    type:"bar",
-    data:{
-      labels:Object.keys(servicoCount),
-      datasets:[{label:"Pedidos por Serviço", data:Object.values(servicoCount), backgroundColor:"#337ab7"}]
-    },
-    options:{scales:{y:{beginAtZero:true}}}
+  if (chartServico) chartServico.destroy();
+  chartServico = new Chart(document.getElementById("graficoServico"), {
+    type: "bar",
+    data: {
+      labels: Object.keys(servico),
+      datasets: [{ data: Object.values(servico) }]
+    }
   });
 }
 
 // ===============================
 // Inicialização
 // ===============================
-(async ()=>{
+(async () => {
   usuarioLogado = await verificarLogin();
-  if(!usuarioLogado) return;
+  if (!usuarioLogado) return;
 
-  // Determinar tipo de usuário
   usuarioTipo = usuarioLogado.email.includes("loja") ? "loja" : "admin";
 
-  // Criar botão Criar Pedido se for loja
   criarBotaoPedido();
-
   btnFiltrar.addEventListener("click", carregarPedidos);
   carregarPedidos();
 })();

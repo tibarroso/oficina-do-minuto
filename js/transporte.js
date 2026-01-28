@@ -1,16 +1,16 @@
 import { supabase } from "./supabase.js";
 
 // =====================
-// Carregar todos os pedidos
+// Inicialização
 // =====================
 async function carregarPedidos() {
   await carregarAguardando();
   await carregarEmTransporte();
-  await carregarLoja5(); // pedidos retornando da Loja 5
+  await carregarRetorno();
 }
 
 // =====================
-// Aguardando coleta
+// Pedidos aguardando coleta (ida Loja → Loja 5)
 // =====================
 async function carregarAguardando() {
   const { data, error } = await supabase
@@ -34,14 +34,14 @@ async function carregarAguardando() {
         <strong>Loja:</strong> ${p.loja_origem}<br>
         <strong>Serviço:</strong> ${p.tipo_servico}<br><br>
 
-        <button onclick="iniciarTransporte('${p.id}')">Iniciar Transporte → Loja 5</button>
+        <button onclick="iniciarTransporte('${p.id}')">Iniciar Transporte</button>
       </div>
     `;
   });
 }
 
 // =====================
-// Em transporte
+// Pedidos em transporte (ida Loja → Loja 5)
 // =====================
 async function carregarEmTransporte() {
   const { data, error } = await supabase
@@ -72,13 +72,13 @@ async function carregarEmTransporte() {
 }
 
 // =====================
-// Retorno da Loja 5
+// Pedidos retornando (Loja 5 → Loja de origem)
 // =====================
-async function carregarLoja5() {
+async function carregarRetorno() {
   const { data, error } = await supabase
     .from("pedidos")
     .select("*")
-    .eq("status", "Retorno da Loja 5")
+    .eq("status", "Aguardando retorno do transporte")
     .order("criado_em", { ascending: false });
 
   const div = document.getElementById("retornoLoja");
@@ -96,43 +96,46 @@ async function carregarLoja5() {
         <strong>Loja:</strong> ${p.loja_origem}<br>
         <strong>Serviço:</strong> ${p.tipo_servico}<br><br>
 
-        <button onclick="entregarLojaOrigem('${p.id}')">Entregar de volta à loja origem</button>
+        <button onclick="entregarLojaOrigem('${p.id}')">Entregar à loja de origem</button>
       </div>
     `;
   });
 }
 
 // =====================
-// Ações
+// Ações do transporte
 // =====================
 window.iniciarTransporte = async function (id) {
   await supabase.from("pedidos").update({ status: "Em transporte" }).eq("id", id);
-  await registrarEvento(id, "Transporte iniciado", "Pedido saiu da loja para Loja 5");
+  await registrarEvento(id, "Transporte iniciado", "Pedido retirado da loja de origem");
   carregarPedidos();
 };
 
 window.entregarLoja5 = async function (id) {
   await supabase.from("pedidos").update({ status: "Entregue na Loja 5" }).eq("id", id);
-  await registrarEvento(id, "Entregue na Loja 5", "Pedido entregue para processamento");
+  await registrarEvento(id, "Entregue na Loja 5", "Pedido entregue para processamento da Loja 5");
+
+  // Alterar status para retorno após processamento da Loja 5 (simulação)
+  await supabase.from("pedidos").update({ status: "Aguardando retorno do transporte" }).eq("id", id);
   carregarPedidos();
 };
 
-// Entregar pedido de volta da Loja 5 para loja de origem
 window.entregarLojaOrigem = async function (id) {
   await supabase.from("pedidos").update({ status: "Entregue na loja de origem" }).eq("id", id);
-  await registrarEvento(id, "Retorno da Loja 5", "Pedido retornou à loja de origem");
+  await registrarEvento(id, "Transporte finalizou retorno", "Pedido entregue na loja de origem");
   carregarPedidos();
 };
 
 // =====================
-// Registrar evento
+// Registrar evento na linha do tempo
 // =====================
 async function registrarEvento(pedidoId, evento, observacao) {
   await supabase.from("pedido_eventos").insert([{
     pedido_id: pedidoId,
     evento,
     observacao,
-    criado_por: "Transporte"
+    criado_por: "Transporte",
+    criado_em: new Date()
   }]);
 }
 
@@ -140,4 +143,4 @@ async function registrarEvento(pedidoId, evento, observacao) {
 // Inicialização
 // =====================
 carregarPedidos();
-setInterval(carregarPedidos, 5000); // atualizar a cada 5 segundos
+setInterval(carregarPedidos, 5000); // Atualiza automaticamente a cada 5s

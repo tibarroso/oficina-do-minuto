@@ -8,7 +8,7 @@ async function carregarPedidos() {
     .from("pedidos")
     .select("*")
     .in("tipo_servico", ["Lavanderia", "Sapataria"])
-    .eq("status", "Entregue na Loja 5")
+    .in("status", ["Entregue na Loja 5", "Em serviço"])
     .order("criado_em", { ascending: false });
 
   if (error) {
@@ -21,7 +21,7 @@ async function carregarPedidos() {
   container.innerHTML = "";
 
   if (!data || data.length === 0) {
-    container.innerHTML = "<p>Nenhum pedido entregue para a Loja 5.</p>";
+    container.innerHTML = "<p>Nenhum pedido para a Loja 5.</p>";
     return;
   }
 
@@ -39,14 +39,14 @@ async function carregarPedidos() {
 
         <label>Foto Antes:</label><br>
         <input type="file" id="antes-${p.id}">
-        <button onclick="uploadAntes('${p.id}')">Enviar Antes</button><br><br>
+        <button onclick="uploadFoto('${p.id}','antes')">Enviar Antes</button><br><br>
 
         <label>Foto Depois:</label><br>
         <input type="file" id="depois-${p.id}">
-        <button onclick="uploadDepois('${p.id}')">Enviar Depois</button><br><br>
+        <button onclick="uploadFoto('${p.id}','depois')">Enviar Depois</button><br><br>
 
         <button onclick="salvarObservacao('${p.id}')">Salvar Observação</button>
-        <button onclick="finalizarPedido('${p.id}')">Finalizar Serviço</button>
+        <button onclick="concluirServico('${p.id}')">Concluir Serviço</button>
 
         <div id="timeline-${p.id}" style="margin-top:10px;"></div>
       </div>
@@ -64,7 +64,7 @@ window.salvarObservacao = async function (id) {
 
   const { error } = await supabase
     .from("pedidos")
-    .update({ obs_loja5: texto })
+    .update({ obs_loja5: texto, status: "Em serviço" })
     .eq("id", id);
 
   if (error) {
@@ -73,24 +73,19 @@ window.salvarObservacao = async function (id) {
     return;
   }
 
-  await registrarEvento(
-    id,
-    "Observação atualizada pela Loja 5",
-    texto
-  );
-
-  alert("Observação salva com sucesso!");
+  await registrarEvento(id, "Pedido em serviço na Loja 5", texto);
+  alert("Observação salva!");
 };
 
 // ===============================
-// Upload foto ANTES
+// Upload fotos (ANTES / DEPOIS)
 // ===============================
-window.uploadAntes = async function (id) {
-  const fileInput = document.getElementById(`antes-${id}`);
+window.uploadFoto = async function (id, tipo) {
+  const fileInput = document.getElementById(`${tipo}-${id}`);
   const file = fileInput?.files[0];
-  if (!file) return alert("Selecione uma foto antes");
+  if (!file) return alert("Selecione uma foto");
 
-  const path = `antes_${id}_${Date.now()}_${file.name}`;
+  const path = `${tipo}_${id}_${Date.now()}_${file.name}`;
 
   const { error } = await supabase.storage
     .from("fotos")
@@ -98,75 +93,46 @@ window.uploadAntes = async function (id) {
 
   if (error) {
     console.error(error);
-    alert("Erro ao enviar foto antes: " + error.message);
+    alert("Erro ao enviar foto");
     return;
   }
 
   await registrarEvento(
     id,
-    "Foto ANTES enviada",
+    `Foto ${tipo.toUpperCase()} enviada`,
     path
   );
 
-  alert("Foto antes enviada!");
+  alert("Foto enviada com sucesso!");
 };
 
 // ===============================
-// Upload foto DEPOIS
+// Concluir serviço (RETORNO)
 // ===============================
-window.uploadDepois = async function (id) {
-  const fileInput = document.getElementById(`depois-${id}`);
-  const file = fileInput?.files[0];
-  if (!file) return alert("Selecione uma foto depois");
-
-  const path = `depois_${id}_${Date.now()}_${file.name}`;
-
-  const { error } = await supabase.storage
-    .from("fotos")
-    .upload(path, file);
-
-  if (error) {
-    console.error(error);
-    alert("Erro ao enviar foto depois: " + error.message);
-    return;
-  }
-
-  await registrarEvento(
-    id,
-    "Foto DEPOIS enviada",
-    path
-  );
-
-  alert("Foto depois enviada!");
-};
-
-// ===============================
-// Finalizar pedido
-// ===============================
-window.finalizarPedido = async function (id) {
+window.concluirServico = async function (id) {
   const { error } = await supabase
     .from("pedidos")
-    .update({ status: "Finalizado" })
+    .update({ status: "Aguardando retorno do transporte" })
     .eq("id", id);
 
   if (error) {
     console.error(error);
-    alert("Erro ao finalizar pedido");
+    alert("Erro ao concluir serviço");
     return;
   }
 
   await registrarEvento(
     id,
-    "Serviço finalizado na Loja 5",
-    "Pedido concluído com sucesso"
+    "Serviço concluído na Loja 5",
+    "Aguardando transporte para retorno"
   );
 
-  alert("Pedido finalizado com sucesso!");
+  alert("Serviço concluído! Transporte será acionado.");
   carregarPedidos();
 };
 
 // ===============================
-// Registrar evento na linha do tempo
+// Registrar evento
 // ===============================
 async function registrarEvento(pedidoId, evento, observacao) {
   await supabase.from("pedido_eventos").insert([{
@@ -178,7 +144,7 @@ async function registrarEvento(pedidoId, evento, observacao) {
 }
 
 // ===============================
-// Carregar linha do tempo
+// Timeline
 // ===============================
 async function carregarTimeline(pedidoId) {
   const { data } = await supabase

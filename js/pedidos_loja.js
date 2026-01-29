@@ -165,11 +165,11 @@ window.finalizarPedido = async function (id) {
 btnFiltrar.addEventListener("click", carregarPedidos);
 
 // ===============================
-// Atualização automática a cada 5 segundos
+// Atualização automática a cada 5 minutos
 // ===============================
 setInterval(() => {
   if (usuarioLogado) carregarPedidos();
-}, 5000);
+}, 50000);
 
 // ===============================
 // Inicialização

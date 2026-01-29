@@ -27,28 +27,25 @@ async function carregarPedidos() {
 
   data.forEach(p => {
     container.innerHTML += `
-      <div style="border:1px solid #ccc; padding:14px; margin-bottom:14px;">
+      <div class="card">
         <strong>OS:</strong> ${p.id}<br>
         <strong>Loja origem:</strong> ${p.loja_origem}<br>
         <strong>Serviço:</strong> ${p.tipo_servico}<br>
-        <strong>Status:</strong> ${p.status}<br>
-        <strong>Orçamento:</strong> ${p.eh_orcamento ? "Sim" : "Não"}<br><br>
+        <strong>Status:</strong> ${p.status}<br><br>
 
-        <label><strong>Observações da Loja 5</strong></label><br>
-        <textarea id="obs-${p.id}" rows="3" style="width:100%;">${p.obs_loja5 || ""}</textarea><br><br>
+        <label>Observações Loja 5</label>
+        <textarea id="obs-${p.id}" rows="3">${p.obs_loja5 || ""}</textarea><br><br>
 
-        <label>Foto Antes:</label><br>
         <input type="file" id="antes-${p.id}">
-        <button onclick="uploadFoto('${p.id}','antes')">Enviar Antes</button><br><br>
+        <button onclick="uploadFoto('${p.id}','antes')">Foto Antes</button><br><br>
 
-        <label>Foto Depois:</label><br>
         <input type="file" id="depois-${p.id}">
-        <button onclick="uploadFoto('${p.id}','depois')">Enviar Depois</button><br><br>
+        <button onclick="uploadFoto('${p.id}','depois')">Foto Depois</button><br><br>
 
-        <button onclick="salvarObservacao('${p.id}')">Salvar Observação</button>
+        <button onclick="salvarObservacao('${p.id}')">Salvar</button>
         <button onclick="concluirServico('${p.id}')">Concluir Serviço</button>
 
-        <div id="timeline-${p.id}" style="margin-top:10px;"></div>
+        <div id="timeline-${p.id}"></div>
       </div>
     `;
 
@@ -57,69 +54,50 @@ async function carregarPedidos() {
 }
 
 // ===============================
-// Salvar observação Loja 5
+// Salvar observação
 // ===============================
-window.salvarObservacao = async function (id) {
+window.salvarObservacao = async (id) => {
   const texto = document.getElementById(`obs-${id}`).value;
 
-  const { error } = await supabase
-    .from("pedidos")
-    .update({ obs_loja5: texto, status: "Em serviço" })
-    .eq("id", id);
+  await supabase.from("pedidos").update({
+    obs_loja5: texto,
+    status: "Em serviço"
+  }).eq("id", id);
 
-  if (error) {
-    console.error(error);
-    alert("Erro ao salvar observação");
-    return;
-  }
-
-  await registrarEvento(id, "Pedido em serviço na Loja 5", texto);
+  await registrarEvento(id, "Em serviço na Loja 5", texto);
   alert("Observação salva!");
 };
 
 // ===============================
-// Upload fotos (ANTES / DEPOIS)
+// Upload foto
 // ===============================
-window.uploadFoto = async function (id, tipo) {
-  const fileInput = document.getElementById(`${tipo}-${id}`);
-  const file = fileInput?.files[0];
+window.uploadFoto = async (id, tipo) => {
+  const input = document.getElementById(`${tipo}-${id}`);
+  const file = input.files[0];
   if (!file) return alert("Selecione uma foto");
 
   const path = `${tipo}_${id}_${Date.now()}_${file.name}`;
+  await supabase.storage.from("fotos").upload(path, file);
 
-  const { error } = await supabase.storage
-    .from("fotos")
-    .upload(path, file);
+  const { data } = supabase.storage.from("fotos").getPublicUrl(path);
 
-  if (error) {
-    console.error(error);
-    alert("Erro ao enviar foto");
-    return;
-  }
+  const campo = tipo === "antes" ? "foto_antes" : "foto_depois";
+  await supabase.from("pedidos").update({
+    [campo]: data.publicUrl
+  }).eq("id", id);
 
-  await registrarEvento(
-    id,
-    `Foto ${tipo.toUpperCase()} enviada`,
-    path
-  );
-
-  alert("Foto enviada com sucesso!");
+  await registrarEvento(id, `Foto ${tipo}`, data.publicUrl);
+  alert("Foto enviada!");
 };
 
 // ===============================
 // Concluir serviço (RETORNO)
 // ===============================
-window.concluirServico = async function (id) {
-  const { error } = await supabase
-    .from("pedidos")
-    .update({ status: "Aguardando retorno do transporte" })
-    .eq("id", id);
-
-  if (error) {
-    console.error(error);
-    alert("Erro ao concluir serviço");
-    return;
-  }
+window.concluirServico = async (id) => {
+  await supabase.from("pedidos").update({
+    status: "Aguardando retorno do transporte",
+    retornando: true
+  }).eq("id", id);
 
   await registrarEvento(
     id,
@@ -127,12 +105,12 @@ window.concluirServico = async function (id) {
     "Aguardando transporte para retorno"
   );
 
-  alert("Serviço concluído! Transporte será acionado.");
+  alert("Serviço concluído!");
   carregarPedidos();
 };
 
 // ===============================
-// Registrar evento
+// Eventos / Timeline
 // ===============================
 async function registrarEvento(pedidoId, evento, observacao) {
   await supabase.from("pedido_eventos").insert([{
@@ -143,36 +121,26 @@ async function registrarEvento(pedidoId, evento, observacao) {
   }]);
 }
 
-// ===============================
-// Timeline
-// ===============================
 async function carregarTimeline(pedidoId) {
   const { data } = await supabase
     .from("pedido_eventos")
     .select("*")
     .eq("pedido_id", pedidoId)
-    .order("criado_em", { ascending: true });
+    .order("criado_em");
 
-  let html = "<strong>Histórico</strong><br>";
+  const div = document.getElementById(`timeline-${pedidoId}`);
+  div.innerHTML = "<strong>Histórico</strong><br>";
 
-  if (!data || data.length === 0) {
-    html += "<small>Sem eventos</small>";
-  } else {
-    data.forEach(e => {
-      html += `
-        <div style="border-left:3px solid #555; padding-left:8px; margin:6px 0;">
-          <strong>${e.evento}</strong><br>
-          ${e.observacao || ""}<br>
-          <small>${new Date(e.criado_em).toLocaleString()} - ${e.criado_por}</small>
-        </div>
-      `;
-    });
-  }
-
-  document.getElementById(`timeline-${pedidoId}`).innerHTML = html;
+  data?.forEach(e => {
+    div.innerHTML += `
+      <div>
+        <strong>${e.evento}</strong><br>
+        ${e.observacao || ""}<br>
+        <small>${new Date(e.criado_em).toLocaleString()}</small>
+      </div>
+    `;
+  });
 }
 
-// ===============================
-// Inicialização
 // ===============================
 carregarPedidos();

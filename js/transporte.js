@@ -1,11 +1,17 @@
 import { supabase } from "./supabase.js";
 
+// =====================
+// Inicialização
+// =====================
 async function carregarPedidos() {
   await carregarAguardando();
   await carregarEmTransporte();
   await carregarRetorno();
 }
 
+// =====================
+// Aguardando coleta (IDA)
+// =====================
 async function carregarAguardando() {
   const { data } = await supabase
     .from("pedidos")
@@ -27,14 +33,15 @@ async function carregarAguardando() {
         <strong>OS:</strong> ${p.id}<br>
         <strong>Loja:</strong> ${p.loja_origem}<br>
         <strong>Serviço:</strong> ${p.tipo_servico}<br><br>
-        <button onclick="iniciarTransporte('${p.id}')">
-          Iniciar Transporte
-        </button>
+        <button onclick="iniciarTransporte('${p.id}')">Iniciar Transporte</button>
       </div>
     `;
   });
 }
 
+// =====================
+// Em transporte (IDA ou VOLTA)
+// =====================
 async function carregarEmTransporte() {
   const { data } = await supabase
     .from("pedidos")
@@ -51,19 +58,24 @@ async function carregarEmTransporte() {
   }
 
   data.forEach(p => {
+    const botao = p.retornando
+      ? `<button onclick="entregarLojaOrigem('${p.id}')">Entregar na loja de origem</button>`
+      : `<button onclick="entregarLoja5('${p.id}')">Entregar na Loja 5</button>`;
+
     div.innerHTML += `
       <div class="card">
         <strong>OS:</strong> ${p.id}<br>
         <strong>Loja:</strong> ${p.loja_origem}<br>
         <strong>Serviço:</strong> ${p.tipo_servico}<br><br>
-        <button onclick="entregarLoja5('${p.id}')">
-          Entregar na Loja 5
-        </button>
+        ${botao}
       </div>
     `;
   });
 }
 
+// =====================
+// Aguardando retorno (VOLTA)
+// =====================
 async function carregarRetorno() {
   const { data } = await supabase
     .from("pedidos")
@@ -94,45 +106,40 @@ async function carregarRetorno() {
 }
 
 // =====================
-// Ações (expostas globalmente)
+// Ações (globais)
 // =====================
-window.iniciarTransporte = async function (id) {
-  const { error } = await supabase
-    .from("pedidos")
-    .update({ status: "Em transporte", retornando: false })
-    .eq("id", id);
+window.iniciarTransporte = async (id) => {
+  await supabase.from("pedidos").update({
+    status: "Em transporte",
+    retornando: false
+  }).eq("id", id);
 
-  if (error) { console.error(error); alert("Erro ao iniciar transporte"); }
   carregarPedidos();
 };
 
-window.entregarLoja5 = async function (id) {
-  const { error } = await supabase
-    .from("pedidos")
-    .update({ status: "Entregue na Loja 5" })
-    .eq("id", id);
+window.entregarLoja5 = async (id) => {
+  await supabase.from("pedidos").update({
+    status: "Entregue na Loja 5"
+  }).eq("id", id);
 
-  if (error) { console.error(error); alert("Erro ao entregar na Loja 5"); }
   carregarPedidos();
 };
 
-window.iniciarRetorno = async function (id) {
-  const { error } = await supabase
-    .from("pedidos")
-    .update({ status: "Em transporte", retornando: true })
-    .eq("id", id);
+window.iniciarRetorno = async (id) => {
+  await supabase.from("pedidos").update({
+    status: "Em transporte",
+    retornando: true
+  }).eq("id", id);
 
-  if (error) { console.error(error); alert("Erro ao iniciar retorno"); }
   carregarPedidos();
 };
 
-window.entregarLojaOrigem = async function (id) {
-  const { error } = await supabase
-    .from("pedidos")
-    .update({ status: "Entregue na loja de origem", retornando: false })
-    .eq("id", id);
+window.entregarLojaOrigem = async (id) => {
+  await supabase.from("pedidos").update({
+    status: "Entregue na loja de origem",
+    retornando: false
+  }).eq("id", id);
 
-  if (error) { console.error(error); alert("Erro ao entregar na origem"); }
   carregarPedidos();
 };
 

@@ -1,19 +1,21 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Pedidos - Oficina do Minuto</title>
-<link rel="stylesheet" href="./css/style.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8">
+  <title>Pedidos - Oficina do Minuto</title>
+  <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
 
 <h1>Pedidos - Oficina do Minuto</h1>
 
+<!-- ========================= -->
 <!-- Criar novo pedido -->
-<section>
+<!-- ========================= -->
+<section class="card">
   <h2>Criar Pedido</h2>
-  <label for="tipo">Tipo de serviço:</label>
+
+  <label for="tipo">Tipo de serviço:</label><br>
   <select id="tipo">
     <option value="Lavanderia">Lavanderia</option>
     <option value="Sapataria">Sapataria</option>
@@ -21,25 +23,47 @@
     <option value="Bordado">Bordado</option>
   </select>
   <br><br>
-  <label for="orcamento">Orçamento?</label>
-  <input type="checkbox" id="orcamento">
+
+  <label for="orcamento">
+    <input type="checkbox" id="orcamento">
+    Orçamento?
+  </label>
   <br><br>
+
+  <label for="observacao">
+    Observação (Ticket / Nº do saco):
+  </label><br>
+  <textarea
+    id="observacao"
+    rows="3"
+    style="width:100%;"
+    placeholder="Ex: Ticket 45821 - Saco nº 12"
+  ></textarea>
+
+  <br><br>
+
   <button id="btnCriarPedido">Criar Pedido</button>
 </section>
 
 <hr>
 
+<!-- ========================= -->
 <!-- Lista de pedidos da loja -->
+<!-- ========================= -->
 <section>
   <h2>Meus Pedidos</h2>
+
   <div class="filtros">
     <label>Status:</label>
     <select id="filtroStatus">
       <option value="">Todos</option>
       <option value="Aguardando coleta">Aguardando coleta</option>
+      <option value="Em transporte">Em transporte</option>
       <option value="Entregue na Loja 5">Entregue na Loja 5</option>
+      <option value="Aguardando retorno do transporte">Aguardando retorno</option>
       <option value="Finalizado">Finalizado</option>
     </select>
+
     <button id="btnFiltrar">Filtrar</button>
   </div>
 

@@ -7,7 +7,7 @@ async function carregarPedidos() {
   const { data, error } = await supabase
     .from("pedidos")
     .select("*")
-    .in("tipo_servico", ["Lavanderia", "Sapataria"])
+    .in("tipo_servico", ["Lavanderia", "Sapataria"], "Bordado"])
     .in("status", ["Entregue na Loja 5", "Em serviço"])
     .order("criado_em", { ascending: false });
 

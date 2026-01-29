@@ -1,11 +1,17 @@
 import { supabase } from "./supabase.js";
 
+// ===============================
 // Elementos
+// ===============================
 const tipoInput = document.getElementById("tipo");
 const orcamentoInput = document.getElementById("orcamento");
+const observacaoInput = document.getElementById("observacao");
+
 const btnCriarPedido = document.getElementById("btnCriarPedido");
+
 const fotoAntesInput = document.getElementById("fotoAntes");
 const btnUploadAntes = document.getElementById("btnUploadAntes");
+
 const fotoDepoisInput = document.getElementById("fotoDepois");
 const btnUploadDepois = document.getElementById("btnUploadDepois");
 
@@ -17,6 +23,7 @@ let pedidoAtualId = null;
 // ===============================
 async function verificarLogin() {
   const { data: { user }, error } = await supabase.auth.getUser();
+
   if (error || !user) {
     alert("Usuário não logado!");
     window.location.href = "login.html";
@@ -33,6 +40,7 @@ btnCriarPedido.addEventListener("click", async () => {
 
   const tipo = tipoInput.value;
   const orcamento = orcamentoInput.checked;
+  const observacao = observacaoInput.value.trim();
 
   const { data, error } = await supabase
     .from("pedidos")
@@ -40,7 +48,8 @@ btnCriarPedido.addEventListener("click", async () => {
       loja_origem: usuarioLogado.email,
       tipo_servico: tipo,
       eh_orcamento: orcamento,
-      status: orcamento ? "Aguardando avaliação" : "Aguardando coleta"
+      status: orcamento ? "Aguardando avaliação" : "Aguardando coleta",
+      obs_loja_origem: observacao
     })
     .select()
     .single();
@@ -53,10 +62,11 @@ btnCriarPedido.addEventListener("click", async () => {
 
   pedidoAtualId = data.id;
 
+  // Registrar evento inicial
   await registrarEvento(
     pedidoAtualId,
     "Pedido criado",
-    `Serviço: ${tipo}`
+    observacao || `Serviço: ${tipo}`
   );
 
   alert(`Pedido criado com sucesso!\nOS: ${pedidoAtualId}`);
@@ -72,7 +82,10 @@ async function uploadFoto(fileInput, tipo) {
   }
 
   const file = fileInput.files[0];
-  if (!file) return alert("Selecione uma foto!");
+  if (!file) {
+    alert("Selecione uma foto!");
+    return;
+  }
 
   const path = `${tipo}_${pedidoAtualId}_${Date.now()}_${file.name}`;
 
@@ -92,7 +105,7 @@ async function uploadFoto(fileInput, tipo) {
     .from("fotos")
     .getPublicUrl(path);
 
-  // Salvar no pedido
+  // Atualizar pedido
   const field = tipo === "antes" ? "foto_antes" : "foto_depois";
 
   await supabase
@@ -100,6 +113,7 @@ async function uploadFoto(fileInput, tipo) {
     .update({ [field]: data.publicUrl })
     .eq("id", pedidoAtualId);
 
+  // Registrar evento
   await registrarEvento(
     pedidoAtualId,
     `Foto ${tipo.toUpperCase()} enviada`,
@@ -124,13 +138,17 @@ async function registrarEvento(pedidoId, evento, observacao) {
 // ===============================
 // Eventos de botão
 // ===============================
-btnUploadAntes.addEventListener("click", () =>
-  uploadFoto(fotoAntesInput, "antes")
-);
+if (btnUploadAntes) {
+  btnUploadAntes.addEventListener("click", () =>
+    uploadFoto(fotoAntesInput, "antes")
+  );
+}
 
-btnUploadDepois.addEventListener("click", () =>
-  uploadFoto(fotoDepoisInput, "depois")
-);
+if (btnUploadDepois) {
+  btnUploadDepois.addEventListener("click", () =>
+    uploadFoto(fotoDepoisInput, "depois")
+  );
+}
 
 // ===============================
 // Inicialização

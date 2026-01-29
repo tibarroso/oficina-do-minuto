@@ -1,8 +1,5 @@
 import { supabase } from "./supabase.js";
 
-const tipoInput = document.getElementById("tipo");
-const orcamentoInput = document.getElementById("orcamento");
-const btnCriarPedido = document.getElementById("btnCriarPedido");
 const filtroStatus = document.getElementById("filtroStatus");
 const btnFiltrar = document.getElementById("btnFiltrar");
 const containerPedidos = document.getElementById("containerPedidos");
@@ -24,43 +21,25 @@ async function verificarLogin() {
 }
 
 // ===============================
-// Criar pedido
-// ===============================
-btnCriarPedido.addEventListener("click", async () => {
-  if (!usuarioLogado) return;
-  const tipo = tipoInput.value;
-  const orcamento = orcamentoInput.checked;
-
-  const { error } = await supabase.from("pedidos").insert({
-    loja_origem: usuarioLogado.email,
-    tipo_servico: tipo,
-    eh_orcamento: orcamento,
-    status: orcamento ? "Aguardando avaliação" : "Aguardando coleta",
-    criado_em: new Date()
-  });
-
-  if (error) {
-    alert("Erro ao criar pedido: " + error.message);
-  } else {
-    alert("Pedido criado com sucesso!");
-    carregarPedidos();
-  }
-});
-
-// ===============================
 // Carregar pedidos da loja
 // ===============================
 async function carregarPedidos() {
   if (!usuarioLogado) return;
 
-  let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false })
-    .eq("loja_origem", usuarioLogado.email);
+  let query = supabase
+    .from("pedidos")
+    .select("*")
+    .eq("loja_origem", usuarioLogado.email)
+    .order("criado_em", { ascending: false });
 
   const status = filtroStatus.value;
   if (status) query = query.eq("status", status);
 
   const { data, error } = await query;
-  if (error) return alert("Erro ao carregar pedidos: " + error.message);
+  if (error) {
+    alert("Erro ao carregar pedidos: " + error.message);
+    return;
+  }
 
   pedidosGlobais = data || [];
   renderizarPedidos();
@@ -71,6 +50,7 @@ async function carregarPedidos() {
 // ===============================
 function renderizarPedidos() {
   containerPedidos.innerHTML = "";
+
   if (!pedidosGlobais.length) {
     containerPedidos.innerHTML = "<p>Nenhum pedido encontrado.</p>";
     return;
@@ -80,13 +60,13 @@ function renderizarPedidos() {
     const card = document.createElement("div");
     card.className = "card";
 
-    // Status com histórico
     let acaoFinalizar = "";
-    // Somente permite finalizar quando o pedido voltou da Loja 5
     if (p.status === "Entregue na loja de origem") {
-      acaoFinalizar = `<button onclick="finalizarPedido('${p.id}')">
-                          Confirmar Recebimento e Finalizar
-                       </button>`;
+      acaoFinalizar = `
+        <button onclick="finalizarPedido('${p.id}')">
+          Confirmar recebimento e finalizar
+        </button>
+      `;
     }
 
     card.innerHTML = `
@@ -94,8 +74,15 @@ function renderizarPedidos() {
       <p><strong>Serviço:</strong> ${p.tipo_servico}</p>
       <p><strong>Orçamento:</strong> ${p.eh_orcamento ? "Sim" : "Não"}</p>
       <p><strong>Status:</strong> <span class="status">${p.status}</span></p>
+
+      <p><strong>Observação (Ticket / Saco):</strong><br>
+        ${p.obs_loja_origem || "<em>Não informado</em>"}
+      </p>
+
       <p><strong>Criado em:</strong> ${new Date(p.criado_em).toLocaleString()}</p>
+
       ${acaoFinalizar}
+
       <div id="timeline-${p.id}" style="margin-top:10px;"></div>
     `;
 
@@ -115,6 +102,7 @@ async function carregarTimeline(pedidoId) {
     .order("criado_em", { ascending: true });
 
   let html = "<strong>Histórico</strong><br>";
+
   if (!data || data.length === 0) {
     html += "<small>Sem eventos</small>";
   } else {
@@ -123,7 +111,9 @@ async function carregarTimeline(pedidoId) {
         <div style="border-left:3px solid #555; padding-left:8px; margin:6px 0;">
           <strong>${e.evento}</strong><br>
           ${e.observacao || ""}<br>
-          <small>${new Date(e.criado_em).toLocaleString()} - ${e.criado_por}</small>
+          <small>
+            ${new Date(e.criado_em).toLocaleString()} - ${e.criado_por}
+          </small>
         </div>
       `;
     });
@@ -148,11 +138,10 @@ window.finalizarPedido = async function (id) {
     return;
   }
 
-  // Registrar evento no histórico
   await supabase.from("pedido_eventos").insert([{
     pedido_id: id,
     evento: "Pedido finalizado pela loja de origem",
-    criado_por: "Loja origem"
+    criado_por: usuarioLogado.email
   }]);
 
   alert("Pedido finalizado com sucesso!");
@@ -160,22 +149,21 @@ window.finalizarPedido = async function (id) {
 };
 
 // ===============================
-// Filtro por status
+// Filtro
 // ===============================
 btnFiltrar.addEventListener("click", carregarPedidos);
 
 // ===============================
-// Atualização automática a cada 5 minutos
+// Auto refresh (5s)
 // ===============================
 setInterval(() => {
   if (usuarioLogado) carregarPedidos();
-}, 50000);
+}, 5000);
 
 // ===============================
 // Inicialização
 // ===============================
 (async () => {
   usuarioLogado = await verificarLogin();
-  if (!usuarioLogado) return;
-  carregarPedidos();
+  if (usuarioLogado) carregarPedidos();
 })();

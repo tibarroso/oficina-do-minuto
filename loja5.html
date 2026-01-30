@@ -4,30 +4,40 @@
   <meta charset="UTF-8">
   <title>Loja 5 - Oficina do Minuto</title>
   <style>
-    .card { 
-      border: 1px solid #ccc; 
-      padding: 12px; 
-      margin-bottom: 12px; 
-      border-radius: 6px; 
-      background-color: #f9f9f9;
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
     }
-    textarea { 
-      width: 100%; 
+    h2, h3 {
+      color: #333;
+    }
+    .card {
+      border: 1px solid #ccc;
+      padding: 12px;
+      margin-bottom: 12px;
+      border-radius: 4px;
+      background: #f9f9f9;
+    }
+    textarea {
+      width: 100%;
       resize: vertical;
-      padding: 6px;
     }
-    button { 
-      margin-top: 6px; 
-      margin-right: 6px; 
+    button {
+      margin-top: 6px;
+      margin-right: 6px;
       padding: 6px 12px;
       cursor: pointer;
-      border-radius: 4px;
       border: none;
+      border-radius: 4px;
       background-color: #337ab7;
       color: white;
     }
-    button:hover { background-color: #286090; }
-    h3 { margin-top: 20px; }
+    button:hover {
+      background-color: #286090;
+    }
+    section {
+      margin-bottom: 24px;
+    }
   </style>
 </head>
 <body>
@@ -36,21 +46,21 @@
   <!-- Pedidos entregues na Loja 5 -->
   <section>
     <h3>Pedidos recebidos</h3>
-    <div id="pedidosRecebidos">Carregando...</div>
+    <div id="pedidosRecebidos"></div>
   </section>
 
   <!-- Pedidos em serviço -->
   <section>
     <h3>Pedidos em serviço</h3>
-    <div id="pedidosEmServico">Carregando...</div>
+    <div id="pedidosEmServico"></div>
   </section>
 
   <!-- Pedidos aguardando retorno -->
   <section>
     <h3>Pedidos prontos para transporte</h3>
-    <div id="pedidosProntosRetorno">Carregando...</div>
+    <div id="pedidosProntosRetorno"></div>
   </section>
 
-  <script type="module" src="js/loja5.js"></script>
+  <script type="module" src="./js/loja5.js"></script>
 </body>
 </html>

@@ -5,7 +5,7 @@ let usuarioLogado = null;
 // =====================
 // Inicialização
 // =====================
-async function carregarPedidos() {
+export async function carregarPedidos() {
   await carregarAguardando();     // Ida
   await carregarEmTransporte();   // Ida e Volta
   await carregarRetorno();        // Volta
@@ -32,10 +32,7 @@ async function carregarAguardando() {
       return;
     }
 
-    data.forEach(p => {
-      const card = criarCard(p, "ida");
-      div.appendChild(card);
-    });
+    data.forEach(p => div.appendChild(criarCard(p, "ida")));
   } catch (err) {
     console.error("Erro ao carregar pedidos aguardando coleta:", err);
   }
@@ -65,10 +62,7 @@ async function carregarEmTransporte() {
       return;
     }
 
-    data.forEach(p => {
-      const card = criarCard(p, "emTransporte");
-      div.appendChild(card);
-    });
+    data.forEach(p => div.appendChild(criarCard(p, "emTransporte")));
   } catch (err) {
     console.error("Erro ao carregar pedidos em transporte:", err);
   }
@@ -95,10 +89,7 @@ async function carregarRetorno() {
       return;
     }
 
-    data.forEach(p => {
-      const card = criarCard(p, "volta");
-      div.appendChild(card);
-    });
+    data.forEach(p => div.appendChild(criarCard(p, "volta")));
   } catch (err) {
     console.error("Erro ao carregar pedidos aguardando retorno:", err);
   }
@@ -123,20 +114,20 @@ function criarCard(pedido, tipo) {
   switch (tipo) {
     case "ida":
       btn.textContent = "Iniciar Transporte (Ida)";
-      btn.addEventListener("click", () => iniciarTransporteIda(pedido.id));
+      btn.onclick = () => iniciarTransporteIda(pedido.id);
       break;
     case "emTransporte":
       if (pedido.status === "Em transporte para Loja 5") {
         btn.textContent = "Entregar na Loja 5";
-        btn.addEventListener("click", () => entregarLoja5(pedido.id));
+        btn.onclick = () => entregarLoja5(pedido.id);
       } else if (pedido.status === "Em transporte para loja de origem") {
         btn.textContent = "Entregar na Loja de Origem";
-        btn.addEventListener("click", () => entregarLojaOrigem(pedido.id));
+        btn.onclick = () => entregarLojaOrigem(pedido.id);
       }
       break;
     case "volta":
       btn.textContent = "Iniciar Transporte de Retorno";
-      btn.addEventListener("click", () => iniciarTransporteVolta(pedido.id));
+      btn.onclick = () => iniciarTransporteVolta(pedido.id);
       break;
   }
 
@@ -204,6 +195,13 @@ async function registrarEvento(pedidoId, evento) {
 (async () => {
   const { data } = await supabase.auth.getUser();
   usuarioLogado = data?.user || null;
+
+  // tornar funções acessíveis globalmente para onclick dos botões
+  window.iniciarTransporteIda = iniciarTransporteIda;
+  window.entregarLoja5 = entregarLoja5;
+  window.iniciarTransporteVolta = iniciarTransporteVolta;
+  window.entregarLojaOrigem = entregarLojaOrigem;
+
   carregarPedidos();
   setInterval(carregarPedidos, 5000);
 })();

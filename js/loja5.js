@@ -6,13 +6,13 @@ let usuarioLogado = null;
 // Verificar login
 // ===============================
 async function verificarLogin() {
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) {
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user) {
     alert("Usuário não logado");
     window.location.href = "login.html";
     return null;
   }
-  return user;
+  return data.user;
 }
 
 // ===============================
@@ -21,32 +21,40 @@ async function verificarLogin() {
 async function carregarPedidos() {
   if (!usuarioLogado) return;
 
-  // Pedidos entregues na Loja 5 (recebidos)
-  const { data: recebidos } = await supabase
-    .from("pedidos")
-    .select("*")
-    .eq("status", "Entregue na Loja 5")
-    .order("criado_em", { ascending: false });
+  try {
+    // Pedidos entregues na Loja 5 (recebidos)
+    const { data: recebidos, error: errRecebidos } = await supabase
+      .from("pedidos")
+      .select("*")
+      .eq("status", "Entregue na Loja 5")
+      .order("criado_em", { ascending: false });
 
-  renderPedidos(recebidos, "pedidosRecebidos", "recebido");
+    if (errRecebidos) throw errRecebidos;
+    renderPedidos(recebidos, "pedidosRecebidos", "recebido");
 
-  // Pedidos em serviço
-  const { data: emServico } = await supabase
-    .from("pedidos")
-    .select("*")
-    .eq("status", "Em serviço")
-    .order("criado_em", { ascending: false });
+    // Pedidos em serviço
+    const { data: emServico, error: errEmServico } = await supabase
+      .from("pedidos")
+      .select("*")
+      .eq("status", "Em serviço")
+      .order("criado_em", { ascending: false });
 
-  renderPedidos(emServico, "pedidosEmServico", "emServico");
+    if (errEmServico) throw errEmServico;
+    renderPedidos(emServico, "pedidosEmServico", "emServico");
 
-  // Pedidos prontos para transporte (retorno)
-  const { data: prontosRetorno } = await supabase
-    .from("pedidos")
-    .select("*")
-    .eq("status", "Aguardando retorno do transporte")
-    .order("criado_em", { ascending: false });
+    // Pedidos prontos para transporte (retorno)
+    const { data: prontosRetorno, error: errProntos } = await supabase
+      .from("pedidos")
+      .select("*")
+      .eq("status", "Aguardando retorno do transporte")
+      .order("criado_em", { ascending: false });
 
-  renderPedidos(prontosRetorno, "pedidosProntosRetorno", "prontoRetorno");
+    if (errProntos) throw errProntos;
+    renderPedidos(prontosRetorno, "pedidosProntosRetorno", "prontoRetorno");
+
+  } catch (err) {
+    console.error("Erro ao carregar pedidos:", err);
+  }
 }
 
 // ===============================
@@ -63,69 +71,87 @@ function renderPedidos(pedidos, containerId, tipo) {
   }
 
   pedidos.forEach(p => {
-    let html = `
-      <div class="card">
-        <strong>OS:</strong> ${p.id}<br>
-        <strong>Loja origem:</strong> ${p.loja_origem}<br>
-        <strong>Serviço:</strong> ${p.tipo_servico}<br>
-        <strong>Status:</strong> ${p.status}<br><br>
+    const html = document.createElement("div");
+    html.classList.add("card");
+    html.innerHTML = `
+      <strong>OS:</strong> ${p.id}<br>
+      <strong>Loja origem:</strong> ${p.loja_origem}<br>
+      <strong>Serviço:</strong> ${p.tipo_servico}<br>
+      <strong>Status:</strong> ${p.status}<br><br>
     `;
 
     if (tipo === "recebido" || tipo === "emServico") {
-      html += `
-        <label for="obs-${p.id}">Observações Loja 5</label><br>
-        <textarea id="obs-${p.id}" rows="3" style="width:100%;">${p.obs_loja5 || ""}</textarea><br><br>
-        <button onclick="salvarObservacao('${p.id}')">Salvar Observação</button>
-      `;
+      const textarea = document.createElement("textarea");
+      textarea.id = `obs-${p.id}`;
+      textarea.rows = 3;
+      textarea.style.width = "100%";
+      textarea.value = p.obs_loja5 || "";
+      html.appendChild(document.createTextNode("Observações Loja 5"));
+      html.appendChild(document.createElement("br"));
+      html.appendChild(textarea);
+      html.appendChild(document.createElement("br"));
+      html.appendChild(document.createElement("br"));
+
+      const btnSalvar = document.createElement("button");
+      btnSalvar.textContent = "Salvar Observação";
+      btnSalvar.addEventListener("click", () => salvarObservacao(p.id));
+      html.appendChild(btnSalvar);
+
+      html.appendChild(document.createElement("br"));
+
+      const btnConcluir = document.createElement("button");
+      btnConcluir.textContent = "Concluir Serviço";
+      btnConcluir.addEventListener("click", () => concluirServico(p.id));
+      html.appendChild(btnConcluir);
     }
 
-    if (tipo === "recebido" || tipo === "emServico") {
-      html += `<button onclick="concluirServico('${p.id}')">Concluir Serviço</button>`;
-    }
-
-    html += `</div>`;
-    container.innerHTML += html;
+    container.appendChild(html);
   });
 }
 
 // ===============================
 // Salvar observação
 // ===============================
-window.salvarObservacao = async (id) => {
-  const texto = document.getElementById(`obs-${id}`).value;
+async function salvarObservacao(id) {
+  const textarea = document.getElementById(`obs-${id}`);
+  if (!textarea) return;
 
-  const { error } = await supabase.from("pedidos").update({
-    obs_loja5: texto,
-    status: "Em serviço"
-  }).eq("id", id);
+  const texto = textarea.value.trim();
 
-  if (error) {
-    console.error(error);
+  try {
+    const { error } = await supabase.from("pedidos").update({
+      obs_loja5: texto,
+      status: "Em serviço"
+    }).eq("id", id);
+
+    if (error) throw error;
+
+    alert("Observação salva!");
+    carregarPedidos();
+  } catch (err) {
+    console.error("Erro ao salvar observação:", err);
     alert("Erro ao salvar observação");
-    return;
   }
-
-  alert("Observação salva!");
-  carregarPedidos();
-};
+}
 
 // ===============================
 // Concluir serviço (prepara retorno)
- // ===============================
-window.concluirServico = async (id) => {
-  const { error } = await supabase.from("pedidos").update({
-    status: "Aguardando retorno do transporte"
-  }).eq("id", id);
+// ===============================
+async function concluirServico(id) {
+  try {
+    const { error } = await supabase.from("pedidos").update({
+      status: "Aguardando retorno do transporte"
+    }).eq("id", id);
 
-  if (error) {
-    console.error(error);
+    if (error) throw error;
+
+    alert("Serviço concluído! Transporte será acionado.");
+    carregarPedidos();
+  } catch (err) {
+    console.error("Erro ao concluir serviço:", err);
     alert("Erro ao concluir serviço");
-    return;
   }
-
-  alert("Serviço concluído! Transporte será acionado.");
-  carregarPedidos();
-};
+}
 
 // ===============================
 // Inicialização
@@ -135,5 +161,7 @@ window.concluirServico = async (id) => {
   if (usuarioLogado) carregarPedidos();
 
   // Atualiza automaticamente a cada 5s
-  setInterval(carregarPedidos, 5000);
+  setInterval(() => {
+    if (usuarioLogado) carregarPedidos();
+  }, 5000);
 })();

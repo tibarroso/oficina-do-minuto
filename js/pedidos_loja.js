@@ -3,6 +3,7 @@ import { supabase } from "./supabase.js";
 const filtroStatus = document.getElementById("filtroStatus");
 const btnFiltrar = document.getElementById("btnFiltrar");
 const containerPedidos = document.getElementById("containerPedidos");
+const btnCriarPedido = document.getElementById("btnCriarPedido");
 
 let usuarioLogado = null;
 let pedidosGlobais = [];
@@ -21,30 +22,58 @@ async function verificarLogin() {
 }
 
 // ===============================
+// Criar pedido
+// ===============================
+btnCriarPedido.addEventListener("click", async () => {
+  const tipo = document.getElementById("tipo").value;
+  const orcamento = document.getElementById("orcamento").checked;
+  const observacao = document.getElementById("observacao").value.trim();
+
+  if (!tipo) return alert("Selecione o tipo de serviço.");
+
+  const { data, error } = await supabase.from("pedidos").insert([{
+    loja_origem: usuarioLogado.email,
+    tipo_servico: tipo,
+    eh_orcamento: orcamento,
+    obs_loja_origem: observacao,
+    status: "Aguardando coleta",
+    criado_em: new Date().toISOString()
+  }]);
+
+  if (error) return alert("Erro ao criar pedido: " + error.message);
+
+  alert("Pedido criado com sucesso!");
+  carregarPedidos();
+
+  // Limpar formulário
+  document.getElementById("tipo").value = "";
+  document.getElementById("orcamento").checked = false;
+  document.getElementById("observacao").value = "";
+});
+
+// ===============================
 // Carregar pedidos da loja
 // ===============================
 async function carregarPedidos() {
   if (!usuarioLogado) return;
 
-  try {
-    let query = supabase
-      .from("pedidos")
-      .select("*")
-      .eq("loja_origem", usuarioLogado.email)
-      .order("criado_em", { ascending: false });
+  let query = supabase
+    .from("pedidos")
+    .select("*")
+    .eq("loja_origem", usuarioLogado.email)
+    .order("criado_em", { ascending: false });
 
-    const status = filtroStatus.value;
-    if (status) query = query.eq("status", status);
+  const status = filtroStatus.value;
+  if (status) query = query.eq("status", status);
 
-    const { data, error } = await query;
-    if (error) throw error;
-
-    pedidosGlobais = data || [];
-    renderizarPedidos();
-  } catch (err) {
-    console.error("Erro ao carregar pedidos:", err);
-    alert("Erro ao carregar pedidos.");
+  const { data, error } = await query;
+  if (error) {
+    alert("Erro ao carregar pedidos: " + error.message);
+    return;
   }
+
+  pedidosGlobais = data || [];
+  renderizarPedidos();
 }
 
 // ===============================
@@ -62,18 +91,16 @@ function renderizarPedidos() {
     const card = document.createElement("div");
     card.className = "card";
 
-    const acoesDiv = document.createElement("div");
+    let acoes = "";
 
-    if (p.status === "Aguardando coleta") {
-      const btn = document.createElement("button");
-      btn.textContent = "Enviar para Transporte";
-      btn.addEventListener("click", () => enviarParaTransporte(p.id));
-      acoesDiv.appendChild(btn);
-    } else if (p.status === "Em transporte para loja de origem") {
-      const btn = document.createElement("button");
-      btn.textContent = "Finalizar / Retrabalho";
-      btn.addEventListener("click", () => finalizarPedido(p.id));
-      acoesDiv.appendChild(btn);
+    // Botões dependendo do status
+    switch (p.status) {
+      case "Aguardando coleta":
+        acoes = `<button onclick="enviarParaTransporte('${p.id}')">Enviar para Transporte</button>`;
+        break;
+      case "Em transporte para loja de origem":
+        acoes = `<button onclick="finalizarPedido('${p.id}')">Finalizar / Retrabalho</button>`;
+        break;
     }
 
     card.innerHTML = `
@@ -83,11 +110,11 @@ function renderizarPedidos() {
       <p><strong>Status:</strong> ${p.status}</p>
       <p><strong>Observação:</strong> ${p.obs_loja_origem || "<em>Não informado</em>"}</p>
       <p><strong>Criado em:</strong> ${new Date(p.criado_em).toLocaleString()}</p>
+      ${acoes}
       <div id="timeline-${p.id}" class="timeline"></div>
     `;
-    card.appendChild(acoesDiv);
-    containerPedidos.appendChild(card);
 
+    containerPedidos.appendChild(card);
     carregarTimeline(p.id);
   });
 }
@@ -96,90 +123,59 @@ function renderizarPedidos() {
 // Timeline de eventos
 // ===============================
 async function carregarTimeline(pedidoId) {
-  try {
-    const { data, error } = await supabase
-      .from("pedido_eventos")
-      .select("*")
-      .eq("pedido_id", pedidoId)
-      .order("criado_em", { ascending: true });
+  const { data } = await supabase
+    .from("pedido_eventos")
+    .select("*")
+    .eq("pedido_id", pedidoId)
+    .order("criado_em", { ascending: true });
 
-    if (error) throw error;
+  let html = "<strong>Histórico</strong><br>";
 
-    let html = "<strong>Histórico</strong><br>";
-
-    if (!data || data.length === 0) {
-      html += "<small>Sem eventos</small>";
-    } else {
-      data.forEach(e => {
-        html += `
-          <div style="border-left:3px solid #555; padding-left:8px; margin:6px 0;">
-            <strong>${e.evento}</strong><br>
-            ${e.observacao || ""}<br>
-            <small>${new Date(e.criado_em).toLocaleString()} – ${e.criado_por}</small>
-          </div>
-        `;
-      });
-    }
-
-    const timelineDiv = document.getElementById(`timeline-${pedidoId}`);
-    if (timelineDiv) timelineDiv.innerHTML = html;
-  } catch (err) {
-    console.error("Erro ao carregar timeline:", err);
+  if (!data || data.length === 0) {
+    html += "<small>Sem eventos</small>";
+  } else {
+    data.forEach(e => {
+      html += `
+        <div style="border-left:3px solid #555; padding-left:8px; margin:6px 0;">
+          <strong>${e.evento}</strong><br>
+          ${e.observacao || ""}<br>
+          <small>${new Date(e.criado_em).toLocaleString()} – ${e.criado_por}</small>
+        </div>
+      `;
+    });
   }
+
+  const timelineDiv = document.getElementById(`timeline-${pedidoId}`);
+  if (timelineDiv) timelineDiv.innerHTML = html;
 }
 
 // ===============================
 // Ações
 // ===============================
-async function enviarParaTransporte(id) {
-  try {
-    const { error } = await supabase.from("pedidos")
-      .update({ status: "Em transporte para Loja 5" })
-      .eq("id", id);
+window.enviarParaTransporte = async (id) => {
+  await supabase.from("pedidos").update({ status: "Em transporte para Loja 5" }).eq("id", id);
+  await registrarEvento(id, "Pedido enviado para Transporte");
+  carregarPedidos();
+};
 
-    if (error) throw error;
-
-    await registrarEvento(id, "Pedido enviado para Transporte");
-    carregarPedidos();
-  } catch (err) {
-    console.error("Erro ao enviar pedido para transporte:", err);
-    alert("Erro ao enviar pedido para transporte");
-  }
-}
-
-async function finalizarPedido(id) {
-  try {
-    const { error } = await supabase.from("pedidos")
-      .update({ status: "Finalizado" })
-      .eq("id", id);
-
-    if (error) throw error;
-
-    await registrarEvento(id, "Pedido finalizado / retrabalho");
-    carregarPedidos();
-  } catch (err) {
-    console.error("Erro ao finalizar pedido:", err);
-    alert("Erro ao finalizar pedido");
-  }
-}
+window.finalizarPedido = async (id) => {
+  const { error } = await supabase.from("pedidos").update({ status: "Finalizado" }).eq("id", id);
+  if (error) return alert("Erro ao finalizar pedido");
+  await registrarEvento(id, "Pedido finalizado / retrabalho");
+  carregarPedidos();
+};
 
 // ===============================
 // Registrar evento
 // ===============================
 async function registrarEvento(pedidoId, evento, observacao = "") {
-  try {
-    if (!usuarioLogado) return;
-
-    await supabase.from("pedido_eventos").insert([{
-      pedido_id: pedidoId,
-      evento,
-      observacao,
-      criado_por: usuarioLogado.email,
-      criado_em: new Date().toISOString()
-    }]);
-  } catch (err) {
-    console.error("Erro ao registrar evento:", err);
-  }
+  await supabase.from("pedido_eventos").insert([{
+    pedido_id: pedidoId,
+    evento,
+    observacao,
+    criado_por: usuarioLogado.email,
+    criado_em: new Date().toISOString()
+  }]);
 }
 
 // ===============================
@@ -187,7 +183,7 @@ async function registrarEvento(pedidoId, evento, observacao = "") {
 // ===============================
 btnFiltrar.addEventListener("click", carregarPedidos);
 
-// Auto refresh
+// Auto refresh a cada 5 segundos
 setInterval(() => {
   if (usuarioLogado) carregarPedidos();
 }, 5000);

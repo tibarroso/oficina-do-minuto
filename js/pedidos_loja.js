@@ -60,38 +60,26 @@ function renderizarPedidos() {
     const card = document.createElement("div");
     card.className = "card";
 
-    let acaoFinalizar = "";
-    if (p.status === "Entregue na loja de origem") {
-      acaoFinalizar = `
-        <button onclick="finalizarPedido('${p.id}')">
-          Confirmar recebimento e finalizar
-        </button>
-      `;
+    let acoes = "";
+
+    // Botões dependendo do status
+    switch (p.status) {
+      case "Aguardando coleta":
+        acoes = `<button onclick="enviarParaTransporte('${p.id}')">Enviar para Transporte</button>`;
+        break;
+      case "Em transporte para loja de origem":
+        acoes = `<button onclick="finalizarPedido('${p.id}')">Finalizar / Retrabalho</button>`;
+        break;
     }
 
     card.innerHTML = `
       <h3>OS: ${p.id}</h3>
-
       <p><strong>Serviço:</strong> ${p.tipo_servico}</p>
       <p><strong>Orçamento:</strong> ${p.eh_orcamento ? "Sim" : "Não"}</p>
-
-      <p>
-        <strong>Status:</strong>
-        <span class="status">${p.status}</span>
-      </p>
-
-      <p>
-        <strong>Observação (Ticket / Nº do saco):</strong><br>
-        ${p.obs_loja_origem ? p.obs_loja_origem : "<em>Não informado</em>"}
-      </p>
-
-      <p>
-        <strong>Criado em:</strong>
-        ${p.criado_em ? new Date(p.criado_em).toLocaleString() : "<em>Não informado</em>"}
-      </p>
-
-      ${acaoFinalizar}
-
+      <p><strong>Status:</strong> ${p.status}</p>
+      <p><strong>Observação:</strong> ${p.obs_loja_origem || "<em>Não informado</em>"}</p>
+      <p><strong>Criado em:</strong> ${new Date(p.criado_em).toLocaleString()}</p>
+      ${acoes}
       <div id="timeline-${p.id}" class="timeline"></div>
     `;
 
@@ -113,17 +101,14 @@ async function carregarTimeline(pedidoId) {
   let html = "<strong>Histórico</strong><br>";
 
   if (!data || data.length === 0) {
-    html += "<small>Sem eventos registrados</small>";
+    html += "<small>Sem eventos</small>";
   } else {
     data.forEach(e => {
       html += `
         <div style="border-left:3px solid #555; padding-left:8px; margin:6px 0;">
           <strong>${e.evento}</strong><br>
-          ${e.observacao || ""}
-          <br>
-          <small>
-            ${e.criado_em ? new Date(e.criado_em).toLocaleString() : ""} – ${e.criado_por}
-          </small>
+          ${e.observacao || ""}<br>
+          <small>${new Date(e.criado_em).toLocaleString()} – ${e.criado_por}</small>
         </div>
       `;
     });
@@ -134,36 +119,48 @@ async function carregarTimeline(pedidoId) {
 }
 
 // ===============================
-// Finalizar pedido (loja de origem)
+// Ações
 // ===============================
-window.finalizarPedido = async function (id) {
+window.enviarParaTransporte = async (id) => {
+  await supabase.from("pedidos").update({ status: "Em transporte para Loja 5" }).eq("id", id);
+
+  await registrarEvento(id, "Pedido enviado para Transporte");
+
+  carregarPedidos();
+};
+
+window.finalizarPedido = async (id) => {
   const { error } = await supabase
     .from("pedidos")
     .update({ status: "Finalizado" })
     .eq("id", id);
 
-  if (error) {
-    alert("Erro ao finalizar pedido");
-    return;
-  }
+  if (error) return alert("Erro ao finalizar pedido");
 
+  await registrarEvento(id, "Pedido finalizado / retrabalho");
+
+  carregarPedidos();
+};
+
+// ===============================
+// Registrar evento
+// ===============================
+async function registrarEvento(pedidoId, evento, observacao = "") {
   await supabase.from("pedido_eventos").insert([{
-    pedido_id: id,
-    evento: "Pedido finalizado pela loja de origem",
+    pedido_id: pedidoId,
+    evento,
+    observacao,
     criado_por: usuarioLogado.email,
     criado_em: new Date().toISOString()
   }]);
-
-  alert("Pedido finalizado com sucesso!");
-  carregarPedidos();
-};
+}
 
 // ===============================
 // Eventos
 // ===============================
 btnFiltrar.addEventListener("click", carregarPedidos);
 
-// Auto refresh a cada 5s
+// Auto refresh
 setInterval(() => {
   if (usuarioLogado) carregarPedidos();
 }, 5000);

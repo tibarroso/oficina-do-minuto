@@ -13,7 +13,7 @@ async function carregarPedidos() {
 // Aguardando coleta (IDA)
 // =====================
 async function carregarAguardando() {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("pedidos")
     .select("*")
     .eq("status", "Aguardando coleta")
@@ -34,7 +34,7 @@ async function carregarAguardando() {
         <strong>Loja:</strong> ${p.loja_origem}<br>
         <strong>Serviço:</strong> ${p.tipo_servico}<br>
         <strong>Observação (Ticket / Nº do saco):</strong><br>
-        <em>${p.obs_loja_origem || "Não informado"}</em><br><br>
+        <em>${p.obs_loja_origem || "—"}</em><br><br>
 
         <button onclick="iniciarTransporte('${p.id}')">
           Iniciar Transporte
@@ -63,13 +63,10 @@ async function carregarEmTransporte() {
   }
 
   data.forEach(p => {
-    const botao = p.status === "Em transporte" && p.retornando
-      ? `<button onclick="entregarLojaOrigem('${p.id}')">
-           Entregar na loja de origem
-         </button>`
-      : `<button onclick="entregarLoja5('${p.id}')">
-           Entregar na Loja 5
-         </button>`;
+    const botao =
+      p.status === "Em transporte"
+        ? `<button onclick="entregarLoja5('${p.id}')">Entregar na Loja 5</button>`
+        : "";
 
     div.innerHTML += `
       <div class="card">
@@ -77,7 +74,7 @@ async function carregarEmTransporte() {
         <strong>Loja:</strong> ${p.loja_origem}<br>
         <strong>Serviço:</strong> ${p.tipo_servico}<br>
         <strong>Observação (Ticket / Nº do saco):</strong><br>
-        <em>${p.obs_loja_origem || "Não informado"}</em><br><br>
+        <em>${p.obs_loja_origem || "—"}</em><br><br>
 
         ${botao}
       </div>
@@ -112,7 +109,7 @@ async function carregarRetorno() {
         <strong>Loja origem:</strong> ${p.loja_origem}<br>
         <strong>Serviço:</strong> ${p.tipo_servico}<br>
         <strong>Observação (Ticket / Nº do saco):</strong><br>
-        <em>${p.obs_loja_origem || "Não informado"}</em><br><br>
+        <em>${p.obs_loja_origem || "—"}</em><br><br>
 
         <button onclick="iniciarRetorno('${p.id}')">
           Iniciar Retorno
@@ -126,33 +123,28 @@ async function carregarRetorno() {
 // Ações
 // =====================
 window.iniciarTransporte = async (id) => {
-  await supabase.from("pedidos").update({
-    status: "Em transporte"
-  }).eq("id", id);
+  await supabase
+    .from("pedidos")
+    .update({ status: "Em transporte" })
+    .eq("id", id);
 
   carregarPedidos();
 };
 
 window.entregarLoja5 = async (id) => {
-  await supabase.from("pedidos").update({
-    status: "Entregue na Loja 5"
-  }).eq("id", id);
+  await supabase
+    .from("pedidos")
+    .update({ status: "Entregue na Loja 5" })
+    .eq("id", id);
 
   carregarPedidos();
 };
 
 window.iniciarRetorno = async (id) => {
-  await supabase.from("pedidos").update({
-    status: "Em transporte"
-  }).eq("id", id);
-
-  carregarPedidos();
-};
-
-window.entregarLojaOrigem = async (id) => {
-  await supabase.from("pedidos").update({
-    status: "Entregue na loja de origem"
-  }).eq("id", id);
+  await supabase
+    .from("pedidos")
+    .update({ status: "Em transporte" })
+    .eq("id", id);
 
   carregarPedidos();
 };

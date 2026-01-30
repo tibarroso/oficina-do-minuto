@@ -1,5 +1,7 @@
 import { supabase } from "./supabase.js";
 
+let usuarioLogado = null;
+
 // =====================
 // Inicialização
 // =====================
@@ -13,174 +15,195 @@ async function carregarPedidos() {
 // AGUARDANDO COLETA (IDA)
 // =====================
 async function carregarAguardando() {
-  const { data } = await supabase
-    .from("pedidos")
-    .select("*")
-    .eq("status", "Aguardando coleta")
-    .order("criado_em", { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from("pedidos")
+      .select("*")
+      .eq("status", "Aguardando coleta")
+      .order("criado_em", { ascending: false });
 
-  const div = document.getElementById("aguardando");
-  div.innerHTML = "";
+    if (error) throw error;
 
-  if (!data || data.length === 0) {
-    div.innerHTML = "<p>Nenhum pedido aguardando coleta.</p>";
-    return;
+    const div = document.getElementById("aguardando");
+    div.innerHTML = "";
+
+    if (!data || data.length === 0) {
+      div.innerHTML = "<p>Nenhum pedido aguardando coleta.</p>";
+      return;
+    }
+
+    data.forEach(p => {
+      const card = criarCard(p, "ida");
+      div.appendChild(card);
+    });
+  } catch (err) {
+    console.error("Erro ao carregar pedidos aguardando coleta:", err);
   }
-
-  data.forEach(p => {
-    div.innerHTML += `
-      <div class="card">
-        <strong>OS:</strong> ${p.id}<br>
-        <strong>Loja:</strong> ${p.loja_origem}<br>
-        <strong>Serviço:</strong> ${p.tipo_servico}<br>
-        <strong>Observação (Ticket / Nº do saco):</strong><br>
-        <em>${p.obs_loja_origem || "—"}</em><br><br>
-
-        <button onclick="iniciarTransporteIda('${p.id}')">
-          Iniciar Transporte (Ida)
-        </button>
-      </div>
-    `;
-  });
 }
 
 // =====================
 // EM TRANSPORTE (IDA ou VOLTA)
 // =====================
 async function carregarEmTransporte() {
-  const { data } = await supabase
-    .from("pedidos")
-    .select("*")
-    .in("status", [
-      "Em transporte para Loja 5",
-      "Em transporte para loja de origem"
-    ])
-    .order("criado_em", { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from("pedidos")
+      .select("*")
+      .in("status", [
+        "Em transporte para Loja 5",
+        "Em transporte para loja de origem"
+      ])
+      .order("criado_em", { ascending: false });
 
-  const div = document.getElementById("transporte");
-  div.innerHTML = "";
+    if (error) throw error;
 
-  if (!data || data.length === 0) {
-    div.innerHTML = "<p>Nenhum pedido em transporte.</p>";
-    return;
+    const div = document.getElementById("transporte");
+    div.innerHTML = "";
+
+    if (!data || data.length === 0) {
+      div.innerHTML = "<p>Nenhum pedido em transporte.</p>";
+      return;
+    }
+
+    data.forEach(p => {
+      const card = criarCard(p, "emTransporte");
+      div.appendChild(card);
+    });
+  } catch (err) {
+    console.error("Erro ao carregar pedidos em transporte:", err);
   }
-
-  data.forEach(p => {
-    let botao = "";
-
-    if (p.status === "Em transporte para Loja 5") {
-      botao = `
-        <button onclick="entregarLoja5('${p.id}')">
-          Entregar na Loja 5
-        </button>`;
-    }
-
-    if (p.status === "Em transporte para loja de origem") {
-      botao = `
-        <button onclick="entregarLojaOrigem('${p.id}')">
-          Entregar na Loja de Origem
-        </button>`;
-    }
-
-    div.innerHTML += `
-      <div class="card">
-        <strong>OS:</strong> ${p.id}<br>
-        <strong>Loja:</strong> ${p.loja_origem}<br>
-        <strong>Serviço:</strong> ${p.tipo_servico}<br>
-        <strong>Status:</strong> ${p.status}<br><br>
-        ${botao}
-      </div>
-    `;
-  });
 }
 
 // =====================
 // AGUARDANDO RETORNO (VOLTA)
 // =====================
 async function carregarRetorno() {
-  const { data } = await supabase
-    .from("pedidos")
-    .select("*")
-    .eq("status", "Aguardando retorno do transporte")
-    .order("criado_em", { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from("pedidos")
+      .select("*")
+      .eq("status", "Aguardando retorno do transporte")
+      .order("criado_em", { ascending: false });
 
-  const div = document.getElementById("retorno");
-  div.innerHTML = "";
+    if (error) throw error;
 
-  if (!data || data.length === 0) {
-    div.innerHTML = "<p>Nenhum pedido aguardando retorno.</p>";
-    return;
+    const div = document.getElementById("retorno");
+    div.innerHTML = "";
+
+    if (!data || data.length === 0) {
+      div.innerHTML = "<p>Nenhum pedido aguardando retorno.</p>";
+      return;
+    }
+
+    data.forEach(p => {
+      const card = criarCard(p, "volta");
+      div.appendChild(card);
+    });
+  } catch (err) {
+    console.error("Erro ao carregar pedidos aguardando retorno:", err);
+  }
+}
+
+// =====================
+// Criar Card de Pedido
+// =====================
+function criarCard(pedido, tipo) {
+  const card = document.createElement("div");
+  card.classList.add("card");
+
+  card.innerHTML = `
+    <strong>OS:</strong> ${pedido.id}<br>
+    <strong>Loja:</strong> ${pedido.loja_origem}<br>
+    <strong>Serviço:</strong> ${pedido.tipo_servico}<br>
+    ${tipo === "ida" ? `<strong>Observação:</strong><br><em>${pedido.obs_loja_origem || "—"}</em><br><br>` : ""}
+  `;
+
+  const btn = document.createElement("button");
+
+  switch (tipo) {
+    case "ida":
+      btn.textContent = "Iniciar Transporte (Ida)";
+      btn.addEventListener("click", () => iniciarTransporteIda(pedido.id));
+      break;
+    case "emTransporte":
+      if (pedido.status === "Em transporte para Loja 5") {
+        btn.textContent = "Entregar na Loja 5";
+        btn.addEventListener("click", () => entregarLoja5(pedido.id));
+      } else if (pedido.status === "Em transporte para loja de origem") {
+        btn.textContent = "Entregar na Loja de Origem";
+        btn.addEventListener("click", () => entregarLojaOrigem(pedido.id));
+      }
+      break;
+    case "volta":
+      btn.textContent = "Iniciar Transporte de Retorno";
+      btn.addEventListener("click", () => iniciarTransporteVolta(pedido.id));
+      break;
   }
 
-  data.forEach(p => {
-    div.innerHTML += `
-      <div class="card">
-        <strong>OS:</strong> ${p.id}<br>
-        <strong>Loja origem:</strong> ${p.loja_origem}<br>
-        <strong>Serviço:</strong> ${p.tipo_servico}<br><br>
-
-        <button onclick="iniciarTransporteVolta('${p.id}')">
-          Iniciar Transporte de Retorno
-        </button>
-      </div>
-    `;
-  });
+  card.appendChild(btn);
+  return card;
 }
 
 // =====================
 // AÇÕES
 // =====================
-window.iniciarTransporteIda = async (id) => {
-  await supabase.from("pedidos")
-    .update({ status: "Em transporte para Loja 5" })
-    .eq("id", id);
+async function iniciarTransporteIda(id) {
+  await atualizarStatus(id, "Em transporte para Loja 5", "Transporte iniciado (ida)");
+}
 
-  await registrarEvento(id, "Transporte iniciado (ida)");
-  carregarPedidos();
-};
+async function entregarLoja5(id) {
+  await atualizarStatus(id, "Entregue na Loja 5", "Entregue na Loja 5");
+}
 
-window.entregarLoja5 = async (id) => {
-  await supabase.from("pedidos")
-    .update({ status: "Entregue na Loja 5" })
-    .eq("id", id);
+async function iniciarTransporteVolta(id) {
+  await atualizarStatus(id, "Em transporte para loja de origem", "Transporte iniciado (volta)");
+}
 
-  await registrarEvento(id, "Entregue na Loja 5");
-  carregarPedidos();
-};
-
-window.iniciarTransporteVolta = async (id) => {
-  await supabase.from("pedidos")
-    .update({ status: "Em transporte para loja de origem" })
-    .eq("id", id);
-
-  await registrarEvento(id, "Transporte iniciado (volta)");
-  carregarPedidos();
-};
-
-window.entregarLojaOrigem = async (id) => {
-  await supabase.from("pedidos")
-    .update({ status: "Recebido na loja de origem" })
-    .eq("id", id);
-
-  await registrarEvento(id, "Entregue na loja de origem");
-  carregarPedidos();
-};
-
-// =====================
-// EVENTOS
-// =====================
-async function registrarEvento(pedidoId, evento) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
-
-  await supabase.from("pedido_eventos").insert([{
-    pedido_id: pedidoId,
-    evento,
-    criado_por: user.email,
-    criado_em: new Date().toISOString()
-  }]);
+async function entregarLojaOrigem(id) {
+  await atualizarStatus(id, "Recebido na loja de origem", "Entregue na loja de origem");
 }
 
 // =====================
-carregarPedidos();
-setInterval(carregarPedidos, 5000);
+// Atualizar status e registrar evento
+// =====================
+async function atualizarStatus(id, status, evento) {
+  try {
+    const { error } = await supabase.from("pedidos").update({ status }).eq("id", id);
+    if (error) throw error;
+
+    await registrarEvento(id, evento);
+    carregarPedidos();
+  } catch (err) {
+    console.error(`Erro ao atualizar status do pedido ${id}:`, err);
+    alert("Erro ao atualizar status do pedido");
+  }
+}
+
+// =====================
+// Registrar evento
+// =====================
+async function registrarEvento(pedidoId, evento) {
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) return;
+
+    await supabase.from("pedido_eventos").insert([{
+      pedido_id: pedidoId,
+      evento,
+      criado_por: data.user.email,
+      criado_em: new Date().toISOString()
+    }]);
+  } catch (err) {
+    console.error("Erro ao registrar evento:", err);
+  }
+}
+
+// =====================
+// Inicialização
+// =====================
+(async () => {
+  const { data } = await supabase.auth.getUser();
+  usuarioLogado = data?.user || null;
+  carregarPedidos();
+  setInterval(carregarPedidos, 5000);
+})();

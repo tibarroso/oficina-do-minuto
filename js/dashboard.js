@@ -10,14 +10,15 @@ const btnCriarPedidoContainer = document.getElementById("btnCriarPedidoContainer
 let pedidosGlobais = [];
 let usuarioLogado = null;
 let usuarioTipo = "admin"; // admin ou loja
-let chartStatus, chartServico;
+let chartStatus = null;
+let chartServico = null;
 
 // ===============================
 // Verificar login
 // ===============================
 async function verificarLogin() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) {
     alert("Usuário não logado!");
     window.location.href = "login.html";
     return null;
@@ -29,7 +30,7 @@ async function verificarLogin() {
 // Criar botão Criar Pedido se for loja
 // ===============================
 function criarBotaoPedido() {
-  if (usuarioTipo === "loja") {
+  if (usuarioTipo === "loja" && btnCriarPedidoContainer) {
     const btn = document.createElement("button");
     btn.textContent = "Criar Pedido";
     btn.style.marginBottom = "20px";
@@ -44,24 +45,29 @@ function criarBotaoPedido() {
 async function carregarPedidos() {
   if (!usuarioLogado) return;
 
-  let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false });
+  try {
+    let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false });
 
-  if (usuarioTipo === "loja") {
-    query = query.eq("loja_origem", usuarioLogado.email);
+    if (usuarioTipo === "loja") query = query.eq("loja_origem", usuarioLogado.email);
+
+    const status = filtroStatus.value;
+    if (status) query = query.eq("status", status);
+
+    const pesquisa = pesquisaOS.value.trim();
+    if (pesquisa) {
+      query = query.or(`id::text.ilike.%${pesquisa}%,loja_origem.ilike.%${pesquisa}%`);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    pedidosGlobais = data || [];
+    renderizarPedidos(pedidosGlobais);
+    atualizarGraficos();
+  } catch (err) {
+    console.error("Erro ao carregar pedidos:", err);
+    alert("Erro ao carregar pedidos");
   }
-
-  const status = filtroStatus.value;
-  if (status) query = query.eq("status", status);
-
-  const pesquisa = pesquisaOS.value.trim();
-  if (pesquisa) query = query.or(`id.ilike.%${pesquisa}%,loja_origem.ilike.%${pesquisa}%`);
-
-  const { data, error } = await query;
-  if (error) { console.error(error); return alert("Erro ao carregar pedidos"); }
-
-  pedidosGlobais = data || [];
-  renderizarPedidos(pedidosGlobais);
-  atualizarGraficos();
 }
 
 // ===============================
@@ -69,12 +75,15 @@ async function carregarPedidos() {
 // ===============================
 function renderizarPedidos(pedidos) {
   container.innerHTML = "";
-  if (!pedidos || pedidos.length === 0) return container.innerHTML = "<p>Nenhum pedido encontrado.</p>";
+
+  if (!pedidos || pedidos.length === 0) {
+    container.innerHTML = "<p>Nenhum pedido encontrado.</p>";
+    return;
+  }
 
   pedidos.forEach(p => {
     const card = document.createElement("div");
     card.className = "card";
-
     card.innerHTML = `
       <h3>OS: ${p.id}</h3>
       <span>Status: ${p.status}</span><br>
@@ -87,7 +96,7 @@ function renderizarPedidos(pedidos) {
 }
 
 // ===============================
-// Gráficos
+// Atualizar gráficos
 // ===============================
 function atualizarGraficos() {
   const statusCount = {};
@@ -98,18 +107,33 @@ function atualizarGraficos() {
     servicoCount[p.tipo_servico] = (servicoCount[p.tipo_servico] || 0) + 1;
   });
 
+  // Gráfico de status
   const ctxStatus = document.getElementById("graficoStatus").getContext("2d");
   if (chartStatus) chartStatus.destroy();
   chartStatus = new Chart(ctxStatus, {
     type: "doughnut",
-    data: { labels: Object.keys(statusCount), datasets: [{ data: Object.values(statusCount), backgroundColor: ["#f0ad4e","#5bc0de","#5cb85c"] }] }
+    data: {
+      labels: Object.keys(statusCount),
+      datasets: [{
+        data: Object.values(statusCount),
+        backgroundColor: ["#f0ad4e", "#5bc0de", "#5cb85c", "#d9534f", "#337ab7"]
+      }]
+    }
   });
 
+  // Gráfico de serviços
   const ctxServico = document.getElementById("graficoServico").getContext("2d");
   if (chartServico) chartServico.destroy();
   chartServico = new Chart(ctxServico, {
     type: "bar",
-    data: { labels: Object.keys(servicoCount), datasets: [{ label: "Pedidos por Serviço", data: Object.values(servicoCount), backgroundColor: "#337ab7" }] },
+    data: {
+      labels: Object.keys(servicoCount),
+      datasets: [{
+        label: "Pedidos por Serviço",
+        data: Object.values(servicoCount),
+        backgroundColor: "#337ab7"
+      }]
+    },
     options: { scales: { y: { beginAtZero: true } } }
   });
 }
@@ -124,6 +148,11 @@ function atualizarGraficos() {
   usuarioTipo = usuarioLogado.email.includes("loja") ? "loja" : "admin";
   criarBotaoPedido();
 
-  btnFiltrar.addEventListener("click", carregarPedidos);
+  btnFiltrar?.addEventListener("click", carregarPedidos);
+
+  // Carregar inicialmente
   carregarPedidos();
+
+  // Atualizar automaticamente a cada 5s
+  setInterval(carregarPedidos, 5000);
 })();

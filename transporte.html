@@ -4,6 +4,27 @@
   <meta charset="UTF-8">
   <title>Transporte - Oficina do Minuto</title>
   <link rel="stylesheet" href="./css/style.css">
+  <style>
+    .card {
+      border: 1px solid #ccc;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 6px;
+      background-color: #f9f9f9;
+    }
+    button {
+      padding: 6px 12px;
+      margin-top: 6px;
+      cursor: pointer;
+      border-radius: 4px;
+      border: none;
+      background-color: #337ab7;
+      color: white;
+    }
+    button:hover {
+      background-color: #286090;
+    }
+  </style>
 </head>
 <body>
 
@@ -11,20 +32,39 @@
 
   <!-- IDA -->
   <h3>Aguardando Coleta</h3>
-  <div id="aguardando"></div>
+  <div id="aguardando">Carregando pedidos...</div>
 
   <hr>
 
   <!-- EM TRANSPORTE -->
   <h3>Em Transporte</h3>
-  <div id="transporte"></div>
+  <div id="transporte">Carregando pedidos...</div>
 
   <hr>
 
   <!-- VOLTA -->
   <h3>Aguardando Retorno do Transporte</h3>
-  <div id="retorno"></div>
+  <div id="retorno">Carregando pedidos...</div>
 
-  <script type="module" src="js/transporte.js"></script>
+  <script type="module">
+    import { supabase } from "./js/supabase.js";
+    import { carregarPedidos } from "./js/transporte.js";
+
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert("Usuário não logado!");
+        window.location.href = "login.html";
+        return;
+      }
+
+      // Inicializa carregamento
+      carregarPedidos();
+
+      // Atualiza automaticamente a cada 5 segundos
+      setInterval(carregarPedidos, 5000);
+    })();
+  </script>
+
 </body>
 </html>

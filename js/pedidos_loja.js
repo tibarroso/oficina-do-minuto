@@ -87,7 +87,7 @@ function renderizarPedidos() {
 
       <p>
         <strong>Criado em:</strong>
-        ${new Date(p.criado_em).toLocaleString()}
+        ${p.criado_em ? new Date(p.criado_em).toLocaleString() : "<em>Não informado</em>"}
       </p>
 
       ${acaoFinalizar}
@@ -119,9 +119,10 @@ async function carregarTimeline(pedidoId) {
       html += `
         <div style="border-left:3px solid #555; padding-left:8px; margin:6px 0;">
           <strong>${e.evento}</strong><br>
-          ${e.observacao || ""}<br>
+          ${e.observacao || ""}
+          <br>
           <small>
-            ${new Date(e.criado_em).toLocaleString()} – ${e.criado_por}
+            ${e.criado_em ? new Date(e.criado_em).toLocaleString() : ""} – ${e.criado_por}
           </small>
         </div>
       `;
@@ -149,7 +150,8 @@ window.finalizarPedido = async function (id) {
   await supabase.from("pedido_eventos").insert([{
     pedido_id: id,
     evento: "Pedido finalizado pela loja de origem",
-    criado_por: usuarioLogado.email
+    criado_por: usuarioLogado.email,
+    criado_em: new Date().toISOString()
   }]);
 
   alert("Pedido finalizado com sucesso!");

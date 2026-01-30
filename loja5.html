@@ -3,10 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <title>Loja 5 - Oficina do Minuto</title>
+  <style>
+    .card { border:1px solid #ccc; padding:12px; margin-bottom:12px; }
+    textarea { width:100%; }
+    button { margin-top:6px; margin-right:6px; }
+  </style>
 </head>
 <body>
   <h2>Pedidos Loja 5 (Lavanderia e Sapataria)</h2>
-  <div id="pedidos"></div>
+
+  <!-- Pedidos entregues na Loja 5 -->
+  <section>
+    <h3>Pedidos recebidos</h3>
+    <div id="pedidosRecebidos"></div>
+  </section>
+
+  <!-- Pedidos em serviço -->
+  <section>
+    <h3>Pedidos em serviço</h3>
+    <div id="pedidosEmServico"></div>
+  </section>
+
+  <!-- Pedidos aguardando retorno -->
+  <section>
+    <h3>Pedidos prontos para transporte</h3>
+    <div id="pedidosProntosRetorno"></div>
+  </section>
 
   <script type="module" src="js/loja5.js"></script>
 </body>

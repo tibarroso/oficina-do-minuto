@@ -16,7 +16,7 @@
   <h2>Criar Pedido</h2>
 
   <label for="tipo">Tipo de serviço:</label><br>
-  <select id="tipo">
+  <select id="tipo" name="tipo">
     <option value="Lavanderia">Lavanderia</option>
     <option value="Sapataria">Sapataria</option>
     <option value="Costura">Costura</option>
@@ -24,22 +24,20 @@
   </select>
   <br><br>
 
-  <label for="orcamento">
-    <input type="checkbox" id="orcamento">
+  <label>
+    <input type="checkbox" id="orcamento" name="orcamento">
     Orçamento?
   </label>
   <br><br>
 
-  <label for="observacao">
-    Observação (Ticket / Nº do saco):
-  </label><br>
+  <label for="observacao">Observação (Ticket / Nº do saco):</label><br>
   <textarea
     id="observacao"
+    name="observacao"
     rows="3"
     style="width:100%;"
     placeholder="Ex: Ticket 45821 - Saco nº 12"
   ></textarea>
-
   <br><br>
 
   <button id="btnCriarPedido">Criar Pedido</button>
@@ -54,8 +52,8 @@
   <h2>Meus Pedidos</h2>
 
   <div class="filtros">
-    <label>Status:</label>
-    <select id="filtroStatus">
+    <label for="filtroStatus">Status:</label>
+    <select id="filtroStatus" name="filtroStatus">
       <option value="">Todos</option>
       <option value="Aguardando coleta">Aguardando coleta</option>
       <option value="Em transporte">Em transporte</option>

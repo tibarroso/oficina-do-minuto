@@ -48,7 +48,9 @@ async function carregarPedidos() {
         <strong>OS:</strong> ${p.id}<br>
         <strong>Loja origem:</strong> ${p.loja_origem}<br>
         <strong>Serviço:</strong> ${p.tipo_servico}<br>
-        <strong>Status:</strong> ${p.status}<br><br>
+        <strong>Status:</strong> ${p.status}<br>
+        <strong>Observação da loja origem:</strong><br>
+        <textarea rows="2" style="width:100%;" readonly>${p.obs_loja_origem || "<em>Não informado</em>"}</textarea><br><br>
 
         <label>Observações Loja 5</label><br>
         <textarea id="obs-${p.id}" rows="3" style="width:100%;">${p.obs_loja5 || ""}</textarea><br><br>
@@ -67,7 +69,7 @@ async function carregarPedidos() {
 }
 
 // ===============================
-// Salvar observação
+// Salvar observação da Loja 5
 // ===============================
 window.salvarObservacao = async (id) => {
   const texto = document.getElementById(`obs-${id}`).value;
@@ -90,7 +92,7 @@ window.salvarObservacao = async (id) => {
 };
 
 // ===============================
-// Upload foto
+// Upload de fotos
 // ===============================
 window.uploadFoto = async (id, tipo) => {
   const input = document.getElementById(`${tipo}-${id}`);
@@ -109,11 +111,17 @@ window.uploadFoto = async (id, tipo) => {
     return;
   }
 
+  const { data } = supabase.storage.from("fotos").getPublicUrl(path);
+
+  // Atualiza URL da foto no pedido
+  const campo = tipo === "antes" ? "foto_antes" : "foto_depois";
+  await supabase.from("pedidos").update({ [campo]: data.publicUrl }).eq("id", id);
+
   alert("Foto enviada com sucesso!");
 };
 
 // ===============================
-// Concluir serviço (RETORNO)
+// Concluir serviço (retorno)
 // ===============================
 window.concluirServico = async (id) => {
   const { error } = await supabase

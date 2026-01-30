@@ -40,9 +40,10 @@ btnCriarPedido.addEventListener("click", async () => {
   const tipo = tipoInput.value;
   const orcamento = orcamentoInput.checked;
   const observacao = observacaoInput.value.trim();
-
-  // Garantir data de criação
   const criadoEm = new Date().toISOString();
+
+  // Status inicial correto: sempre começa na loja de origem
+  const statusInicial = orcamento ? "Aguardando avaliação" : "Aguardando coleta";
 
   const { data, error } = await supabase
     .from("pedidos")
@@ -50,7 +51,7 @@ btnCriarPedido.addEventListener("click", async () => {
       loja_origem: usuarioLogado.email,
       tipo_servico: tipo,
       eh_orcamento: orcamento,
-      status: orcamento ? "Aguardando avaliação" : "Aguardando coleta",
+      status: statusInicial,
       obs_loja_origem: observacao,
       criado_em: criadoEm
     })
@@ -58,17 +59,17 @@ btnCriarPedido.addEventListener("click", async () => {
     .single();
 
   if (error) {
-    console.error(error);
+    console.error("Erro ao criar pedido:", error);
     alert("Erro ao criar pedido: " + error.message);
     return;
   }
 
   pedidoAtualId = data.id;
 
-  // Registrar evento inicial com a observação
+  // Registrar evento inicial
   await registrarEvento(
     pedidoAtualId,
-    "Pedido criado",
+    "Pedido criado na loja de origem",
     observacao || `Serviço: ${tipo}`
   );
 
@@ -90,15 +91,13 @@ async function uploadFoto(fileInput, tipo) {
   const path = `${tipo}_${pedidoAtualId}_${Date.now()}_${file.name}`;
 
   const { error } = await supabase.storage.from("fotos").upload(path, file);
-
   if (error) {
-    console.error(error);
+    console.error("Erro upload:", error);
     alert("Erro ao enviar foto: " + error.message);
     return;
   }
 
   const { data } = supabase.storage.from("fotos").getPublicUrl(path);
-
   const field = tipo === "antes" ? "foto_antes" : "foto_depois";
 
   await supabase.from("pedidos").update({ [field]: data.publicUrl }).eq("id", pedidoAtualId);

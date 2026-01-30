@@ -1,67 +1,30 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <title>Pedidos - Oficina do Minuto</title>
-  <link rel="stylesheet" href="./css/style.css">
-</head>
-<body>
+const btnCriarPedido = document.getElementById("btnCriarPedido");
 
-<h1>Pedidos - Oficina do Minuto</h1>
+btnCriarPedido.addEventListener("click", async () => {
+  const tipo = document.getElementById("tipo").value;
+  const orcamento = document.getElementById("orcamento").checked;
+  const observacao = document.getElementById("observacao").value.trim();
 
-<!-- ========================= -->
-<!-- Criar novo pedido -->
-<!-- ========================= -->
-<section class="card">
-  <h2>Criar Pedido</h2>
+  if (!tipo) return alert("Selecione o tipo de serviço.");
 
-  <label for="tipo">Tipo de serviço:</label><br>
-  <select id="tipo">
-    <option value="Lavanderia">Lavanderia</option>
-    <option value="Sapataria">Sapataria</option>
-    <option value="Costura">Costura</option>
-    <option value="Bordado">Bordado</option>
-  </select>
-  <br><br>
+  const { data, error } = await supabase
+    .from("pedidos")
+    .insert([{
+      loja_origem: usuarioLogado.email,
+      tipo_servico: tipo,
+      eh_orcamento: orcamento,
+      obs_loja_origem: observacao,
+      status: "Aguardando coleta",
+      criado_em: new Date().toISOString()
+    }]);
 
-  <label>
-    <input type="checkbox" id="orcamento">
-    Orçamento?
-  </label>
-  <br><br>
+  if (error) return alert("Erro ao criar pedido: " + error.message);
 
-  <label for="observacao">Observação (Ticket / Nº do saco):</label><br>
-  <textarea id="observacao" rows="3" style="width:100%;" placeholder="Ex: Ticket 45821 - Saco nº 12"></textarea>
+  alert("Pedido criado com sucesso!");
+  carregarPedidos();
 
-  <br><br>
-  <button id="btnCriarPedido">Criar Pedido</button>
-</section>
-
-<hr>
-
-<!-- ========================= -->
-<!-- Lista de pedidos da loja -->
-<!-- ========================= -->
-<section>
-  <h2>Meus Pedidos</h2>
-
-  <div class="filtros">
-    <label for="filtroStatus">Status:</label>
-    <select id="filtroStatus">
-      <option value="">Todos</option>
-      <option value="Aguardando coleta">Aguardando coleta</option>
-      <option value="Em transporte para Loja 5">Em transporte</option>
-      <option value="Entregue na Loja 5">Na Loja 5</option>
-      <option value="Aguardando retorno do transporte">Retornando do transporte</option>
-      <option value="Finalizado">Finalizado</option>
-      <option value="Retrabalho">Retrabalho</option>
-    </select>
-    <button id="btnFiltrar">Filtrar</button>
-  </div>
-
-  <div id="containerPedidos" class="cards-container"></div>
-</section>
-
-<script type="module" src="./js/pedidos_loja.js"></script>
-</body>
-</html>
+  // Limpar formulário
+  document.getElementById("tipo").value = "";
+  document.getElementById("orcamento").checked = false;
+  document.getElementById("observacao").value = "";
+});

@@ -71,19 +71,28 @@ function renderizarPedidos() {
 
     card.innerHTML = `
       <h3>OS: ${p.id}</h3>
+
       <p><strong>Serviço:</strong> ${p.tipo_servico}</p>
       <p><strong>Orçamento:</strong> ${p.eh_orcamento ? "Sim" : "Não"}</p>
-      <p><strong>Status:</strong> <span class="status">${p.status}</span></p>
 
-      <p><strong>Observação (Ticket / Saco):</strong><br>
-        ${p.obs_loja_origem || "<em>Não informado</em>"}
+      <p>
+        <strong>Status:</strong>
+        <span class="status">${p.status}</span>
       </p>
 
-      <p><strong>Criado em:</strong> ${new Date(p.criado_em).toLocaleString()}</p>
+      <p>
+        <strong>Observação (Ticket / Nº do saco):</strong><br>
+        ${p.obs_loja_origem ? p.obs_loja_origem : "<em>Não informado</em>"}
+      </p>
+
+      <p>
+        <strong>Criado em:</strong>
+        ${new Date(p.criado_em).toLocaleString()}
+      </p>
 
       ${acaoFinalizar}
 
-      <div id="timeline-${p.id}" style="margin-top:10px;"></div>
+      <div id="timeline-${p.id}" class="timeline"></div>
     `;
 
     containerPedidos.appendChild(card);
@@ -104,7 +113,7 @@ async function carregarTimeline(pedidoId) {
   let html = "<strong>Histórico</strong><br>";
 
   if (!data || data.length === 0) {
-    html += "<small>Sem eventos</small>";
+    html += "<small>Sem eventos registrados</small>";
   } else {
     data.forEach(e => {
       html += `
@@ -112,7 +121,7 @@ async function carregarTimeline(pedidoId) {
           <strong>${e.evento}</strong><br>
           ${e.observacao || ""}<br>
           <small>
-            ${new Date(e.criado_em).toLocaleString()} - ${e.criado_por}
+            ${new Date(e.criado_em).toLocaleString()} – ${e.criado_por}
           </small>
         </div>
       `;
@@ -133,7 +142,6 @@ window.finalizarPedido = async function (id) {
     .eq("id", id);
 
   if (error) {
-    console.error(error);
     alert("Erro ao finalizar pedido");
     return;
   }
@@ -149,13 +157,11 @@ window.finalizarPedido = async function (id) {
 };
 
 // ===============================
-// Filtro
+// Eventos
 // ===============================
 btnFiltrar.addEventListener("click", carregarPedidos);
 
-// ===============================
-// Auto refresh (5s)
-// ===============================
+// Auto refresh a cada 5s
 setInterval(() => {
   if (usuarioLogado) carregarPedidos();
 }, 5000);

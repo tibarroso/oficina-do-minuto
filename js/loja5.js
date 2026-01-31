@@ -8,197 +8,126 @@ let usuarioLogado = null;
 (async () => {
   const { data } = await supabase.auth.getUser();
   usuarioLogado = data?.user || null;
-
   if (!usuarioLogado) {
     alert("Usuário não logado!");
     window.location.href = "login.html";
     return;
   }
 
-  carregarPedidosLoja5();
-  setInterval(carregarPedidosLoja5, 5000); // auto refresh
+  carregarTodosPedidos();
+  setInterval(carregarTodosPedidos, 5000); // Atualiza sem recarregar
 })();
 
 // =====================
-// Carregar pedidos para Loja 5
+// Carregar todos os pedidos
 // =====================
-async function carregarPedidosLoja5() {
-  await carregarRecebidos();
-  await carregarEmServico();
-  await carregarProntosRetorno();
+async function carregarTodosPedidos() {
+  await carregarPedidosRecebidos();
+  await carregarPedidosServico();
+  await carregarPedidosRetorno();
 }
 
 // =====================
-// Pedidos recebidos na Loja 5
+// Funções de carregamento
 // =====================
-async function carregarRecebidos() {
-  try {
-    const { data, error } = await supabase
-      .from("pedidos")
-      .select("*")
-      .eq("status", "Entregue na Loja 5")
-      .order("criado_em", { ascending: false });
+async function carregarPedidosRecebidos() {
+  const { data, error } = await supabase
+    .from("pedidos")
+    .select("*")
+    .eq("status", "Entregue na Loja 5")
+    .order("criado_em", { ascending: false });
 
-    if (error) throw error;
+  renderizarPedidos("pedidosRecebidos", data, error);
+}
 
-    const div = document.getElementById("pedidosRecebidos");
-    div.innerHTML = "";
+async function carregarPedidosServico() {
+  const { data, error } = await supabase
+    .from("pedidos")
+    .select("*")
+    .eq("status", "Em serviço")
+    .order("criado_em", { ascending: false });
 
-    if (!data || data.length === 0) {
-      div.innerHTML = "<p>Nenhum pedido recebido.</p>";
-      return;
-    }
+  renderizarPedidos("pedidosEmServico", data, error);
+}
 
-    data.forEach(p => div.appendChild(criarCardLoja5(p, "recebido")));
-  } catch (err) {
-    console.error("Erro ao carregar pedidos recebidos:", err);
+async function carregarPedidosRetorno() {
+  const { data, error } = await supabase
+    .from("pedidos")
+    .select("*")
+    .in("status", ["Aguardando retorno do transporte", "Em transporte para loja de origem"])
+    .order("criado_em", { ascending: false });
+
+  renderizarPedidos("pedidosProntosRetorno", data, error);
+}
+
+// =====================
+// Renderizar pedidos
+// =====================
+async function renderizarPedidos(containerId, pedidos, error) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = "";
+
+  if (error) {
+    container.innerHTML = `<p>Erro ao carregar pedidos: ${error.message}</p>`;
+    return;
+  }
+
+  if (!pedidos || pedidos.length === 0) {
+    container.innerHTML = "<p>Nenhum pedido encontrado.</p>";
+    return;
+  }
+
+  for (const p of pedidos) {
+    const card = document.createElement("div");
+    card.classList.add("card");
+
+    // Status colorido
+    let statusClass = "status-Aguardando";
+    if (p.status.includes("Loja 5")) statusClass = "status-Loja5";
+    else if (p.status.includes("Em serviço")) statusClass = "status-Transporte";
+    else if (p.status === "Finalizado") statusClass = "status-Finalizado";
+    else if (p.status === "Retrabalho") statusClass = "status-Retrabalho";
+
+    // Card HTML
+    card.innerHTML = `
+      <strong>OS:</strong> ${p.id}<br>
+      <strong>Loja:</strong> ${p.loja_origem}<br>
+      <strong>Serviço:</strong> ${p.tipo_servico}<br>
+      <span class="status-tag ${statusClass}">${p.status}</span><br>
+      <strong>Observação:</strong><br><em>${p.obs_loja_origem || "—"}</em>
+      <div class="timeline" id="timeline-${p.id}">
+        <strong>Eventos:</strong>
+      </div>
+    `;
+
+    container.appendChild(card);
+
+    // Carregar timeline de eventos
+    carregarTimeline(p.id);
   }
 }
 
 // =====================
-// Pedidos em serviço
+// Timeline de eventos
 // =====================
-async function carregarEmServico() {
-  try {
-    const { data, error } = await supabase
-      .from("pedidos")
-      .select("*")
-      .eq("status", "Em serviço")
-      .order("criado_em", { ascending: false });
+async function carregarTimeline(pedidoId) {
+  const { data: eventos, error } = await supabase
+    .from("pedido_eventos")
+    .select("*")
+    .eq("pedido_id", pedidoId)
+    .order("criado_em", { ascending: true });
 
-    if (error) throw error;
-
-    const div = document.getElementById("pedidosEmServico");
-    div.innerHTML = "";
-
-    if (!data || data.length === 0) {
-      div.innerHTML = "<p>Nenhum pedido em serviço.</p>";
-      return;
-    }
-
-    data.forEach(p => div.appendChild(criarCardLoja5(p, "emServico")));
-  } catch (err) {
-    console.error("Erro ao carregar pedidos em serviço:", err);
-  }
-}
-
-// =====================
-// Pedidos prontos para transporte (aguardando retorno)
-// =====================
-async function carregarProntosRetorno() {
-  try {
-    const { data, error } = await supabase
-      .from("pedidos")
-      .select("*")
-      .eq("status", "Aguardando retorno do transporte")
-      .order("criado_em", { ascending: false });
-
-    if (error) throw error;
-
-    const div = document.getElementById("pedidosProntosRetorno");
-    div.innerHTML = "";
-
-    if (!data || data.length === 0) {
-      div.innerHTML = "<p>Nenhum pedido pronto para transporte.</p>";
-      return;
-    }
-
-    data.forEach(p => div.appendChild(criarCardLoja5(p, "prontoRetorno")));
-  } catch (err) {
-    console.error("Erro ao carregar pedidos prontos para transporte:", err);
-  }
-}
-
-// =====================
-// Criar Card Loja 5
-// =====================
-function criarCardLoja5(pedido, tipo) {
-  const card = document.createElement("div");
-  card.classList.add("card");
-
-  const statusTag = `<span class="status-tag ${
-    tipo === "recebido" ? "status-Loja5" :
-    tipo === "emServico" ? "status-Transporte" :
-    "status-Transporte"
-  }">${pedido.status}</span>`;
-
-  card.innerHTML = `
-    ${statusTag}
-    <h3>OS: ${pedido.id}</h3>
-    <p><strong>Serviço:</strong> ${pedido.tipo_servico}</p>
-    <p><strong>Loja Origem:</strong> ${pedido.loja_origem}</p>
-    <p><strong>Observação:</strong><br><em>${pedido.obs_loja_origem || "—"}</em></p>
-  `;
-
-  const btn = document.createElement("button");
-
-  switch (tipo) {
-    case "recebido":
-      btn.textContent = "Enviar de volta";
-      btn.onclick = () => iniciarTransporteRetorno(pedido.id);
-      card.appendChild(btn);
-      break;
-    case "emServico":
-      btn.textContent = "Finalizar serviço";
-      btn.onclick = () => finalizarServico(pedido.id);
-      card.appendChild(btn);
-      break;
-    case "prontoRetorno":
-      btn.textContent = "Iniciar transporte de retorno";
-      btn.onclick = () => iniciarTransporteRetorno(pedido.id);
-      card.appendChild(btn);
-      break;
+  const timelineDiv = document.getElementById(`timeline-${pedidoId}`);
+  if (error || !eventos) {
+    timelineDiv.innerHTML += `<p>Erro ao carregar eventos.</p>`;
+    return;
   }
 
-  return card;
-}
-
-// =====================
-// Ações
-// =====================
-async function finalizarServico(id) {
-  await atualizarStatusLoja5(id, "Aguardando retorno do transporte", "Serviço finalizado");
-}
-
-async function iniciarTransporteRetorno(id) {
-  await atualizarStatusLoja5(id, "Em transporte para loja de origem", "Transporte de retorno iniciado");
-}
-
-// =====================
-// Atualizar status + registrar evento
-// =====================
-async function atualizarStatusLoja5(id, status, evento) {
-  try {
-    const { error } = await supabase.from("pedidos").update({ status }).eq("id", id);
-    if (error) throw error;
-
-    await registrarEventoLoja5(id, evento);
-    carregarPedidosLoja5();
-  } catch (err) {
-    console.error(`Erro ao atualizar status do pedido ${id}:`, err);
-    alert("Erro ao atualizar status do pedido");
+  for (const e of eventos) {
+    const item = document.createElement("div");
+    item.classList.add("timeline-item");
+    if (e.evento.toLowerCase().includes("finalizado")) item.classList.add("evento-final");
+    item.innerHTML = `${e.evento} <small>${new Date(e.criado_em).toLocaleString()}</small>`;
+    timelineDiv.appendChild(item);
   }
 }
-
-// =====================
-// Registrar evento
-// =====================
-async function registrarEventoLoja5(pedidoId, evento) {
-  try {
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) return;
-
-    await supabase.from("pedido_eventos").insert([{
-      pedido_id: pedidoId,
-      evento,
-      criado_por: data.user.email,
-      criado_em: new Date().toISOString()
-    }]);
-  } catch (err) {
-    console.error("Erro ao registrar evento:", err);
-  }
-}
-
-// Tornar funções globais para onclick
-window.finalizarServico = finalizarServico;
-window.iniciarTransporteRetorno = iniciarTransporteRetorno;

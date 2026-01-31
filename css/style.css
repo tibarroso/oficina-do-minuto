@@ -3,18 +3,20 @@
 ========================= */
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
   font-family: "Segoe UI", Arial, sans-serif;
-  margin: 0;
-  padding: 16px;
   background: #f4f6f9;
   color: #333;
+  padding: 16px;
 }
 
 h1, h2, h3 {
-  margin: 0 0 12px 0;
+  margin-bottom: 12px;
+  font-weight: 600;
 }
 
 h1 {
@@ -40,6 +42,7 @@ input[type="text"] {
   border-radius: 6px;
   border: 1px solid #ccc;
   font-size: 14px;
+  width: 100%;
 }
 
 /* =========================
@@ -84,7 +87,13 @@ button + button {
   box-shadow: 0 6px 16px rgba(0,0,0,0.08);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
 }
 
 .card h3 {
@@ -92,13 +101,13 @@ button + button {
   margin-bottom: 4px;
 }
 
-.card p {
+.card p, .card em, .card strong {
   font-size: 14px;
-  margin: 2px 0;
 }
 
 .card em {
   color: #666;
+  font-style: normal;
 }
 
 /* =========================
@@ -138,45 +147,43 @@ button + button {
    TIMELINE
 ========================= */
 .timeline {
+  display: flex;
+  justify-content: space-between;
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid #e5e7eb;
 }
 
-.timeline strong {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 14px;
-}
-
-.timeline-item {
+.timeline-step {
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  padding: 4px 0;
+  border-radius: 12px;
+  color: #fff;
   position: relative;
-  padding-left: 16px;
-  margin-bottom: 8px;
-  font-size: 13px;
 }
 
-.timeline-item::before {
+.timeline-step::before {
   content: "";
   position: absolute;
-  left: 0;
-  top: 4px;
-  width: 8px;
-  height: 8px;
-  background: #2563eb;
-  border-radius: 50%;
+  top: 50%;
+  left: -50%;
+  width: 100%;
+  height: 4px;
+  background-color: #ddd;
+  z-index: -1;
 }
 
-.timeline-item small {
-  display: block;
-  color: #666;
-  font-size: 11px;
-  margin-top: 2px;
+.timeline-step:first-child::before {
+  content: none;
 }
 
-.timeline-item.evento-final::before {
-  background: #22c55e;
-}
+.step-Aguardando { background-color: #f59e0b; }
+.step-Transporte { background-color: #0ea5e9; }
+.step-Loja5 { background-color: #6366f1; }
+.step-Finalizado { background-color: #22c55e; }
+.step-Retrabalho { background-color: #ef4444; }
 
 /* =========================
    IMAGENS
@@ -207,6 +214,10 @@ section {
     font-size: 20px;
   }
 
+  .cards-container {
+    grid-template-columns: 1fr;
+  }
+
   .card {
     padding: 14px;
   }
@@ -218,5 +229,13 @@ section {
 
   button + button {
     margin-left: 0;
+  }
+
+  .timeline {
+    flex-direction: column;
+  }
+
+  .timeline-step::before {
+    display: none;
   }
 }

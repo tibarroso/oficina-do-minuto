@@ -17,6 +17,7 @@
 
   <label for="tipo">Tipo de serviço:</label><br>
   <select id="tipo">
+    <option value="">Selecione</option>
     <option value="Lavanderia">Lavanderia</option>
     <option value="Sapataria">Sapataria</option>
     <option value="Costura">Costura</option>
@@ -31,7 +32,12 @@
   <br><br>
 
   <label for="observacao">Observação (Ticket / Nº do saco):</label><br>
-  <textarea id="observacao" rows="3" style="width:100%;" placeholder="Ex: Ticket 45821 - Saco nº 12"></textarea>
+  <textarea
+    id="observacao"
+    rows="3"
+    style="width:100%;"
+    placeholder="Ex: Ticket 45821 - Saco nº 12"
+  ></textarea>
 
   <br><br>
   <button id="btnCriarPedido">Criar Pedido</button>
@@ -49,13 +55,25 @@
     <label for="filtroStatus">Status:</label>
     <select id="filtroStatus">
       <option value="">Todos</option>
+
+      <!-- Ida -->
       <option value="Aguardando coleta">Aguardando coleta</option>
-      <option value="Em transporte para Loja 5">Em transporte</option>
-      <option value="Entregue na Loja 5">Na Loja 5</option>
-      <option value="Aguardando retorno do transporte">Retornando do transporte</option>
+      <option value="Em transporte para Loja 5">Em transporte (ida)</option>
+      <option value="Entregue na Loja 5">Recebido na Loja 5</option>
+
+      <!-- Serviço -->
+      <option value="Em serviço">Em serviço</option>
+
+      <!-- Volta -->
+      <option value="Aguardando retorno do transporte">Aguardando retorno</option>
+      <option value="Em transporte para loja de origem">Em transporte (volta)</option>
+      <option value="Recebido na loja de origem">Recebido na loja de origem</option>
+
+      <!-- Encerramento -->
       <option value="Finalizado">Finalizado</option>
       <option value="Retrabalho">Retrabalho</option>
     </select>
+
     <button id="btnFiltrar">Filtrar</button>
   </div>
 

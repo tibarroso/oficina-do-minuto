@@ -13,7 +13,7 @@ async function carregarPedidos() {
       .from("pedidos")
       .select("*")
       .in("status", ["Entregue na Loja 5", "Em serviço"]) // Status para pedidos entregues
-      .order("criado_em", { ascending: false });
+      .order("criado_em", { ascending: false }); // Ordenar do mais recente para o mais antigo
 
     if (error) throw error;
 

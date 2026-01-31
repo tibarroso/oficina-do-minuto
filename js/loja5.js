@@ -1,133 +1,85 @@
 import { supabase } from "./supabase.js";
 
-let usuarioLogado = null;
+const form = document.getElementById("formLoja5");
+const containerPedidos = document.getElementById("containerPedidos");
 
-// =====================
-// Inicialização
-// =====================
-(async () => {
-  const { data } = await supabase.auth.getUser();
-  usuarioLogado = data?.user || null;
-  if (!usuarioLogado) {
-    alert("Usuário não logado!");
-    window.location.href = "login.html";
+// Evento de envio do formulário para criar pedido
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const tipoServico = document.getElementById("tipoServico").value;
+  const observacaoLoja5 = document.getElementById("observacaoLoja5").value;
+
+  if (!tipoServico) {
+    alert("Selecione o tipo de serviço.");
     return;
   }
 
-  carregarTodosPedidos();
-  setInterval(carregarTodosPedidos, 5000); // Atualiza sem recarregar
-})();
+  try {
+    const { data, error } = await supabase
+      .from("pedidos")
+      .insert([
+        {
+          tipo_servico: tipoServico,
+          obs_loja5: observacaoLoja5,
+          status: "Entregue na Loja 5",
+          criado_em: new Date().toISOString(),
+        },
+      ]);
 
-// =====================
-// Carregar todos os pedidos
-// =====================
-async function carregarTodosPedidos() {
-  await carregarPedidosRecebidos();
-  await carregarPedidosServico();
-  await carregarPedidosRetorno();
-}
+    if (error) {
+      console.error("Erro ao criar pedido:", error);
+      alert("Erro ao criar pedido.");
+      return;
+    }
 
-// =====================
-// Funções de carregamento
-// =====================
-async function carregarPedidosRecebidos() {
-  const { data, error } = await supabase
-    .from("pedidos")
-    .select("*")
-    .eq("status", "Entregue na Loja 5")
-    .order("criado_em", { ascending: false });
-
-  renderizarPedidos("pedidosRecebidos", data, error);
-}
-
-async function carregarPedidosServico() {
-  const { data, error } = await supabase
-    .from("pedidos")
-    .select("*")
-    .eq("status", "Em serviço")
-    .order("criado_em", { ascending: false });
-
-  renderizarPedidos("pedidosEmServico", data, error);
-}
-
-async function carregarPedidosRetorno() {
-  const { data, error } = await supabase
-    .from("pedidos")
-    .select("*")
-    .in("status", ["Aguardando retorno do transporte", "Em transporte para loja de origem"])
-    .order("criado_em", { ascending: false });
-
-  renderizarPedidos("pedidosProntosRetorno", data, error);
-}
-
-// =====================
-// Renderizar pedidos
-// =====================
-async function renderizarPedidos(containerId, pedidos, error) {
-  const container = document.getElementById(containerId);
-  container.innerHTML = "";
-
-  if (error) {
-    container.innerHTML = `<p>Erro ao carregar pedidos: ${error.message}</p>`;
-    return;
+    alert("Pedido criado com sucesso!");
+    form.reset();
+    carregarPedidos();
+  } catch (err) {
+    console.error("Erro inesperado:", err);
+    alert("Erro inesperado ao criar pedido.");
   }
+});
 
-  if (!pedidos || pedidos.length === 0) {
-    container.innerHTML = "<p>Nenhum pedido encontrado.</p>";
-    return;
-  }
+// Função para carregar e listar pedidos da Loja 5
+async function carregarPedidos() {
+  try {
+    const { data, error } = await supabase
+      .from("pedidos")
+      .select("*")
+      .eq("status", "Entregue na Loja 5")
+      .order("criado_em", { ascending: false });
 
-  for (const p of pedidos) {
-    const card = document.createElement("div");
-    card.classList.add("card");
+    if (error) {
+      console.error("Erro ao carregar pedidos:", error);
+      containerPedidos.innerHTML = "<p>Erro ao carregar pedidos.</p>";
+      return;
+    }
 
-    // Status colorido
-    let statusClass = "status-Aguardando";
-    if (p.status.includes("Loja 5")) statusClass = "status-Loja5";
-    else if (p.status.includes("Em serviço")) statusClass = "status-Transporte";
-    else if (p.status === "Finalizado") statusClass = "status-Finalizado";
-    else if (p.status === "Retrabalho") statusClass = "status-Retrabalho";
+    if (!data.length) {
+      containerPedidos.innerHTML = "<p>Nenhum pedido encontrado.</p>";
+      return;
+    }
 
-    // Card HTML
-    card.innerHTML = `
-      <strong>OS:</strong> ${p.id}<br>
-      <strong>Loja:</strong> ${p.loja_origem}<br>
-      <strong>Serviço:</strong> ${p.tipo_servico}<br>
-      <span class="status-tag ${statusClass}">${p.status}</span><br>
-      <strong>Observação:</strong><br><em>${p.obs_loja_origem || "—"}</em>
-      <div class="timeline" id="timeline-${p.id}">
-        <strong>Eventos:</strong>
-      </div>
-    `;
+    containerPedidos.innerHTML = "";
 
-    container.appendChild(card);
-
-    // Carregar timeline de eventos
-    carregarTimeline(p.id);
+    data.forEach((pedido) => {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <strong>OS:</strong> ${pedido.id}<br>
+        <strong>Serviço:</strong> ${pedido.tipo_servico}<br>
+        <strong>Observação Loja 5:</strong><br><em>${pedido.obs_loja5 || "—"}</em>
+        <br><small>Criado em: ${new Date(pedido.criado_em).toLocaleString()}</small>
+      `;
+      containerPedidos.appendChild(card);
+    });
+  } catch (err) {
+    console.error("Erro inesperado ao carregar pedidos:", err);
+    containerPedidos.innerHTML = "<p>Erro inesperado ao carregar pedidos.</p>";
   }
 }
 
-// =====================
-// Timeline de eventos
-// =====================
-async function carregarTimeline(pedidoId) {
-  const { data: eventos, error } = await supabase
-    .from("pedido_eventos")
-    .select("*")
-    .eq("pedido_id", pedidoId)
-    .order("criado_em", { ascending: true });
-
-  const timelineDiv = document.getElementById(`timeline-${pedidoId}`);
-  if (error || !eventos) {
-    timelineDiv.innerHTML += `<p>Erro ao carregar eventos.</p>`;
-    return;
-  }
-
-  for (const e of eventos) {
-    const item = document.createElement("div");
-    item.classList.add("timeline-item");
-    if (e.evento.toLowerCase().includes("finalizado")) item.classList.add("evento-final");
-    item.innerHTML = `${e.evento} <small>${new Date(e.criado_em).toLocaleString()}</small>`;
-    timelineDiv.appendChild(item);
-  }
-}
+// Carrega os pedidos assim que a página carrega
+carregarPedidos();

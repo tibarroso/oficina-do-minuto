@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pedidos - Oficina do Minuto</title>
+
+  <!-- CSS global do sistema -->
   <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
@@ -47,8 +49,10 @@
 <!-- ========================= -->
 <!-- FILTROS DE PEDIDOS -->
 <!-- ========================= -->
-<section class="filtros">
-  <label for="filtroStatus">Filtrar por Status:</label>
+<section class="filtros card">
+  <h2>Filtrar Pedidos</h2>
+
+  <label for="filtroStatus">Status:</label>
   <select id="filtroStatus">
     <option value="">Todos</option>
     <option value="Aguardando coleta">Aguardando coleta</option>
@@ -74,6 +78,7 @@
   </div>
 </section>
 
+<!-- JS do pedidos -->
 <script type="module" src="./js/pedidos_loja.js"></script>
 </body>
 </html>

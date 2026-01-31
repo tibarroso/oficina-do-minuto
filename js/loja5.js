@@ -38,14 +38,22 @@ function criarCardPedido(pedido) {
   const card = document.createElement("div");
   card.className = "card";
 
+  // Mapeia o status para classe CSS
+  const statusMap = {
+    "Entregue na Loja 5": "status-Entregue",
+    "Em serviço": "status-EmServico",
+    "Pronto para transporte": "status-ProntoTransporte",
+  };
+  const statusClass = statusMap[pedido.status] || "";
+
   card.innerHTML = `
     <strong>OS:</strong> ${pedido.id}<br>
     <strong>Serviço:</strong> ${pedido.tipo_servico}<br>
-    <strong>Status:</strong> ${pedido.status}<br>
-    
+    <span class="status-tag ${statusClass}">${pedido.status}</span><br>
+
     <label for="obs_${pedido.id}"><strong>Observação Loja 5:</strong></label><br>
-    <textarea id="obs_${pedido.id}" rows="3">${pedido.obs_loja5 || ""}</textarea><br>
-    
+    <textarea id="obs_${pedido.id}" placeholder="Digite uma observação">${pedido.obs_loja5 || ""}</textarea><br>
+
     <label for="status_${pedido.id}"><strong>Alterar Status:</strong></label><br>
     <select id="status_${pedido.id}">
       <option value="Entregue na Loja 5" ${pedido.status === "Entregue na Loja 5" ? "selected" : ""}>Entregue na Loja 5</option>

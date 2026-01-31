@@ -49,7 +49,7 @@ async function carregarEmTransporte() {
   const { data, error } = await supabase
     .from("pedidos")
     .select("*")
-    .in("status", ["Em transporte para Loja 5", "Em transporte para loja de origem"])
+    .in("status", ["Em transporte para Loja 5", "Em transporte para loja de origem"]) // Incluindo os pedidos "Em transporte para loja de origem"
     .order("criado_em", { ascending: false });
 
   if (error) {

@@ -11,7 +11,7 @@ async function carregarPedidos() {
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
-      .in("status", ["Entregue na Loja 5", "Em serviço"])
+      .in("status", ["Entregue na Loja 5", "Em serviço", "Pronto para transporte"])  // Adicionado "Pronto para transporte"
       .order("criado_em", { ascending: false });
 
     if (error) throw error;
@@ -44,7 +44,8 @@ function criarCardPedido(pedido) {
   const statusMap = {
     "Entregue na Loja 5": "status-Loja5",
     "Em serviço": "status-Transporte",
-    "Pronto para transporte": "status-Finalizado"
+    "Pronto para transporte": "status-Finalizado",
+    "Aguardando coleta": "status-Aguardando"
   };
   const statusClass = statusMap[pedido.status] || "status-Aguardando";
 
@@ -95,6 +96,14 @@ window.atualizarPedido = async function(pedidoId) {
     alert("Erro inesperado ao atualizar pedido.");
   }
 };
+
+// =========================
+// FILTRO DE PEDIDOS
+// =========================
+document.getElementById("btnFiltrar").addEventListener("click", () => {
+  const filtro = document.getElementById("filtroStatus").value;
+  carregarPedidos(filtro);
+});
 
 // =========================
 // AUTO-ATUALIZAÇÃO

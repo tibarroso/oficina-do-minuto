@@ -102,13 +102,15 @@ function criarCard(pedido, tipo) {
   const card = document.createElement("div");
   card.classList.add("card");
 
-  let obs = pedido.obs_loja_origem ? `<strong>Observação:</strong><br><em>${pedido.obs_loja_origem}</em><br>` : "";
+  let obs = pedido.obs_loja_origem ? `<strong>Observação Loja de Origem:</strong><br><em>${pedido.obs_loja_origem}</em><br>` : "";
+  let obsLoja5 = pedido.obs_loja5 ? `<strong>Observação Loja 5:</strong><br><em>${pedido.obs_loja5}</em><br>` : "";
 
   card.innerHTML = `
     <strong>OS:</strong> ${pedido.id}<br>
     <strong>Loja:</strong> ${pedido.loja_origem}<br>
     <strong>Serviço:</strong> ${pedido.tipo_servico}<br>
     ${obs}
+    ${obsLoja5}
     <span class="status-tag status-${statusClasse(pedido.status)}">${pedido.status}</span>
   `;
 

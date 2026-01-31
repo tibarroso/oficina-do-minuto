@@ -34,7 +34,7 @@ async function verificarLogin() {
 // ===============================
 // Criar pedido
 // ===============================
-btnCriarPedido.addEventListener("click", async () => {
+btnCriarPedido?.addEventListener("click", async () => {
   if (!usuarioLogado) {
     alert("Usuário não logado!");
     return;
@@ -43,25 +43,29 @@ btnCriarPedido.addEventListener("click", async () => {
   const tipo = tipoInput.value.trim();
   const orcamento = orcamentoInput.checked;
   const observacao = observacaoInput.value.trim();
-  const criadoEm = new Date().toISOString();
 
   if (!tipo) {
-    return alert("Selecione o tipo de serviço.");
+    alert("Selecione o tipo de serviço.");
+    return;
   }
 
-  const statusInicial = orcamento ? "Aguardando avaliação" : "Aguardando coleta";
+  /**
+   * STATUS PADRONIZADO
+   * ⚠️ NÃO usar status que não existam no fluxo
+   */
+  const statusInicial = "Aguardando coleta";
 
   try {
     const { data, error } = await supabase
       .from("pedidos")
-      .insert({
+      .insert([{
         loja_origem: usuarioLogado.email,
         tipo_servico: tipo,
         eh_orcamento: orcamento,
         status: statusInicial,
         obs_loja_origem: observacao || null,
-        criado_em: criadoEm
-      })
+        criado_em: new Date().toISOString()
+      }])
       .select()
       .single();
 
@@ -69,14 +73,20 @@ btnCriarPedido.addEventListener("click", async () => {
 
     pedidoAtualId = data.id;
 
-    // Registrar evento inicial
+    // Evento inicial
     await registrarEvento(
       pedidoAtualId,
-      "Pedido criado na loja de origem",
+      "Pedido criado",
       observacao || `Serviço: ${tipo}`
     );
 
     alert(`Pedido criado com sucesso!\nOS: ${pedidoAtualId}`);
+
+    // Limpar formulário
+    tipoInput.value = "";
+    orcamentoInput.checked = false;
+    observacaoInput.value = "";
+
   } catch (err) {
     console.error("Erro ao criar pedido:", err);
     alert("Erro ao criar pedido: " + err.message);
@@ -93,19 +103,32 @@ async function uploadFoto(fileInput, tipo) {
   }
 
   const file = fileInput.files[0];
-  if (!file) return alert("Selecione uma foto!");
+  if (!file) {
+    alert("Selecione uma foto!");
+    return;
+  }
 
   const path = `${tipo}_${pedidoAtualId}_${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
 
   try {
-    const { error: uploadError } = await supabase.storage.from("fotos").upload(path, file);
+    const { error: uploadError } = await supabase
+      .storage
+      .from("fotos")
+      .upload(path, file);
 
     if (uploadError) throw uploadError;
 
-    const { data: urlData } = supabase.storage.from("fotos").getPublicUrl(path);
+    const { data: urlData } = supabase
+      .storage
+      .from("fotos")
+      .getPublicUrl(path);
+
     const field = tipo === "antes" ? "foto_antes" : "foto_depois";
 
-    await supabase.from("pedidos").update({ [field]: urlData.publicUrl }).eq("id", pedidoAtualId);
+    await supabase
+      .from("pedidos")
+      .update({ [field]: urlData.publicUrl })
+      .eq("id", pedidoAtualId);
 
     await registrarEvento(
       pedidoAtualId,
@@ -115,7 +138,7 @@ async function uploadFoto(fileInput, tipo) {
 
     alert("Foto enviada com sucesso!");
   } catch (err) {
-    console.error("Erro upload:", err);
+    console.error("Erro ao enviar foto:", err);
     alert("Erro ao enviar foto: " + err.message);
   }
 }
@@ -123,17 +146,19 @@ async function uploadFoto(fileInput, tipo) {
 // ===============================
 // Registrar evento
 // ===============================
-async function registrarEvento(pedidoId, evento, observacao) {
+async function registrarEvento(pedidoId, evento, observacao = "") {
   if (!usuarioLogado) return;
 
   try {
-    await supabase.from("pedido_eventos").insert([{
-      pedido_id: pedidoId,
-      evento,
-      observacao,
-      criado_por: usuarioLogado.email,
-      criado_em: new Date().toISOString()
-    }]);
+    await supabase
+      .from("pedido_eventos")
+      .insert([{
+        pedido_id: pedidoId,
+        evento,
+        observacao,
+        criado_por: usuarioLogado.email,
+        criado_em: new Date().toISOString()
+      }]);
   } catch (err) {
     console.error("Erro ao registrar evento:", err);
   }
@@ -142,8 +167,13 @@ async function registrarEvento(pedidoId, evento, observacao) {
 // ===============================
 // Eventos de botão
 // ===============================
-btnUploadAntes?.addEventListener("click", () => uploadFoto(fotoAntesInput, "antes"));
-btnUploadDepois?.addEventListener("click", () => uploadFoto(fotoDepoisInput, "depois"));
+btnUploadAntes?.addEventListener("click", () =>
+  uploadFoto(fotoAntesInput, "antes")
+);
+
+btnUploadDepois?.addEventListener("click", () =>
+  uploadFoto(fotoDepoisInput, "depois")
+);
 
 // ===============================
 // Inicialização

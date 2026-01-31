@@ -10,13 +10,17 @@
 
 <h1>Pedidos - Oficina do Minuto</h1>
 
+<p style="text-align:center; color:#666; margin-bottom:20px;">
+  Crie, filtre e acompanhe todos os pedidos da loja
+</p>
+
 <!-- ========================= -->
 <!-- CRIAR NOVO PEDIDO -->
 <!-- ========================= -->
 <section class="card">
   <h2>Criar Pedido</h2>
 
-  <label for="tipo">Tipo de serviço</label>
+  <label for="tipo">Tipo de serviço:</label>
   <select id="tipo">
     <option value="">Selecione</option>
     <option value="Lavanderia">Lavanderia</option>
@@ -25,60 +29,49 @@
     <option value="Bordado">Bordado</option>
   </select>
 
-  <label style="margin-top:10px; display:block;">
+  <label>
     <input type="checkbox" id="orcamento">
     Orçamento?
   </label>
 
-  <label for="observacao" style="margin-top:10px; display:block;">
-    Observação (Ticket / Nº do saco)
-  </label>
+  <label for="observacao">Observação (Ticket / Nº do saco):</label>
   <textarea
     id="observacao"
     rows="3"
     placeholder="Ex: Ticket 45821 - Saco nº 12"
   ></textarea>
 
-  <button id="btnCriarPedido" style="margin-top:12px;">
-    Criar Pedido
-  </button>
+  <button id="btnCriarPedido">Criar Pedido</button>
 </section>
 
 <!-- ========================= -->
-<!-- MEUS PEDIDOS -->
+<!-- FILTROS DE PEDIDOS -->
+<!-- ========================= -->
+<section class="filtros">
+  <label for="filtroStatus">Filtrar por Status:</label>
+  <select id="filtroStatus">
+    <option value="">Todos</option>
+    <option value="Aguardando coleta">Aguardando coleta</option>
+    <option value="Em transporte para Loja 5">Em transporte (ida)</option>
+    <option value="Entregue na Loja 5">Recebido na Loja 5</option>
+    <option value="Em serviço">Em serviço</option>
+    <option value="Aguardando retorno do transporte">Aguardando retorno</option>
+    <option value="Em transporte para loja de origem">Em transporte (volta)</option>
+    <option value="Recebido na loja de origem">Recebido na loja de origem</option>
+    <option value="Finalizado">Finalizado</option>
+    <option value="Retrabalho">Retrabalho</option>
+  </select>
+  <button id="btnFiltrar">Filtrar</button>
+</section>
+
+<!-- ========================= -->
+<!-- LISTA DE PEDIDOS -->
 <!-- ========================= -->
 <section>
   <h2>Meus Pedidos</h2>
-
-  <div class="filtros">
-    <label for="filtroStatus">Status</label>
-
-    <select id="filtroStatus">
-      <option value="">Todos</option>
-
-      <!-- Ida -->
-      <option value="Aguardando coleta">Aguardando coleta</option>
-      <option value="Em transporte para Loja 5">Em transporte (ida)</option>
-      <option value="Entregue na Loja 5">Recebido na Loja 5</option>
-
-      <!-- Serviço -->
-      <option value="Em serviço">Em serviço</option>
-
-      <!-- Volta -->
-      <option value="Aguardando retorno do transporte">Aguardando retorno</option>
-      <option value="Em transporte para loja de origem">Em transporte (volta)</option>
-      <option value="Recebido na loja de origem">Recebido na loja de origem</option>
-
-      <!-- Encerramento -->
-      <option value="Finalizado">Finalizado</option>
-      <option value="Retrabalho">Retrabalho</option>
-    </select>
-
-    <button id="btnFiltrar">Filtrar</button>
+  <div id="containerPedidos" class="cards-container">
+    <p>Carregando pedidos...</p>
   </div>
-
-  <!-- Cards dos pedidos -->
-  <div id="containerPedidos" class="cards-container"></div>
 </section>
 
 <script type="module" src="./js/pedidos_loja.js"></script>

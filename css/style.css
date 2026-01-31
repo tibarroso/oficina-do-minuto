@@ -329,3 +329,32 @@ section {
     width: 100%;
   }
 }
+
+.timeline-item {
+  margin-bottom: 6px;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.timeline-item strong {
+  display: block;
+  color: #2563eb;
+}
+
+.timeline-item small {
+  display: block;
+  color: #666;
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.card p {
+  margin: 6px 0;
+}
+
+.card .os-id {
+  font-family: monospace;
+  font-size: 13px;
+  color: #555;
+  word-break: break-word;
+}

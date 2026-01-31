@@ -2,100 +2,135 @@ import { supabase } from "./supabase.js";
 
 let usuarioLogado = null;
 
+// =====================
+// INICIALIZAÇÃO
+// =====================
 export async function carregarPedidos() {
-  await carregarAguardando();    
-  await carregarEmTransporte();  
-  await carregarRetorno();       
+  await carregarAguardando();     // Ida
+  await carregarEmTransporte();   // Ida e Volta
+  await carregarRetorno();        // Volta
 }
 
 // =====================
-// AGUARDANDO COLETA
+// AGUARDANDO COLETA (IDA)
 // =====================
 async function carregarAguardando() {
-  const { data, error } = await supabase
-    .from("pedidos")
-    .select("*")
-    .eq("status", "Aguardando coleta")
-    .order("criado_em", { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from("pedidos")
+      .select("*")
+      .eq("status", "Aguardando coleta")
+      .order("criado_em", { ascending: false });
 
-  const div = document.getElementById("aguardando");
-  div.innerHTML = "";
+    if (error) throw error;
 
-  if (error || !data.length) return div.innerHTML = "<p>Nenhum pedido aguardando coleta.</p>";
+    const div = document.getElementById("aguardando");
+    div.innerHTML = "";
 
-  data.forEach(p => div.appendChild(criarCard(p, "ida")));
+    if (!data || data.length === 0) {
+      div.innerHTML = "<p>Nenhum pedido aguardando coleta.</p>";
+      return;
+    }
+
+    data.forEach(p => div.appendChild(criarCard(p, "ida")));
+  } catch (err) {
+    console.error("Erro ao carregar pedidos aguardando coleta:", err);
+  }
 }
 
 // =====================
-// EM TRANSPORTE
+// EM TRANSPORTE (IDA ou VOLTA)
 // =====================
 async function carregarEmTransporte() {
-  const { data, error } = await supabase
-    .from("pedidos")
-    .select("*")
-    .in("status", ["Em transporte para Loja 5", "Em transporte para loja de origem"])
-    .order("criado_em", { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from("pedidos")
+      .select("*")
+      .in("status", [
+        "Em transporte para Loja 5",
+        "Em transporte para loja de origem"
+      ])
+      .order("criado_em", { ascending: false });
 
-  const div = document.getElementById("transporte");
-  div.innerHTML = "";
+    if (error) throw error;
 
-  if (error || !data.length) return div.innerHTML = "<p>Nenhum pedido em transporte.</p>";
+    const div = document.getElementById("transporte");
+    div.innerHTML = "";
 
-  data.forEach(p => div.appendChild(criarCard(p, "emTransporte")));
+    if (!data || data.length === 0) {
+      div.innerHTML = "<p>Nenhum pedido em transporte.</p>";
+      return;
+    }
+
+    data.forEach(p => div.appendChild(criarCard(p, "emTransporte")));
+  } catch (err) {
+    console.error("Erro ao carregar pedidos em transporte:", err);
+  }
 }
 
 // =====================
-// AGUARDANDO RETORNO / RETRABALHO
+// AGUARDANDO RETORNO (VOLTA)
 // =====================
 async function carregarRetorno() {
-  const { data, error } = await supabase
-    .from("pedidos")
-    .select("*")
-    .in("status", ["Aguardando retorno do transporte", "Retrabalho"])
-    .order("criado_em", { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from("pedidos")
+      .select("*")
+      .in("status", ["Aguardando retorno do transporte", "Retrabalho"])
+      .order("criado_em", { ascending: false });
 
-  const div = document.getElementById("retorno");
-  div.innerHTML = "";
+    if (error) throw error;
 
-  if (error || !data.length) return div.innerHTML = "<p>Nenhum pedido aguardando retorno ou retrabalho.</p>";
+    const div = document.getElementById("retorno");
+    div.innerHTML = "";
 
-  data.forEach(p => div.appendChild(criarCard(p, "volta")));
+    if (!data || data.length === 0) {
+      div.innerHTML = "<p>Nenhum pedido aguardando retorno.</p>";
+      return;
+    }
+
+    data.forEach(p => div.appendChild(criarCard(p, "volta")));
+  } catch (err) {
+    console.error("Erro ao carregar pedidos aguardando retorno:", err);
+  }
 }
 
 // =====================
-// Criar Card
+// CRIAR CARD DE PEDIDO
 // =====================
 function criarCard(pedido, tipo) {
   const card = document.createElement("div");
   card.classList.add("card");
 
-  // Badge de status
-  let statusClass = "";
-  if (pedido.status.includes("Aguardando")) statusClass = "status-Aguardando";
-  else if (pedido.status.includes("Em transporte")) statusClass = "status-EmTransporte";
-  else if (pedido.status.includes("Entregue") || pedido.status.includes("Recebido")) statusClass = "status-Finalizado";
-  else if (pedido.status.includes("Retrabalho")) statusClass = "status-Retrabalho";
+  // Definir badge de status
+  let statusClasse = "";
+  switch(pedido.status) {
+    case "Aguardando coleta": statusClasse = "status-Aguardando"; break;
+    case "Em transporte para Loja 5":
+    case "Em transporte para loja de origem": statusClasse = "status-Transporte"; break;
+    case "Entregue na Loja 5": statusClasse = "status-Loja5"; break;
+    case "Recebido na loja de origem":
+    case "Finalizado": statusClasse = "status-Finalizado"; break;
+    case "Retrabalho": statusClasse = "status-Retrabalho"; break;
+    default: statusClasse = "status-Aguardando";
+  }
 
-  // Timeline horizontal
-  const timeline = `
+  card.innerHTML = `
+    <span class="status-tag ${statusClasse}">${pedido.status}</span>
+    <h3>OS: ${pedido.id}</h3>
+    <p><strong>Loja:</strong> ${pedido.loja_origem}</p>
+    <p><strong>Serviço:</strong> ${pedido.tipo_servico}</p>
+    <p><strong>Observação:</strong> <em>${pedido.obs_loja_origem || "—"}</em></p>
     <div class="timeline">
-      <div class="timeline-step ${pedido.status.includes("Aguardando") ? "step-Aguardando" : ""}">Aguardando</div>
-      <div class="timeline-step ${pedido.status.includes("Em transporte") ? "step-Transporte" : ""}">Transporte</div>
-      <div class="timeline-step ${pedido.status.includes("Entregue") || pedido.status.includes("Recebido") ? "step-Entregue" : ""}">Entregue</div>
-      <div class="timeline-step ${pedido.status.includes("Retrabalho") ? "step-Retrabalho" : ""}">Retrabalho</div>
+      <div class="timeline-step step-Aguardando">Aguardando</div>
+      <div class="timeline-step step-Transporte">Transporte</div>
+      <div class="timeline-step step-Loja5">Loja 5</div>
+      <div class="timeline-step step-Finalizado">Finalizado</div>
+      <div class="timeline-step step-Retrabalho">Retrabalho</div>
     </div>
   `;
 
-  card.innerHTML = `
-    <strong>OS:</strong> ${pedido.id}<br>
-    <strong>Loja:</strong> ${pedido.loja_origem}<br>
-    <strong>Serviço:</strong> ${pedido.tipo_servico}<br>
-    <strong>Observação:</strong> <em>${pedido.obs_loja_origem || "—"}</em><br>
-    <span class="status-badge ${statusClass}">${pedido.status}</span>
-    ${timeline}<br>
-  `;
-
-  // Botões
+  // Botão de ação
   const btn = document.createElement("button");
 
   switch (tipo) {
@@ -106,60 +141,70 @@ function criarCard(pedido, tipo) {
     case "emTransporte":
       if (pedido.status === "Em transporte para Loja 5") {
         btn.textContent = "Entregar na Loja 5";
-        btn.onclick = () => atualizarStatus(pedido.id, "Entregue na Loja 5", "Pedido entregue na Loja 5");
+        btn.onclick = () => atualizarStatus(pedido.id, "Entregue na Loja 5", "Entregue na Loja 5");
       } else if (pedido.status === "Em transporte para loja de origem") {
         btn.textContent = "Entregar na Loja de Origem";
-        btn.onclick = () => atualizarStatus(pedido.id, "Recebido na loja de origem", "Pedido entregue na Loja de Origem");
+        btn.onclick = () => atualizarStatus(pedido.id, "Recebido na loja de origem", "Entregue na loja de origem");
       }
       break;
     case "volta":
-      if (pedido.status === "Aguardando retorno do transporte") {
+      if(pedido.status === "Aguardando retorno do transporte") {
         btn.textContent = "Iniciar Transporte de Retorno";
         btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para loja de origem", "Transporte de retorno iniciado");
-      } else if (pedido.status === "Retrabalho") {
-        btn.textContent = "Enviar para retrabalho";
+      } else if(pedido.status === "Retrabalho") {
+        btn.textContent = "Enviar para Retrabalho";
         btn.onclick = () => atualizarStatus(pedido.id, "Retrabalho", "Pedido enviado para retrabalho");
       }
       break;
   }
 
-  if (btn.textContent) card.appendChild(btn);
+  card.appendChild(btn);
   return card;
 }
 
 // =====================
-// Atualizar status e registrar evento
+// ATUALIZAR STATUS
 // =====================
 async function atualizarStatus(id, status, evento) {
-  const { error } = await supabase.from("pedidos").update({ status }).eq("id", id);
-  if (error) return alert("Erro ao atualizar status do pedido");
+  try {
+    const { error } = await supabase.from("pedidos").update({ status }).eq("id", id);
+    if (error) throw error;
 
-  await registrarEvento(id, evento);
-  carregarPedidos();
+    await registrarEvento(id, evento);
+    carregarPedidos();
+  } catch (err) {
+    console.error(`Erro ao atualizar status do pedido ${id}:`, err);
+    alert("Erro ao atualizar status do pedido");
+  }
 }
 
 // =====================
-// Registrar evento
+// REGISTRAR EVENTO
 // =====================
 async function registrarEvento(pedidoId, evento) {
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) return;
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) return;
 
-  await supabase.from("pedido_eventos").insert([{
-    pedido_id: pedidoId,
-    evento,
-    criado_por: data.user.email,
-    criado_em: new Date().toISOString()
-  }]);
+    await supabase.from("pedido_eventos").insert([{
+      pedido_id: pedidoId,
+      evento,
+      criado_por: data.user.email,
+      criado_em: new Date().toISOString()
+    }]);
+  } catch (err) {
+    console.error("Erro ao registrar evento:", err);
+  }
 }
 
 // =====================
-// Inicialização
+// EXECUÇÃO INICIAL
 // =====================
 (async () => {
   const { data } = await supabase.auth.getUser();
   usuarioLogado = data?.user || null;
 
+  // Tornar funções globais para onclick
   window.atualizarStatus = atualizarStatus;
 
   carregarPedidos();

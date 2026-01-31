@@ -29,7 +29,7 @@ async function verificarLogin() {
 // ===============================
 const btnCriarPedido = document.getElementById("btnCriarPedido");
 
-btnCriarPedido.addEventListener("click", async () => {
+btnCriarPedido?.addEventListener("click", async () => {
   if (!usuarioLogado) return alert("Usuário não logado.");
 
   const tipo = document.getElementById("tipo").value;
@@ -38,18 +38,24 @@ btnCriarPedido.addEventListener("click", async () => {
 
   if (!tipo) return alert("Selecione o tipo de serviço.");
 
-  const { error } = await supabase.from("pedidos").insert([{
-    loja_origem: usuarioLogado.email,
-    tipo_servico: tipo,
-    eh_orcamento: orcamento,
-    obs_loja_origem: observacao,
-    status: "Aguardando coleta",
-    criado_em: new Date().toISOString()
-  }]);
+  const { data, error } = await supabase
+    .from("pedidos")
+    .insert([{
+      loja_origem: usuarioLogado.email,
+      tipo_servico: tipo,
+      eh_orcamento: orcamento,
+      obs_loja_origem: observacao,
+      status: "Aguardando coleta",
+      criado_em: new Date().toISOString()
+    }])
+    .select()
+    .single();
 
   if (error) return alert("Erro ao criar pedido: " + error.message);
 
-  alert("Pedido criado com sucesso!");
+  await registrarEvento(data.id, "Pedido criado", observacao);
+
+  alert(`Pedido criado com sucesso!\nOS: ${data.id}`);
   carregarPedidos();
 
   document.getElementById("tipo").value = "";
@@ -63,7 +69,7 @@ btnCriarPedido.addEventListener("click", async () => {
 async function carregarPedidos() {
   if (!usuarioLogado) return;
 
-  const filtroStatus = document.getElementById("filtroStatus").value;
+  const filtroStatus = document.getElementById("filtroStatus")?.value;
 
   let query = supabase
     .from("pedidos")
@@ -81,7 +87,7 @@ async function carregarPedidos() {
 }
 
 // ===============================
-// Renderizar pedidos
+// Renderizar pedidos + timeline
 // ===============================
 function renderizarPedidos() {
   const container = document.getElementById("containerPedidos");
@@ -101,9 +107,10 @@ function renderizarPedidos() {
     switch (p.status) {
 
       case "Aguardando coleta":
-        acoes = `<button onclick="enviarParaTransporte('${p.id}')">
-          Enviar para Transporte
-        </button>`;
+        acoes = `
+          <button onclick="enviarParaTransporte('${p.id}')">
+            Enviar para Transporte
+          </button>`;
         break;
 
       case "Em transporte para loja de origem":
@@ -112,12 +119,8 @@ function renderizarPedidos() {
 
       case "Recebido na loja de origem":
         acoes = `
-          <button onclick="finalizarPedido('${p.id}')">
-            Finalizar Pedido
-          </button>
-          <button onclick="retrabalhoPedido('${p.id}')">
-            Retrabalho
-          </button>
+          <button onclick="finalizarPedido('${p.id}')">Finalizar</button>
+          <button onclick="retrabalhoPedido('${p.id}')">Retrabalho</button>
         `;
         break;
     }
@@ -127,11 +130,53 @@ function renderizarPedidos() {
       <p><strong>Serviço:</strong> ${p.tipo_servico}</p>
       <p><strong>Orçamento:</strong> ${p.eh_orcamento ? "Sim" : "Não"}</p>
       <p><strong>Status:</strong> ${p.status}</p>
-      <p><strong>Observação:</strong> ${p.obs_loja_origem || "<em>—</em>"}</p>
+      <p><strong>Observação:</strong> ${p.obs_loja_origem || "—"}</p>
       ${acoes}
+      <div id="timeline-${p.id}" class="timeline"></div>
     `;
 
     container.appendChild(card);
+    carregarTimeline(p.id);
+  });
+}
+
+// ===============================
+// Timeline visual
+// ===============================
+async function carregarTimeline(pedidoId) {
+  const { data, error } = await supabase
+    .from("pedido_eventos")
+    .select("*")
+    .eq("pedido_id", pedidoId)
+    .order("criado_em", { ascending: true });
+
+  const timelineDiv = document.getElementById(`timeline-${pedidoId}`);
+  if (!timelineDiv) return;
+
+  timelineDiv.innerHTML = "<strong>Histórico do Pedido</strong>";
+
+  if (error || !data || data.length === 0) {
+    timelineDiv.innerHTML += "<p><small>Sem eventos registrados</small></p>";
+    return;
+  }
+
+  data.forEach(e => {
+    const final =
+      e.evento.toLowerCase().includes("finalizado") ||
+      e.evento.toLowerCase().includes("recebido na loja de origem");
+
+    const item = document.createElement("div");
+    item.className = `timeline-item ${final ? "evento-final" : ""}`;
+
+    item.innerHTML = `
+      <strong>${e.evento}</strong>
+      ${e.observacao ? `<div>${e.observacao}</div>` : ""}
+      <small>
+        ${new Date(e.criado_em).toLocaleString()} — ${e.criado_por}
+      </small>
+    `;
+
+    timelineDiv.appendChild(item);
   });
 }
 
@@ -171,10 +216,13 @@ window.retrabalhoPedido = async (id) => {
 // ===============================
 // Registrar evento
 // ===============================
-async function registrarEvento(pedidoId, evento) {
+async function registrarEvento(pedidoId, evento, observacao = "") {
+  if (!usuarioLogado) return;
+
   await supabase.from("pedido_eventos").insert([{
     pedido_id: pedidoId,
     evento,
+    observacao,
     criado_por: usuarioLogado.email,
     criado_em: new Date().toISOString()
   }]);
@@ -184,7 +232,7 @@ async function registrarEvento(pedidoId, evento) {
 // Filtro
 // ===============================
 document.getElementById("btnFiltrar")
-  .addEventListener("click", carregarPedidos);
+  ?.addEventListener("click", carregarPedidos);
 
 // Auto refresh
 setInterval(() => {

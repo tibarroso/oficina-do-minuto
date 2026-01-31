@@ -52,18 +52,49 @@ function criarCardPedido(pedido) {
     <span class="status-tag ${statusClass}">${pedido.status}</span><br>
 
     <strong>Observação:</strong><br>
-    <em>${pedido.obs_loja_origem || "Nenhuma observação"}</em>
+    <em>${pedido.obs_loja_origem || "Nenhuma observação"}</em><br>
+
+    <label for="obs_loja5_${pedido.id}"><strong>Observação Loja 5:</strong></label><br>
+    <textarea id="obs_loja5_${pedido.id}" placeholder="Digite uma observação para a Loja 5">${pedido.obs_loja5 || ""}</textarea><br>
+
+    <button onclick="atualizarPedido('${pedido.id}')">Salvar Observação</button>
   `;
 
   return card;
 }
 
 // =========================
+// ATUALIZAR PEDIDO COM A OBSERVAÇÃO DA LOJA 5
+// =========================
+window.atualizarPedido = async function(pedidoId) {
+  const obsLoja5 = document.getElementById(`obs_loja5_${pedidoId}`).value;
+
+  try {
+    const { error } = await supabase
+      .from("pedidos")
+      .update({ obs_loja5: obsLoja5 })
+      .eq("id", pedidoId);
+
+    if (error) {
+      console.error("Erro ao atualizar pedido:", error);
+      alert("Erro ao atualizar pedido.");
+      return;
+    }
+
+    alert("Observação da Loja 5 salva com sucesso!");
+    carregarPedidos();
+  } catch (err) {
+    console.error("Erro inesperado:", err);
+    alert("Erro inesperado ao atualizar pedido.");
+  }
+};
+
+// =========================
 // MAPEAR STATUS PARA CLASSE CSS
 // =========================
 function getStatusClass(status) {
-  if (status.includes("Loja 5")) return "status-Loja5";
-  if (status.includes("Em serviço")) return "status-Transporte";
+  if (status === "Entregue na Loja 5") return "status-Loja5";
+  if (status === "Em serviço") return "status-Transporte";
   if (status === "Finalizado") return "status-Finalizado";
   if (status === "Retrabalho") return "status-Retrabalho";
   return "status-Aguardando";

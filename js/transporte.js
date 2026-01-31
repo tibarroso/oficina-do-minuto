@@ -102,13 +102,24 @@ function criarCard(pedido, tipo) {
   const card = document.createElement("div");
   card.classList.add("card");
 
+  // Renderizar informações básicas
   card.innerHTML = `
     <strong>OS:</strong> ${pedido.id}<br>
     <strong>Loja:</strong> ${pedido.loja_origem}<br>
     <strong>Serviço:</strong> ${pedido.tipo_servico}<br>
-    ${tipo === "ida" ? `<strong>Observação:</strong><br><em>${pedido.obs_loja_origem || "—"}</em><br><br>` : ""}
   `;
 
+  // Mostrar Observação da Loja para todas as etapas (ida, emTransporte, volta)
+  if (["ida", "emTransporte", "volta"].includes(tipo)) {
+    const obs = document.createElement("p");
+    obs.innerHTML = `<strong>Observação da Loja:</strong> <em>${pedido.obs_loja_origem || "—"}</em>`;
+    obs.style.background = "#fff3cd"; // fundo amarelo suave
+    obs.style.padding = "4px 6px";
+    obs.style.borderRadius = "4px";
+    card.appendChild(obs);
+  }
+
+  // Botão de ação
   const btn = document.createElement("button");
 
   switch (tipo) {

@@ -12,7 +12,7 @@ export async function carregarPedidos() {
 }
 
 // =====================
-// AGUARDANDO COLETA (IDA) — inclui orçamento
+// AGUARDANDO COLETA (IDA)
 // =====================
 async function carregarAguardando() {
   try {
@@ -76,7 +76,7 @@ async function carregarRetorno() {
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
-      .in("status", ["Aguardando retorno do transporte"])
+      .eq("status", "Aguardando retorno do transporte")
       .order("criado_em", { ascending: false });
 
     if (error) throw error;
@@ -102,29 +102,31 @@ function criarCard(pedido, tipo) {
   const card = document.createElement("div");
   card.classList.add("card");
 
-  let observacaoHTML = "";
-  if (pedido.obs_loja_origem) {
-    observacaoHTML = `<strong>Observação:</strong><br><em>${pedido.obs_loja_origem}</em><br><br>`;
-  }
+  const observacaoHTML = pedido.obs_loja_origem
+    ? `<strong>Observação:</strong><br><em>${pedido.obs_loja_origem}</em><br><br>`
+    : "";
 
   card.innerHTML = `
     <strong>OS:</strong> ${pedido.id}<br>
     <strong>Loja:</strong> ${pedido.loja_origem}<br>
     <strong>Serviço:</strong> ${pedido.tipo_servico}<br>
     ${observacaoHTML}
-    <strong>Status:</strong> ${pedido.status}
+    <strong>Status:</strong> ${pedido.status}<br><br>
   `;
 
   const btn = document.createElement("button");
 
   switch (tipo) {
     case "ida":
-      btn.textContent = pedido.status === "Aguardando avaliação" 
-        ? "Aguardar Avaliação"
-        : "Iniciar Transporte (Ida)";
-      btn.disabled = pedido.status === "Aguardando avaliação";
-      btn.onclick = () => iniciarTransporteIda(pedido.id);
+      if (pedido.status === "Aguardando avaliação") {
+        btn.textContent = "Aguardando Avaliação";
+        btn.disabled = true;
+      } else {
+        btn.textContent = "Iniciar Transporte (Ida)";
+        btn.onclick = () => iniciarTransporteIda(pedido.id);
+      }
       break;
+
     case "emTransporte":
       if (pedido.status === "Em transporte para Loja 5") {
         btn.textContent = "Entregar na Loja 5";
@@ -134,6 +136,7 @@ function criarCard(pedido, tipo) {
         btn.onclick = () => entregarLojaOrigem(pedido.id);
       }
       break;
+
     case "volta":
       btn.textContent = "Iniciar Transporte de Retorno";
       btn.onclick = () => iniciarTransporteVolta(pedido.id);
@@ -199,13 +202,18 @@ async function registrarEvento(pedidoId, evento) {
 }
 
 // =====================
-// Inicialização
+// Inicialização global
 // =====================
 (async () => {
-  const { data } = await supabase.auth.getUser();
-  usuarioLogado = data?.user || null;
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user) {
+    alert("Usuário não logado!");
+    window.location.href = "login.html";
+    return;
+  }
+  usuarioLogado = data.user;
 
-  // tornar funções acessíveis globalmente para onclick dos botões
+  // tornar funções globais para onclick
   window.iniciarTransporteIda = iniciarTransporteIda;
   window.entregarLoja5 = entregarLoja5;
   window.iniciarTransporteVolta = iniciarTransporteVolta;

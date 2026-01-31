@@ -40,14 +40,36 @@
 <!-- AGUARDANDO RETORNO -->
 <!-- ========================= -->
 <section>
-  <h2>Aguardando Retorno do Transporte</h2>
+  <h2>Aguardando Retorno do Transporte / Retrabalho</h2>
   <div id="retorno" class="cards-container">
     <p>Carregando pedidos...</p>
   </div>
 </section>
 
-<!-- JS do transporte -->
-<script type="module" src="./js/transporte.js"></script>
+<!-- ========================= -->
+<!-- SCRIPT DO TRANSPORTE -->
+<!-- ========================= -->
+<script type="module">
+  import { supabase } from "./js/supabase.js";
+
+  // Funções do transporte
+  import { carregarPedidos } from "./js/transporte.js";
+
+  (async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      alert("Usuário não logado!");
+      window.location.href = "login.html";
+      return;
+    }
+
+    // Carrega pedidos inicialmente
+    carregarPedidos();
+
+    // Atualiza automaticamente a cada 5 segundos
+    setInterval(carregarPedidos, 5000);
+  })();
+</script>
 
 </body>
 </html>

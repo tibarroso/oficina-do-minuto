@@ -1,23 +1,28 @@
 import { supabase } from "./supabase.js";
 
-function abreviarId(id) {
-  if (!id) return "";
-  return id.length > 10 ? id.slice(0, 8) + "..." : id;
-}
-
+// Função para carregar pedidos e exibir na tela
 async function carregarPedidos(filtro = "") {
   const { data, error } = await supabase
     .from("pedidos")
     .select("*")
     .order("criado_em", { ascending: false });
 
+  if (error) {
+    console.error("Erro ao carregar pedidos:", error);
+    const container = document.getElementById("containerPedidos");
+    container.innerHTML = `<p style="color: red;">Erro ao carregar pedidos: ${error.message}</p>`;
+    return;
+  }
+
   let pedidos = data || [];
-  if (filtro) pedidos = pedidos.filter(p => p.status === filtro);
+  if (filtro && filtro !== "") {
+    pedidos = pedidos.filter(p => p.status === filtro);
+  }
 
   const container = document.getElementById("containerPedidos");
   container.innerHTML = "";
 
-  if (!pedidos.length) {
+  if (pedidos.length === 0) {
     container.innerHTML = "<p>Nenhum pedido encontrado.</p>";
     return;
   }
@@ -26,56 +31,59 @@ async function carregarPedidos(filtro = "") {
     const card = document.createElement("div");
     card.className = "card";
 
-    // Status colorido
+    // Definindo a cor da tag status de acordo com o status do pedido
     let statusClass = "status-Aguardando";
     if (p.status.includes("Loja 5")) statusClass = "status-Loja5";
     else if (p.status.includes("Em serviço")) statusClass = "status-Transporte";
     else if (p.status === "Finalizado") statusClass = "status-Finalizado";
     else if (p.status === "Retrabalho") statusClass = "status-Retrabalho";
+    else if (p.status === "Aguardando coleta") statusClass = "status-Aguardando";
 
     card.innerHTML = `
-      <div class="os-id"><strong>OS:</strong> ${abreviarId(p.id)}</div>
-      <p><strong>Serviço:</strong> ${p.tipo_servico || "—"}</p>
-      <span class="status-tag ${statusClass}">${p.status}</span>
-      <p><strong>Observação:</strong><br><em>${p.obs_loja_origem || "—"}</em></p>
+      <strong>OS:</strong> ${p.id}<br>
+      <strong>Serviço:</strong> ${p.tipo_servico}<br>
+      <span class="status-tag ${statusClass}">${p.status}</span><br>
+      <strong>Observação:</strong><br><em>${p.obs_loja_origem || "—"}</em>
       <div class="timeline" id="timeline-${p.id}"><strong>Eventos:</strong></div>
     `;
 
     container.appendChild(card);
 
-    // Timeline
+    // Carrega a timeline de eventos para cada pedido
     carregarTimeline(p.id);
   });
 }
 
+// Função para carregar a timeline de eventos de um pedido
 async function carregarTimeline(pedidoId) {
-  const { data: eventos } = await supabase
+  const { data: eventos, error } = await supabase
     .from("pedido_eventos")
     .select("*")
     .eq("pedido_id", pedidoId)
     .order("criado_em", { ascending: true });
 
   const timelineDiv = document.getElementById(`timeline-${pedidoId}`);
-  if (!eventos) return;
+  if (!timelineDiv) return; // Proteção se não encontrar o container
+
+  if (error) {
+    timelineDiv.innerHTML += `<p style="color: red;">Erro ao carregar eventos: ${error.message}</p>`;
+    return;
+  }
+
+  if (!eventos || eventos.length === 0) {
+    timelineDiv.innerHTML += `<p><em>Sem eventos registrados.</em></p>`;
+    return;
+  }
 
   eventos.forEach(e => {
     const item = document.createElement("div");
     item.className = "timeline-item";
-    item.innerHTML = `
-      <strong>${e.evento}</strong>
-      <small>${new Date(e.criado_em).toLocaleString()}</small>
-    `;
+    item.innerHTML = `${e.evento} <small>${new Date(e.criado_em).toLocaleString()}</small>`;
     timelineDiv.appendChild(item);
   });
 }
 
-// Filtro
-document.getElementById("btnFiltrar").addEventListener("click", () => {
-  const filtro = document.getElementById("filtroStatus").value;
-  carregarPedidos(filtro);
-});
-
-// Criar pedido
+// Evento para criação do pedido
 document.getElementById("btnCriarPedido").addEventListener("click", async () => {
   const tipoServico = document.getElementById("tipo").value;
   const orcamento = document.getElementById("orcamento").checked;
@@ -86,30 +94,48 @@ document.getElementById("btnCriarPedido").addEventListener("click", async () => 
     return;
   }
 
-  const { data, error } = await supabase.from("pedidos").insert([
-    {
-      tipo_servico: tipoServico,
-      orcamento: orcamento,
-      obs_loja_origem: observacao,
-      status: "Aguardando coleta",
-      criado_em: new Date().toISOString(),
+  try {
+    const { data, error } = await supabase.from("pedidos").insert([
+      {
+        tipo_servico: tipoServico,
+        orcamento: orcamento,
+        obs_loja_origem: observacao,
+        status: "Aguardando coleta",
+        criado_em: new Date().toISOString(),
+      }
+    ]);
+
+    if (error) {
+      alert("Erro ao criar pedido: " + error.message);
+      return;
     }
-  ]);
 
-  if (error) {
-    alert("Erro ao criar pedido: " + error.message);
-    return;
+    alert("Pedido criado com sucesso!");
+
+    // Limpa o formulário
+    document.getElementById("tipo").value = "";
+    document.getElementById("orcamento").checked = false;
+    document.getElementById("observacao").value = "";
+
+    // Atualiza a lista de pedidos exibidos
+    carregarPedidos(document.getElementById("filtroStatus").value);
+
+  } catch (err) {
+    alert("Erro inesperado: " + err.message);
   }
-
-  alert("Pedido criado com sucesso!");
-  // Limpar form
-  document.getElementById("tipo").value = "";
-  document.getElementById("orcamento").checked = false;
-  document.getElementById("observacao").value = "";
-
-  carregarPedidos();
 });
 
-// Carregar pedidos inicial e a cada 5s
+// Evento para filtro de pedidos
+document.getElementById("btnFiltrar").addEventListener("click", () => {
+  const filtro = document.getElementById("filtroStatus").value;
+  carregarPedidos(filtro);
+});
+
+// Carrega os pedidos inicialmente
 carregarPedidos();
-setInterval(() => carregarPedidos(document.getElementById("filtroStatus").value), 5000);
+
+// Atualiza a lista de pedidos a cada 5 segundos
+setInterval(() => {
+  const filtroAtual = document.getElementById("filtroStatus").value;
+  carregarPedidos(filtroAtual);
+}, 5000);

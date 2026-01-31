@@ -12,14 +12,14 @@ export async function carregarPedidos() {
 }
 
 // =====================
-// AGUARDANDO COLETA (IDA)
+// AGUARDANDO COLETA (IDA) — inclui orçamento
 // =====================
 async function carregarAguardando() {
   try {
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
-      .eq("status", "Aguardando coleta")
+      .in("status", ["Aguardando coleta", "Aguardando avaliação"])
       .order("criado_em", { ascending: false });
 
     if (error) throw error;
@@ -76,7 +76,7 @@ async function carregarRetorno() {
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
-      .eq("status", "Aguardando retorno do transporte")
+      .in("status", ["Aguardando retorno do transporte"])
       .order("criado_em", { ascending: false });
 
     if (error) throw error;
@@ -102,29 +102,27 @@ function criarCard(pedido, tipo) {
   const card = document.createElement("div");
   card.classList.add("card");
 
-  // Renderizar informações básicas
+  let observacaoHTML = "";
+  if (pedido.obs_loja_origem) {
+    observacaoHTML = `<strong>Observação:</strong><br><em>${pedido.obs_loja_origem}</em><br><br>`;
+  }
+
   card.innerHTML = `
     <strong>OS:</strong> ${pedido.id}<br>
     <strong>Loja:</strong> ${pedido.loja_origem}<br>
     <strong>Serviço:</strong> ${pedido.tipo_servico}<br>
+    ${observacaoHTML}
+    <strong>Status:</strong> ${pedido.status}
   `;
 
-  // Mostrar Observação da Loja para todas as etapas (ida, emTransporte, volta)
-  if (["ida", "emTransporte", "volta"].includes(tipo)) {
-    const obs = document.createElement("p");
-    obs.innerHTML = `<strong>Observação da Loja:</strong> <em>${pedido.obs_loja_origem || "—"}</em>`;
-    obs.style.background = "#fff3cd"; // fundo amarelo suave
-    obs.style.padding = "4px 6px";
-    obs.style.borderRadius = "4px";
-    card.appendChild(obs);
-  }
-
-  // Botão de ação
   const btn = document.createElement("button");
 
   switch (tipo) {
     case "ida":
-      btn.textContent = "Iniciar Transporte (Ida)";
+      btn.textContent = pedido.status === "Aguardando avaliação" 
+        ? "Aguardar Avaliação"
+        : "Iniciar Transporte (Ida)";
+      btn.disabled = pedido.status === "Aguardando avaliação";
       btn.onclick = () => iniciarTransporteIda(pedido.id);
       break;
     case "emTransporte":

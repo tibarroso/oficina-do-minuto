@@ -19,7 +19,7 @@ async function carregarAguardando() {
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
-      .in("status", ["Aguardando coleta", "Aguardando avaliação"])
+      .eq("status", "Aguardando coleta")
       .order("criado_em", { ascending: false });
 
     if (error) throw error;
@@ -102,31 +102,20 @@ function criarCard(pedido, tipo) {
   const card = document.createElement("div");
   card.classList.add("card");
 
-  const observacaoHTML = pedido.obs_loja_origem
-    ? `<strong>Observação:</strong><br><em>${pedido.obs_loja_origem}</em><br><br>`
-    : "";
-
   card.innerHTML = `
     <strong>OS:</strong> ${pedido.id}<br>
     <strong>Loja:</strong> ${pedido.loja_origem}<br>
     <strong>Serviço:</strong> ${pedido.tipo_servico}<br>
-    ${observacaoHTML}
-    <strong>Status:</strong> ${pedido.status}<br><br>
+    ${tipo === "ida" ? `<strong>Observação:</strong><br><em>${pedido.obs_loja_origem || "—"}</em><br><br>` : ""}
   `;
 
   const btn = document.createElement("button");
 
   switch (tipo) {
     case "ida":
-      if (pedido.status === "Aguardando avaliação") {
-        btn.textContent = "Aguardando Avaliação";
-        btn.disabled = true;
-      } else {
-        btn.textContent = "Iniciar Transporte (Ida)";
-        btn.onclick = () => iniciarTransporteIda(pedido.id);
-      }
+      btn.textContent = "Iniciar Transporte (Ida)";
+      btn.onclick = () => iniciarTransporteIda(pedido.id);
       break;
-
     case "emTransporte":
       if (pedido.status === "Em transporte para Loja 5") {
         btn.textContent = "Entregar na Loja 5";
@@ -136,7 +125,6 @@ function criarCard(pedido, tipo) {
         btn.onclick = () => entregarLojaOrigem(pedido.id);
       }
       break;
-
     case "volta":
       btn.textContent = "Iniciar Transporte de Retorno";
       btn.onclick = () => iniciarTransporteVolta(pedido.id);
@@ -202,18 +190,13 @@ async function registrarEvento(pedidoId, evento) {
 }
 
 // =====================
-// Inicialização global
+// Inicialização
 // =====================
 (async () => {
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) {
-    alert("Usuário não logado!");
-    window.location.href = "login.html";
-    return;
-  }
-  usuarioLogado = data.user;
+  const { data } = await supabase.auth.getUser();
+  usuarioLogado = data?.user || null;
 
-  // tornar funções globais para onclick
+  // tornar funções acessíveis globalmente para onclick dos botões
   window.iniciarTransporteIda = iniciarTransporteIda;
   window.entregarLoja5 = entregarLoja5;
   window.iniciarTransporteVolta = iniciarTransporteVolta;

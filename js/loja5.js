@@ -2,57 +2,59 @@ import { supabase } from "./supabase.js";
 
 const containerPedidos = document.getElementById("containerPedidos");
 
+// =========================
+// CARREGAR PEDIDOS
+// =========================
 async function carregarPedidos() {
-  const statusValidos = ["Entregue na Loja 5", "Em serviço", "Pronto para transporte"];
   try {
+    // Buscar pedidos que estão entregues na Loja 5 ou em serviço
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
-      .in("status", statusValidos)
+      .in("status", ["Entregue na Loja 5", "Em serviço"])
       .order("criado_em", { ascending: false });
 
-    if (error) {
-      console.error("Erro ao carregar pedidos:", error);
-      containerPedidos.innerHTML = "<p>Erro ao carregar pedidos.</p>";
-      return;
-    }
+    if (error) throw error;
+
+    containerPedidos.innerHTML = "";
 
     if (!data.length) {
       containerPedidos.innerHTML = "<p>Nenhum pedido encontrado.</p>";
       return;
     }
 
-    containerPedidos.innerHTML = "";
-
-    data.forEach((pedido) => {
+    data.forEach(pedido => {
       const card = criarCardPedido(pedido);
       containerPedidos.appendChild(card);
     });
   } catch (err) {
-    console.error("Erro inesperado:", err);
-    containerPedidos.innerHTML = "<p>Erro inesperado ao carregar pedidos.</p>";
+    console.error("Erro ao carregar pedidos:", err);
+    containerPedidos.innerHTML = `<p style="color:red;">Erro ao carregar pedidos.</p>`;
   }
 }
 
+// =========================
+// CRIAR CARD DE PEDIDO
+// =========================
 function criarCardPedido(pedido) {
   const card = document.createElement("div");
   card.className = "card";
 
-  // Mapeia o status para classe CSS
+  // Status colorido
   const statusMap = {
-    "Entregue na Loja 5": "status-Entregue",
-    "Em serviço": "status-EmServico",
-    "Pronto para transporte": "status-ProntoTransporte",
+    "Entregue na Loja 5": "status-Loja5",
+    "Em serviço": "status-Transporte",
+    "Pronto para transporte": "status-Finalizado"
   };
-  const statusClass = statusMap[pedido.status] || "";
+  const statusClass = statusMap[pedido.status] || "status-Aguardando";
 
   card.innerHTML = `
     <strong>OS:</strong> ${pedido.id}<br>
     <strong>Serviço:</strong> ${pedido.tipo_servico}<br>
     <span class="status-tag ${statusClass}">${pedido.status}</span><br>
 
-    <label for="obs_${pedido.id}"><strong>Observação Loja 5:</strong></label><br>
-    <textarea id="obs_${pedido.id}" placeholder="Digite uma observação">${pedido.obs_loja5 || ""}</textarea><br>
+    <label for="obs_loja5_${pedido.id}"><strong>Observação Loja 5:</strong></label><br>
+    <textarea id="obs_loja5_${pedido.id}" placeholder="Digite uma observação">${pedido.obs_loja5 || ""}</textarea><br>
 
     <label for="status_${pedido.id}"><strong>Alterar Status:</strong></label><br>
     <select id="status_${pedido.id}">
@@ -67,14 +69,17 @@ function criarCardPedido(pedido) {
   return card;
 }
 
-window.atualizarPedido = async function (pedidoId) {
-  const obs = document.getElementById(`obs_${pedidoId}`).value;
+// =========================
+// ATUALIZAR PEDIDO
+// =========================
+window.atualizarPedido = async function(pedidoId) {
+  const obs = document.getElementById(`obs_loja5_${pedidoId}`).value;
   const status = document.getElementById(`status_${pedidoId}`).value;
 
   try {
     const { error } = await supabase
       .from("pedidos")
-      .update({ obs_loja5: obs, status: status })
+      .update({ obs_loja5: obs, status })
       .eq("id", pedidoId);
 
     if (error) {
@@ -86,10 +91,13 @@ window.atualizarPedido = async function (pedidoId) {
     alert("Pedido atualizado com sucesso!");
     carregarPedidos();
   } catch (err) {
-    console.error("Erro inesperado ao atualizar pedido:", err);
+    console.error("Erro inesperado:", err);
     alert("Erro inesperado ao atualizar pedido.");
   }
 };
 
-// Carrega os pedidos ao iniciar
+// =========================
+// AUTO-ATUALIZAÇÃO
+// =========================
 carregarPedidos();
+setInterval(carregarPedidos, 5000);

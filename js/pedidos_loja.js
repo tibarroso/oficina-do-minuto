@@ -83,59 +83,69 @@ async function carregarTimeline(pedidoId) {
   });
 }
 
-// Evento para criação do pedido
-document.getElementById("btnCriarPedido").addEventListener("click", async () => {
-  const tipoServico = document.getElementById("tipo").value;
-  const orcamento = document.getElementById("orcamento").checked;
-  const observacao = document.getElementById("observacao").value.trim();
+// Espera o DOM estar carregado para associar eventos e garantir elementos
+window.addEventListener("DOMContentLoaded", () => {
 
-  if (!tipoServico) {
-    alert("Por favor, selecione o tipo de serviço.");
-    return;
-  }
+  // Evento para criação do pedido
+  document.getElementById("btnCriarPedido").addEventListener("click", async () => {
+    console.log("Botão Criar Pedido clicado."); // DEBUG
 
-  try {
-    const { data, error } = await supabase.from("pedidos").insert([
-      {
-        tipo_servico: tipoServico,
-        orcamento: orcamento,
-        obs_loja_origem: observacao,
-        status: "Aguardando coleta",
-        criado_em: new Date().toISOString(),
-      }
-    ]);
+    const tipoServico = document.getElementById("tipo").value;
+    const orcamento = document.getElementById("orcamento").checked;
+    const observacao = document.getElementById("observacao").value.trim();
 
-    if (error) {
-      alert("Erro ao criar pedido: " + error.message);
+    if (!tipoServico) {
+      alert("Por favor, selecione o tipo de serviço.");
       return;
     }
 
-    alert("Pedido criado com sucesso!");
+    try {
+      const { data, error } = await supabase.from("pedidos").insert([
+        {
+          tipo_servico: tipoServico,
+          orcamento: orcamento,
+          obs_loja_origem: observacao,
+          status: "Aguardando coleta",
+          criado_em: new Date().toISOString(),
+        }
+      ]);
 
-    // Limpa o formulário
-    document.getElementById("tipo").value = "";
-    document.getElementById("orcamento").checked = false;
-    document.getElementById("observacao").value = "";
+      if (error) {
+        alert("Erro ao criar pedido: " + error.message);
+        console.error(error);
+        return;
+      }
 
-    // Atualiza a lista de pedidos exibidos
-    carregarPedidos(document.getElementById("filtroStatus").value);
+      alert("Pedido criado com sucesso!");
+      console.log("Pedido criado:", data);
 
-  } catch (err) {
-    alert("Erro inesperado: " + err.message);
-  }
+      // Limpa o formulário
+      document.getElementById("tipo").value = "";
+      document.getElementById("orcamento").checked = false;
+      document.getElementById("observacao").value = "";
+
+      // Atualiza a lista de pedidos exibidos
+      carregarPedidos(document.getElementById("filtroStatus").value);
+
+    } catch (err) {
+      alert("Erro inesperado: " + err.message);
+      console.error(err);
+    }
+  });
+
+  // Evento para filtro de pedidos
+  document.getElementById("btnFiltrar").addEventListener("click", () => {
+    const filtro = document.getElementById("filtroStatus").value;
+    carregarPedidos(filtro);
+  });
+
+  // Carrega os pedidos inicialmente
+  carregarPedidos();
+
+  // Atualiza a lista de pedidos a cada 5 segundos
+  setInterval(() => {
+    const filtroAtual = document.getElementById("filtroStatus").value;
+    carregarPedidos(filtroAtual);
+  }, 5000);
+
 });
-
-// Evento para filtro de pedidos
-document.getElementById("btnFiltrar").addEventListener("click", () => {
-  const filtro = document.getElementById("filtroStatus").value;
-  carregarPedidos(filtro);
-});
-
-// Carrega os pedidos inicialmente
-carregarPedidos();
-
-// Atualiza a lista de pedidos a cada 5 segundos
-setInterval(() => {
-  const filtroAtual = document.getElementById("filtroStatus").value;
-  carregarPedidos(filtroAtual);
-}, 5000);

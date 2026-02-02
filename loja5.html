@@ -8,6 +8,22 @@
   <!-- CSS global do sistema -->
   <link rel="stylesheet" href="./css/style.css" />
 
+  <style>
+    /* Estilo para a mensagem de sucesso */
+    .success-message {
+      background-color: #28a745;
+      color: white;
+      padding: 10px;
+      text-align: center;
+      font-size: 16px;
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-radius: 5px;
+      z-index: 1000;
+    }
+  </style>
 </head>
 <body>
   <h1>Loja 5 – Lavanderia & Sapataria</h1>
@@ -16,16 +32,23 @@
   <!-- Botão para atualizar os pedidos manualmente -->
   <button id="btnAtualizar">Atualizar Pedidos</button>
 
+  <!-- Mensagem de sucesso (inicialmente oculta) -->
+  <div id="successMessage" class="success-message" style="display: none;">
+    Pedido finalizado com sucesso!
+  </div>
+
   <!-- ========================= -->
   <!-- PEDIDOS RECEBIDOS (Somente Entregue na Loja 5) -->
   <!-- ========================= -->
   <section>
     <h2>Pedidos Recebidos</h2>
     <div id="containerPedidos" class="cards-container">
+      <!-- Inicialmente exibe "Carregando pedidos..." -->
       <p class="loading">Carregando pedidos...</p>
     </div>
   </section>
 
+  <!-- Script do JavaScript -->
   <script type="module" src="./js/loja5.js"></script>
 </body>
 </html>

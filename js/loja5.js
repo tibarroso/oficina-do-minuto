@@ -20,7 +20,7 @@ async function carregarPedidos() {
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
-      .eq("status", "Entregue na Loja 5") // Exibe apenas pedidos "Entregue na Loja 5"
+      .eq("status", "Entregue na Loja 5") // Garantir que estamos trazendo apenas os pedidos com o status "Entregue na Loja 5"
       .order("criado_em", { ascending: false }); // Ordenar do mais recente para o mais antigo
 
     if (error) throw error;

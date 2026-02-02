@@ -84,6 +84,7 @@ function criarCardPedido(pedido) {
     ${pedido.status !== "Finalizado" ? `<button onclick="atualizarPedido('${pedido.id}')">Salvar Observação</button>` : ""}
 
     ${pedido.status === "Em serviço" ? `<button onclick="mudarStatusParaTransporte('${pedido.id}')">Mover para Transporte</button>` : ''}
+
     ${pedido.status === "Entregue na Loja 5" || pedido.status === "Em transporte para loja de origem" ? `<button onclick="mudarStatusParaFinalizado('${pedido.id}')">Finalizar Pedido</button>` : ''}
   `;
 
@@ -91,17 +92,18 @@ function criarCardPedido(pedido) {
 }
 
 // =========================
-// MUDAR STATUS PARA 'FINALIZADO'
+// MUDAR STATUS PARA 'EM TRANSPORTE PARA LOJA DE ORIGEM'
 // =========================
 window.mudarStatusParaFinalizado = async function(pedidoId) {
   try {
+    // Atualiza o status para 'Em transporte para loja de origem'
     const { error } = await supabase
       .from("pedidos")
       .update({ status: "Em transporte para loja de origem" })
       .eq("id", pedidoId);
 
     if (error) {
-      console.error("Erro ao atualizar status para Finalizado:", error);
+      console.error("Erro ao atualizar status para 'Em transporte para loja de origem':", error);
       return;
     }
 
@@ -130,11 +132,36 @@ window.mudarStatusParaFinalizado = async function(pedidoId) {
 }
 
 // =========================
+// MUDAR STATUS PARA 'FINALIZADO'
+// =========================
+window.mudarStatusParaTransporte = async function(pedidoId) {
+  try {
+    // Atualiza o status para 'Em transporte para loja de origem'
+    const { error } = await supabase
+      .from("pedidos")
+      .update({ status: "Em transporte para loja de origem" })
+      .eq("id", pedidoId);
+
+    if (error) {
+      console.error("Erro ao mudar status para 'Em transporte para loja de origem':", error);
+      return;
+    }
+
+    // Recarrega os pedidos para atualizar a interface
+    carregarPedidos();
+
+  } catch (err) {
+    console.error("Erro inesperado:", err);
+  }
+}
+
+// =========================
 // MAPEAMENTO DE STATUS PARA CLASSE CSS
 // =========================
 function getStatusClass(status) {
   if (status === "Entregue na Loja 5") return "status-Loja5";
   if (status === "Em serviço") return "status-Transporte";
+  if (status === "Em transporte para loja de origem") return "status-Transporte-Volta";
   if (status === "Finalizado") return "status-Finalizado";
   if (status === "Retrabalho") return "status-Retrabalho";
   return "status-Aguardando";

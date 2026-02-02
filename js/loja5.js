@@ -50,7 +50,7 @@ async function carregarPedidos() {
           containerPedidos.appendChild(card);  // Adiciona o novo card caso não exista
         }
       } else {
-        // Caso não tenha alteração, apenas mantém o card atual
+        // Caso não tenha alteração, apenas mantemos o card atual
         const existingCard = document.getElementById(`pedido-${pedido.id}`);
         if (existingCard) {
           existingCard.querySelector(`#obs_loja5_${pedido.id}`).value = pedido.obs_loja5 || ""; // Mantém a observação

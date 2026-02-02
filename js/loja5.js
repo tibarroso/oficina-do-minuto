@@ -20,33 +20,24 @@ async function carregarPedidos() {
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
-      .in("status", ["Entregue na Loja 5", "Em serviço"]) // Status para pedidos entregues
+      .in("status", ["Entregue na Loja 5", "Em serviço"]) // Status para pedidos entregues ou em serviço
       .order("criado_em", { ascending: false }); // Ordenar do mais recente para o mais antigo
 
     if (error) throw error;
 
-    // Limpar o conteúdo anterior
-    containerPedidos.innerHTML = "";
-
-    if (!data.length) {
-      containerPedidos.innerHTML = "<p class='error'>Nenhum pedido encontrado.</p>";
-      return;
-    }
-
-    // Atualiza apenas os pedidos que foram alterados (status ou observação)
+    // Atualiza os pedidos apenas se houve alterações
     data.forEach(pedido => {
       const pedidoAnterior = pedidosAnteriores.find(p => p.id === pedido.id);
 
       if (!pedidoAnterior || pedido.status !== pedidoAnterior.status || pedido.obs_loja5 !== pedidoAnterior.obs_loja5) {
-        // Se o pedido foi alterado (status ou observação diferente), recria o card
+        // Se o pedido foi alterado (status ou observação diferente), atualiza o card
         const card = criarCardPedido(pedido);
-        containerPedidos.appendChild(card);
-      } else {
-        // Caso contrário, apenas mantém o card existente
-        const card = document.getElementById(`pedido-${pedido.id}`);
-        if (card) {
-          // Atualiza o valor da observação sem recarregar o card inteiro
-          document.getElementById(`obs_loja5_${pedido.id}`).value = pedido.obs_loja5 || "";
+        const existingCard = document.getElementById(`pedido-${pedido.id}`);
+        
+        if (existingCard) {
+          existingCard.replaceWith(card);  // Substitui o card antigo com o novo
+        } else {
+          containerPedidos.appendChild(card);  // Adiciona o novo card caso não exista
         }
       }
     });
@@ -109,7 +100,7 @@ window.atualizarPedido = async function(pedidoId) {
       return;
     }
 
-    // Atualiza o pedido nos dados carregados
+    // Atualiza a observação localmente
     pedidosAnteriores = pedidosAnteriores.map(p => {
       if (p.id === pedidoId) {
         p.obs_loja5 = obsLoja5;
@@ -118,7 +109,7 @@ window.atualizarPedido = async function(pedidoId) {
     });
 
     alert("Observação da Loja 5 salva com sucesso!");
-    carregarPedidos(); // Recarrega os pedidos após a atualização
+    carregarPedidos(); // Atualiza os pedidos após a atualização
   } catch (err) {
     console.error("Erro inesperado:", err);
     alert("Erro inesperado ao atualizar pedido.");
@@ -142,7 +133,7 @@ window.mudarStatusParaTransporte = async function(pedidoId) {
     }
 
     alert("Pedido movido para Transporte com sucesso!");
-    carregarPedidos(); // Recarrega os pedidos após a atualização
+    carregarPedidos(); // Atualiza os pedidos após a atualização
   } catch (err) {
     console.error("Erro inesperado:", err);
     alert("Erro inesperado ao atualizar pedido.");
@@ -166,7 +157,7 @@ window.mudarStatusParaFinalizado = async function(pedidoId) {
     }
 
     alert("Pedido finalizado com sucesso!");
-    carregarPedidos(); // Recarrega os pedidos após a atualização
+    carregarPedidos(); // Atualiza os pedidos após a atualização
   } catch (err) {
     console.error("Erro inesperado:", err);
     alert("Erro inesperado ao atualizar pedido.");

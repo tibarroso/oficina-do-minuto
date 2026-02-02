@@ -24,7 +24,7 @@ async function carregarPedidos() {
     if (error) throw error;
 
     // Limpar o conteúdo anterior antes de adicionar os novos pedidos
-    containerPedidos.innerHTML = "";
+    containerPedidos.innerHTML = "";  // Limpa antes de adicionar os novos pedidos
 
     if (!data.length) {
       containerPedidos.innerHTML = "<p class='error'>Nenhum pedido encontrado.</p>";
@@ -171,7 +171,8 @@ window.mudarStatusParaFinalizado = async function(pedidoId) {
     alert("Pedido finalizado com sucesso!");
 
     // Recarregar a lista de pedidos após a finalização
-    carregarPedidos(); // Atualiza os pedidos após a atualização
+    carregarPedidos(); // Atualiza os pedidos após a finalização
+
   } catch (err) {
     console.error("Erro inesperado:", err);
     alert("Erro inesperado ao atualizar pedido.");

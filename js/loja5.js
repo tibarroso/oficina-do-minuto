@@ -12,13 +12,15 @@ let pedidosAnteriores = [];
 async function carregarPedidos() {
   try {
     // Exibe feedback de carregamento
-    containerPedidos.innerHTML = '<p class="loading">Carregando pedidos...</p>';
+    if (!containerPedidos.innerHTML.includes("Carregando")) {
+      containerPedidos.innerHTML = '<p class="loading">Carregando pedidos...</p>';
+    }
 
     // Buscar pedidos com status 'Entregue na Loja 5' ou 'Em serviço'
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
-      .in("status", ["Entregue na Loja 5", "Em serviço"]) // Status para pedidos entregues ou em serviço
+      .in("status", ["Entregue na Loja 5", "Em serviço"]) // Status para pedidos entregues
       .order("criado_em", { ascending: false }); // Ordenar do mais recente para o mais antigo
 
     if (error) throw error;
@@ -31,7 +33,7 @@ async function carregarPedidos() {
       return;
     }
 
-    // Verificar se houve alguma alteração
+    // Atualiza apenas os pedidos que foram alterados (status ou observação)
     data.forEach(pedido => {
       const pedidoAnterior = pedidosAnteriores.find(p => p.id === pedido.id);
 
@@ -39,6 +41,13 @@ async function carregarPedidos() {
         // Se o pedido foi alterado (status ou observação diferente), recria o card
         const card = criarCardPedido(pedido);
         containerPedidos.appendChild(card);
+      } else {
+        // Caso contrário, apenas mantém o card existente
+        const card = document.getElementById(`pedido-${pedido.id}`);
+        if (card) {
+          // Atualiza o valor da observação sem recarregar o card inteiro
+          document.getElementById(`obs_loja5_${pedido.id}`).value = pedido.obs_loja5 || "";
+        }
       }
     });
 

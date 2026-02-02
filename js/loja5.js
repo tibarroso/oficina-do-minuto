@@ -1,10 +1,12 @@
 import { supabase } from "./supabase.js";
 
-// Referência para o container onde os pedidos serão exibidos
+// =========================
+// Referências de elementos
+// =========================
 const containerPedidos = document.getElementById("containerPedidos");
 
 // =========================
-// CARREGAR PEDIDOS
+// Carregar pedidos
 // =========================
 async function carregarPedidos() {
   try {
@@ -12,7 +14,7 @@ async function carregarPedidos() {
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
-      .in("status", ["Entregue na Loja 5", "Em serviço"]) // Status para pedidos entregues
+      .in("status", ["Entregue na Loja 5", "Em serviço"]) // Status para pedidos entregues ou em serviço
       .order("criado_em", { ascending: false }); // Ordenar do mais recente para o mais antigo
 
     if (error) throw error;
@@ -37,7 +39,7 @@ async function carregarPedidos() {
 }
 
 // =========================
-// CRIAR CARD DE PEDIDO
+// Criar card de pedido
 // =========================
 function criarCardPedido(pedido) {
   const card = document.createElement("div");
@@ -50,21 +52,24 @@ function criarCardPedido(pedido) {
     <strong>OS:</strong> ${pedido.id}<br>
     <strong>Serviço:</strong> ${pedido.tipo_servico}<br>
     <span class="status-tag ${statusClass}">${pedido.status}</span><br>
-
-    <strong>Observação:</strong><br>
+    <strong>Observação Loja de Origem:</strong><br>
     <em>${pedido.obs_loja_origem || "Nenhuma observação"}</em><br>
 
     <label for="obs_loja5_${pedido.id}"><strong>Observação Loja 5:</strong></label><br>
     <textarea id="obs_loja5_${pedido.id}" placeholder="Digite uma observação para a Loja 5">${pedido.obs_loja5 || ""}</textarea><br>
 
     <button onclick="atualizarPedido('${pedido.id}')">Salvar Observação</button>
+    
+    <!-- Botões para alterar status -->
+    ${pedido.status === "Em serviço" ? `<button onclick="mudarStatusParaTransporte('${pedido.id}')">Mover para Transporte</button>` : ''}
+    ${pedido.status === "Entregue na Loja 5" ? `<button onclick="mudarStatusParaFinalizado('${pedido.id}')">Finalizar Pedido</button>` : ''}
   `;
 
   return card;
 }
 
 // =========================
-// ATUALIZAR PEDIDO COM A OBSERVAÇÃO DA LOJA 5
+// Atualizar pedido com observação da Loja 5
 // =========================
 window.atualizarPedido = async function(pedidoId) {
   const obsLoja5 = document.getElementById(`obs_loja5_${pedidoId}`).value;
@@ -82,7 +87,7 @@ window.atualizarPedido = async function(pedidoId) {
     }
 
     alert("Observação da Loja 5 salva com sucesso!");
-    carregarPedidos();
+    carregarPedidos(); // Recarrega os pedidos após a atualização
   } catch (err) {
     console.error("Erro inesperado:", err);
     alert("Erro inesperado ao atualizar pedido.");
@@ -90,7 +95,55 @@ window.atualizarPedido = async function(pedidoId) {
 };
 
 // =========================
-// MAPEAR STATUS PARA CLASSE CSS
+// Mudar status para 'Transporte'
+// =========================
+window.mudarStatusParaTransporte = async function(pedidoId) {
+  try {
+    const { error } = await supabase
+      .from("pedidos")
+      .update({ status: "Transporte" })
+      .eq("id", pedidoId);
+
+    if (error) {
+      console.error("Erro ao atualizar status para Transporte:", error);
+      alert("Erro ao mover para Transporte.");
+      return;
+    }
+
+    alert("Pedido movido para Transporte com sucesso!");
+    carregarPedidos(); // Recarrega os pedidos após a atualização
+  } catch (err) {
+    console.error("Erro inesperado:", err);
+    alert("Erro inesperado ao atualizar pedido.");
+  }
+};
+
+// =========================
+// Mudar status para 'Finalizado'
+// =========================
+window.mudarStatusParaFinalizado = async function(pedidoId) {
+  try {
+    const { error } = await supabase
+      .from("pedidos")
+      .update({ status: "Finalizado" })
+      .eq("id", pedidoId);
+
+    if (error) {
+      console.error("Erro ao atualizar status para Finalizado:", error);
+      alert("Erro ao finalizar o pedido.");
+      return;
+    }
+
+    alert("Pedido finalizado com sucesso!");
+    carregarPedidos(); // Recarrega os pedidos após a atualização
+  } catch (err) {
+    console.error("Erro inesperado:", err);
+    alert("Erro inesperado ao atualizar pedido.");
+  }
+};
+
+// =========================
+// Mapeamento do status para a classe CSS
 // =========================
 function getStatusClass(status) {
   if (status === "Entregue na Loja 5") return "status-Loja5";
@@ -101,7 +154,7 @@ function getStatusClass(status) {
 }
 
 // =========================
-// INICIALIZAÇÃO
+// Inicialização
 // =========================
 carregarPedidos();
 setInterval(carregarPedidos, 5000); // Atualiza a cada 5 segundos

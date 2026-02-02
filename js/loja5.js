@@ -97,7 +97,7 @@ window.mudarStatusParaFinalizado = async function(pedidoId) {
   try {
     const { error } = await supabase
       .from("pedidos")
-      .update({ status: "Finalizado" })
+      .update({ status: "Em transporte para loja de origem" })
       .eq("id", pedidoId);
 
     if (error) {

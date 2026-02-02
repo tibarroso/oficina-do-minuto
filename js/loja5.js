@@ -6,15 +6,19 @@ const containerPedidos = document.getElementById("containerPedidos");
 // Variável para armazenar os pedidos carregados anteriormente
 let pedidosAnteriores = [];
 
+let isLoading = false;
+
 // =========================
 // CARREGAR PEDIDOS
 // =========================
 async function carregarPedidos() {
+  if (isLoading) return; // Evita sobrecarga de requisições, aguarda o carregamento atual
+
+  isLoading = true;
+
   try {
     // Exibe feedback de carregamento
-    if (!containerPedidos.innerHTML.includes("Carregando")) {
-      containerPedidos.innerHTML = '<p class="loading">Carregando pedidos...</p>';
-    }
+    containerPedidos.innerHTML = '<p class="loading">Carregando pedidos...</p>';
 
     // Buscar pedidos com status 'Entregue na Loja 5' ou 'Em serviço'
     const { data, error } = await supabase
@@ -25,15 +29,23 @@ async function carregarPedidos() {
 
     if (error) throw error;
 
-    // Atualiza os pedidos apenas se houve alterações
+    // Limpar o conteúdo anterior e substituir os pedidos
+    containerPedidos.innerHTML = "";
+
+    if (!data.length) {
+      containerPedidos.innerHTML = "<p class='error'>Nenhum pedido encontrado.</p>";
+      return;
+    }
+
+    // Atualiza os pedidos que foram alterados
     data.forEach(pedido => {
       const pedidoAnterior = pedidosAnteriores.find(p => p.id === pedido.id);
 
       if (!pedidoAnterior || pedido.status !== pedidoAnterior.status || pedido.obs_loja5 !== pedidoAnterior.obs_loja5) {
-        // Se o pedido foi alterado (status ou observação diferente), atualiza o card
+        // Se o pedido foi alterado (status ou observação diferente), cria ou atualiza o card
         const card = criarCardPedido(pedido);
         const existingCard = document.getElementById(`pedido-${pedido.id}`);
-        
+
         if (existingCard) {
           existingCard.replaceWith(card);  // Substitui o card antigo com o novo
         } else {
@@ -48,6 +60,8 @@ async function carregarPedidos() {
   } catch (err) {
     console.error("Erro ao carregar pedidos:", err);
     containerPedidos.innerHTML = `<p class="error">Erro ao carregar pedidos. Tente novamente.</p>`;
+  } finally {
+    isLoading = false; // Libera o bloqueio de requisição
   }
 }
 

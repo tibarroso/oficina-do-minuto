@@ -84,7 +84,7 @@ function criarCardPedido(pedido) {
     ${pedido.status !== "Finalizado" ? `<button onclick="atualizarPedido('${pedido.id}')">Salvar Observação</button>` : ""}
 
     ${pedido.status === "Em serviço" ? `<button onclick="mudarStatusParaTransporte('${pedido.id}')">Mover para Transporte</button>` : ''}
-    ${pedido.status === "Entregue na Loja 5" || pedido.status === "Finalizado" ? `<button onclick="mudarStatusParaFinalizado('${pedido.id}')">Finalizar Pedido</button>` : ''}
+    ${pedido.status === "Entregue na Loja 5" || pedido.status === "Em transporte para loja de origem" ? `<button onclick="mudarStatusParaFinalizado('${pedido.id}')">Finalizar Pedido</button>` : ''}
   `;
 
   return card;

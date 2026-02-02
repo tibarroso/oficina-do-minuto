@@ -7,14 +7,12 @@ const containerPedidos = document.getElementById("containerPedidos");
 let pedidosAnteriores = [];
 
 // =========================
-// CARREGAR PEDIDOS
+// CARREGAR PEDIDOS (MANUAL)
 // =========================
 async function carregarPedidos() {
   try {
     // Exibe feedback de carregamento
-    if (containerPedidos.innerHTML === '') {
-      containerPedidos.innerHTML = '<p class="loading">Carregando pedidos...</p>';
-    }
+    containerPedidos.innerHTML = '<p class="loading">Carregando pedidos...</p>';
 
     // Buscar pedidos com status 'Entregue na Loja 5' ou 'Em serviço'
     const { data, error } = await supabase
@@ -25,10 +23,8 @@ async function carregarPedidos() {
 
     if (error) throw error;
 
-    // Limpar o conteúdo anterior apenas se for necessário
-    if (pedidosAnteriores.length === 0) {
-      containerPedidos.innerHTML = "";  // Limpa o conteúdo apenas uma vez no início
-    }
+    // Limpar o conteúdo anterior
+    containerPedidos.innerHTML = "";
 
     if (!data.length) {
       containerPedidos.innerHTML = "<p class='error'>Nenhum pedido encontrado.</p>";
@@ -194,5 +190,7 @@ function getStatusClass(status) {
 // =========================
 // INICIALIZAÇÃO
 // =========================
+document.getElementById("btnAtualizar").addEventListener("click", carregarPedidos); // Adicionando o botão de atualização manual
+
+// Atualiza os pedidos quando a página for carregada
 carregarPedidos();
-setInterval(carregarPedidos, 5000); // Atualiza a cada 5 segundos

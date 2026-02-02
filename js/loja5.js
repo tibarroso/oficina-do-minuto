@@ -120,7 +120,7 @@ window.mudarStatusParaFinalizado = async function(pedidoId) {
   } catch (err) {
     console.error("Erro inesperado:", err);
   }
-};
+}
 
 // =========================
 // MAPEAMENTO DE STATUS PARA CLASSE CSS
@@ -136,7 +136,8 @@ function getStatusClass(status) {
 // =========================
 // INICIALIZAÇÃO
 // =========================
-document.getElementById("btnAtualizar").addEventListener("click", carregarPedidos); // Adicionando o botão de atualização manual
+// Adiciona o evento de clique no botão de atualizar pedidos
+document.getElementById("btnAtualizar").addEventListener("click", carregarPedidos);
 
 // Carrega os pedidos assim que a página for carregada
 carregarPedidos();

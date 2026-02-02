@@ -10,7 +10,7 @@ const successMessage = document.getElementById("successMessage");
 let pedidosAnteriores = [];
 
 // =========================
-// CARREGAR PEDIDOS
+// CARREGAR PEDIDOS (Somente com status "Entregue na Loja 5")
 // =========================
 async function carregarPedidos() {
   try {
@@ -21,7 +21,7 @@ async function carregarPedidos() {
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
-      .eq("status", "Entregue na Loja 5") // Exibe apenas pedidos "Entregue na Loja 5"
+      .eq("status", "Entregue na Loja 5") // Filtro para carregar somente os pedidos com status "Entregue na Loja 5"
       .order("criado_em", { ascending: false }); // Ordenar do mais recente para o mais antigo
 
     if (error) throw error;

@@ -16,11 +16,11 @@ async function carregarPedidos() {
       containerPedidos.innerHTML = '<p class="loading">Carregando pedidos...</p>';
     }
 
-    // Buscar pedidos com status 'Entregue na Loja 5' ou 'Em serviço' (não carregar pedidos "Finalizados")
+    // Buscar pedidos apenas com status 'Entregue na Loja 5'
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
-      .in("status", ["Entregue na Loja 5", "Em serviço"]) // Apenas pedidos "Entregue na Loja 5" e "Em serviço"
+      .eq("status", "Entregue na Loja 5") // Exibe apenas pedidos "Entregue na Loja 5"
       .order("criado_em", { ascending: false }); // Ordenar do mais recente para o mais antigo
 
     if (error) throw error;

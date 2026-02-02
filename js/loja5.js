@@ -189,8 +189,4 @@ function getStatusClass(status) {
   return "status-Aguardando";
 }
 
-// =========================
-// INICIALIZAÇÃO
-// =========================
-carregarPedidos();
-setInterval(carregarPedidos, 5000); // Atualiza a cada 5 segundos
+

@@ -6,7 +6,7 @@
   <title>Loja 5 – Lavanderia & Sapataria</title>
 
   <!-- Google Font: Poppins -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 
   <!-- CSS global do sistema -->
   <link rel="stylesheet" href="./css/style.css" />
@@ -15,7 +15,7 @@
     /* Estilos Globais */
     body {
       font-family: 'Poppins', sans-serif;
-      background-color: #f4f7fb;
+      background-color: #f1f5f9; /* Cor de fundo mais suave */
       margin: 0;
       padding: 0;
       box-sizing: border-box;
@@ -23,57 +23,65 @@
     }
 
     h1, h2 {
-      color: #222;
-      font-weight: 500;
+      color: #333;
+      font-weight: 600; /* Deixar os títulos mais destacados */
     }
 
     /* Barra de navegação fixa */
     header {
-      background-color: #007bff;
+      background-color: #1a73e8; /* Azul mais moderno */
       color: white;
-      padding: 15px 40px;
+      padding: 18px 40px;
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       z-index: 100;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.3s;
+    }
+
+    header:hover {
+      background-color: #1558b1; /* Efeito de hover na barra de navegação */
     }
 
     header h1 {
       margin: 0;
-      font-size: 24px;
+      font-size: 26px;
     }
 
     header nav {
       float: right;
+      display: flex;
+      gap: 20px;
     }
 
     header nav a {
       color: white;
       text-decoration: none;
-      padding: 8px 20px;
-      margin-left: 20px;
-      border-radius: 5px;
-      transition: background-color 0.3s ease;
+      padding: 10px 18px;
+      border-radius: 25px;
+      background-color: rgba(255, 255, 255, 0.1); /* Fundo sutil */
+      transition: background-color 0.3s ease, transform 0.2s ease;
     }
 
     header nav a:hover {
-      background-color: #0056b3;
+      background-color: rgba(255, 255, 255, 0.3);
+      transform: scale(1.1); /* Pequena animação de zoom */
     }
 
     /* Estilo para a mensagem de sucesso */
     .success-message {
       background-color: #28a745;
       color: white;
-      padding: 10px 20px;
+      padding: 12px 30px;
       text-align: center;
-      font-size: 16px;
+      font-size: 18px;
       position: fixed;
       top: 20px;
       left: 50%;
       transform: translateX(-50%);
-      border-radius: 5px;
+      border-radius: 25px;
       z-index: 1000;
       display: none;
       transition: opacity 0.5s ease;
@@ -81,55 +89,61 @@
 
     /* Container de pedidos */
     section {
-      padding-top: 100px; /* Para compensar o header fixo */
-      padding-bottom: 50px;
+      padding-top: 120px; /* Para compensar o header fixo */
+      padding-bottom: 60px;
       padding-left: 40px;
       padding-right: 40px;
+      background-color: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
     }
 
     /* Ajuste no título "Pedidos Recebidos" */
     section h2 {
-      margin-top: 60px; /* Adiciona mais espaço acima do título */
-      color: #222;
-      font-size: 24px;
+      color: #333;
+      font-size: 28px;
       font-weight: 600;
+      margin-top: 30px;
     }
 
     .cards-container {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Ajuste para maior largura */
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 30px;
+      margin-top: 20px;
     }
 
     .card {
       background-color: white;
       border-radius: 12px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-      padding: 25px;
-      transition: transform 0.3s ease;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
       overflow: hidden;
-      font-size: 16px; /* Tamanho de texto ajustado */
+      font-size: 16px;
     }
 
     .card:hover {
-      transform: translateY(-8px);
+      transform: translateY(-12px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
     }
 
     .card h3 {
       margin-top: 0;
-      color: #007bff;
-      font-size: 20px;
+      color: #1a73e8;
+      font-size: 22px;
     }
 
     .card p {
       font-size: 16px;
       color: #555;
+      line-height: 1.5;
     }
 
     /* Estilo para a mensagem de carregamento */
     .loading {
       font-size: 18px;
-      color: #007bff;
+      color: #1a73e8;
       text-align: center;
       margin-top: 50px;
     }
@@ -145,7 +159,7 @@
       }
 
       header h1 {
-        font-size: 20px;
+        font-size: 22px;
       }
 
       header nav {
@@ -156,7 +170,7 @@
 
       header nav a {
         font-size: 14px;
-        margin-left: 10px;
+        padding: 8px 12px;
       }
 
       .cards-container {
@@ -164,7 +178,7 @@
       }
 
       .card {
-        padding: 15px;
+        padding: 20px;
       }
 
       .loading {

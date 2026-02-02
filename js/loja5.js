@@ -1,20 +1,21 @@
 import { supabase } from "./supabase.js";
 
-// =========================
-// Referências de elementos
-// =========================
+// Referência para o container onde os pedidos serão exibidos
 const containerPedidos = document.getElementById("containerPedidos");
 
 // =========================
-// Carregar pedidos
+// CARREGAR PEDIDOS
 // =========================
 async function carregarPedidos() {
   try {
+    // Exibe feedback de carregamento
+    containerPedidos.innerHTML = '<p class="loading">Carregando pedidos...</p>';
+
     // Buscar pedidos com status 'Entregue na Loja 5' ou 'Em serviço'
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
-      .in("status", ["Entregue na Loja 5", "Em serviço"]) // Status para pedidos entregues ou em serviço
+      .in("status", ["Entregue na Loja 5", "Em serviço"]) // Status para pedidos entregues
       .order("criado_em", { ascending: false }); // Ordenar do mais recente para o mais antigo
 
     if (error) throw error;
@@ -23,7 +24,7 @@ async function carregarPedidos() {
     containerPedidos.innerHTML = "";
 
     if (!data.length) {
-      containerPedidos.innerHTML = "<p>Nenhum pedido encontrado.</p>";
+      containerPedidos.innerHTML = "<p class='error'>Nenhum pedido encontrado.</p>";
       return;
     }
 
@@ -34,12 +35,12 @@ async function carregarPedidos() {
     });
   } catch (err) {
     console.error("Erro ao carregar pedidos:", err);
-    containerPedidos.innerHTML = `<p style="color:red;">Erro ao carregar pedidos.</p>`;
+    containerPedidos.innerHTML = `<p class="error">Erro ao carregar pedidos. Tente novamente.</p>`;
   }
 }
 
 // =========================
-// Criar card de pedido
+// CRIAR CARD DE PEDIDO
 // =========================
 function criarCardPedido(pedido) {
   const card = document.createElement("div");
@@ -52,15 +53,15 @@ function criarCardPedido(pedido) {
     <strong>OS:</strong> ${pedido.id}<br>
     <strong>Serviço:</strong> ${pedido.tipo_servico}<br>
     <span class="status-tag ${statusClass}">${pedido.status}</span><br>
-    <strong>Observação Loja de Origem:</strong><br>
+    <strong>Observação:</strong><br>
     <em>${pedido.obs_loja_origem || "Nenhuma observação"}</em><br>
 
     <label for="obs_loja5_${pedido.id}"><strong>Observação Loja 5:</strong></label><br>
     <textarea id="obs_loja5_${pedido.id}" placeholder="Digite uma observação para a Loja 5">${pedido.obs_loja5 || ""}</textarea><br>
 
     <button onclick="atualizarPedido('${pedido.id}')">Salvar Observação</button>
-    
-    <!-- Botões para alterar status -->
+
+    <!-- Botões de status -->
     ${pedido.status === "Em serviço" ? `<button onclick="mudarStatusParaTransporte('${pedido.id}')">Mover para Transporte</button>` : ''}
     ${pedido.status === "Entregue na Loja 5" ? `<button onclick="mudarStatusParaFinalizado('${pedido.id}')">Finalizar Pedido</button>` : ''}
   `;
@@ -69,7 +70,7 @@ function criarCardPedido(pedido) {
 }
 
 // =========================
-// Atualizar pedido com observação da Loja 5
+// ATUALIZAR PEDIDO COM A OBSERVAÇÃO DA LOJA 5
 // =========================
 window.atualizarPedido = async function(pedidoId) {
   const obsLoja5 = document.getElementById(`obs_loja5_${pedidoId}`).value;
@@ -95,7 +96,7 @@ window.atualizarPedido = async function(pedidoId) {
 };
 
 // =========================
-// Mudar status para 'Transporte'
+// MUDAR STATUS PARA 'TRANSPORTE'
 // =========================
 window.mudarStatusParaTransporte = async function(pedidoId) {
   try {
@@ -119,7 +120,7 @@ window.mudarStatusParaTransporte = async function(pedidoId) {
 };
 
 // =========================
-// Mudar status para 'Finalizado'
+// MUDAR STATUS PARA 'FINALIZADO'
 // =========================
 window.mudarStatusParaFinalizado = async function(pedidoId) {
   try {
@@ -143,7 +144,7 @@ window.mudarStatusParaFinalizado = async function(pedidoId) {
 };
 
 // =========================
-// Mapeamento do status para a classe CSS
+// MAPEAMENTO DE STATUS PARA CLASSE CSS
 // =========================
 function getStatusClass(status) {
   if (status === "Entregue na Loja 5") return "status-Loja5";
@@ -154,7 +155,7 @@ function getStatusClass(status) {
 }
 
 // =========================
-// Inicialização
+// INICIALIZAÇÃO
 // =========================
 carregarPedidos();
 setInterval(carregarPedidos, 5000); // Atualiza a cada 5 segundos

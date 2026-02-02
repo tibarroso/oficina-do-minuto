@@ -133,11 +133,5 @@ function getStatusClass(status) {
   return "status-Aguardando";
 }
 
-// =========================
-// INICIALIZAÇÃO
-// =========================
-// Adiciona o evento de clique no botão de atualizar pedidos
-document.getElementById("btnAtualizar").addEventListener("click", carregarPedidos);
-
 // Carrega os pedidos assim que a página for carregada
 carregarPedidos();

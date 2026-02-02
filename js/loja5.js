@@ -11,8 +11,8 @@ let pedidosAnteriores = [];
 // =========================
 async function carregarPedidos() {
   try {
-    // Exibe feedback de carregamento
-    if (!containerPedidos.innerHTML.includes("Carregando")) {
+    // Exibe feedback de carregamento apenas se necessário
+    if (!containerPedidos.innerHTML.includes("Carregando pedidos...")) {
       containerPedidos.innerHTML = '<p class="loading">Carregando pedidos...</p>';
     }
 
@@ -26,9 +26,7 @@ async function carregarPedidos() {
     if (error) throw error;
 
     // Limpar o conteúdo anterior apenas se for necessário
-    if (pedidosAnteriores.length === 0) {
-      containerPedidos.innerHTML = "";  // Limpa o conteúdo apenas uma vez no início
-    }
+    containerPedidos.innerHTML = "";  // Limpar antes de adicionar os novos pedidos
 
     if (!data.length) {
       containerPedidos.innerHTML = "<p class='error'>Nenhum pedido encontrado.</p>";
@@ -42,19 +40,7 @@ async function carregarPedidos() {
       if (!pedidoAnterior || pedido.status !== pedidoAnterior.status || pedido.obs_loja5 !== pedidoAnterior.obs_loja5) {
         // Se o pedido foi alterado (status ou observação diferente), cria ou atualiza o card
         const card = criarCardPedido(pedido);
-        const existingCard = document.getElementById(`pedido-${pedido.id}`);
-        
-        if (existingCard) {
-          existingCard.replaceWith(card);  // Substitui o card antigo com o novo
-        } else {
-          containerPedidos.appendChild(card);  // Adiciona o novo card caso não exista
-        }
-      } else {
-        // Caso não tenha alteração, apenas mantemos o card atual
-        const existingCard = document.getElementById(`pedido-${pedido.id}`);
-        if (existingCard) {
-          existingCard.querySelector(`#obs_loja5_${pedido.id}`).value = pedido.obs_loja5 || ""; // Mantém a observação
-        }
+        containerPedidos.appendChild(card);
       }
     });
 
@@ -186,14 +172,7 @@ window.mudarStatusParaFinalizado = async function(pedidoId) {
 
     alert("Pedido finalizado com sucesso!");
 
-    // Atualiza a lista de pedidos sem recarregar a página
-    const card = document.getElementById(`pedido-${pedidoId}`);
-    if (card) {
-      // Remover o card do pedido finalizado da interface
-      card.remove();
-    }
-
-    // Atualiza os pedidos novamente
+    // Atualiza a lista de pedidos após a finalização
     carregarPedidos(); // Atualiza os pedidos após a atualização
   } catch (err) {
     console.error("Erro inesperado:", err);

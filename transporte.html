@@ -10,45 +10,56 @@
 </head>
 <body>
 
-<h1>Transporte</h1>
-
-<p style="text-align:center; color:#666; margin-bottom:20px;">
-  Controle de coleta, entrega e retorno dos pedidos
-</p>
-
-<!-- ========================= -->
-<!-- AGUARDANDO COLETA (IDA) -->
-<!-- ========================= -->
-<section>
-  <h2>Aguardando Coleta</h2>
-  <div id="aguardando" class="cards-container">
-    <p>Carregando pedidos...</p>
+<!-- Barra de navegação fixa -->
+<header>
+  <div class="container">
+    <h1>Transporte</h1>
+    <nav>
+      <a href="index.html">Início</a>
+      <a href="pedidos.html">Pedidos</a>
+      <a href="login.html">Sair</a>
+    </nav>
   </div>
-</section>
+</header>
 
-<!-- ========================= -->
-<!-- EM TRANSPORTE -->
-<!-- ========================= -->
-<section>
-  <h2>Em Transporte</h2>
-  <div id="transporte" class="cards-container">
-    <p>Carregando pedidos...</p>
-  </div>
-</section>
+<main>
+  <section class="intro">
+    <h2>Controle de Coleta, Entrega e Retorno</h2>
+    <p>Gerencie o status de cada pedido durante o transporte.</p>
+  </section>
 
-<!-- ========================= -->
-<!-- AGUARDANDO RETORNO -->
-<!-- ========================= -->
-<section>
-  <h2>Aguardando Retorno do Transporte / Retrabalho</h2>
-  <div id="retorno" class="cards-container">
-    <p>Carregando pedidos...</p>
-  </div>
-</section>
+  <!-- ========================= -->
+  <!-- AGUARDANDO COLETA (IDA) -->
+  <!-- ========================= -->
+  <section>
+    <h2>Aguardando Coleta</h2>
+    <div id="aguardando" class="cards-container">
+      <p class="loading">Carregando pedidos...</p>
+    </div>
+  </section>
 
-<!-- ========================= -->
-<!-- SCRIPT DO TRANSPORTE -->
-<!-- ========================= -->
+  <!-- ========================= -->
+  <!-- EM TRANSPORTE -->
+  <!-- ========================= -->
+  <section>
+    <h2>Em Transporte</h2>
+    <div id="transporte" class="cards-container">
+      <p class="loading">Carregando pedidos...</p>
+    </div>
+  </section>
+
+  <!-- ========================= -->
+  <!-- AGUARDANDO RETORNO -->
+  <!-- ========================= -->
+  <section>
+    <h2>Aguardando Retorno do Transporte / Retrabalho</h2>
+    <div id="retorno" class="cards-container">
+      <p class="loading">Carregando pedidos...</p>
+    </div>
+  </section>
+</main>
+
+<!-- Script do Transporte -->
 <script type="module">
   import { supabase } from "./js/supabase.js";
 

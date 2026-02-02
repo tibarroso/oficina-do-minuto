@@ -41,6 +41,7 @@
 
     header h1 {
       margin: 0;
+      font-size: 24px;
     }
 
     header nav {
@@ -98,6 +99,7 @@
       padding: 20px;
       transition: transform 0.3s ease;
       overflow: hidden;
+      font-size: 14px;
     }
 
     .card:hover {
@@ -121,6 +123,37 @@
       color: #007bff;
       text-align: center;
       margin-top: 50px;
+    }
+
+    /* Responsividade */
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+
+      header {
+        padding: 10px 15px;
+      }
+
+      header h1 {
+        font-size: 20px;
+      }
+
+      header nav a {
+        font-size: 14px;
+      }
+
+      .cards-container {
+        grid-template-columns: 1fr;
+      }
+
+      .card {
+        padding: 15px;
+      }
+
+      .loading {
+        font-size: 16px;
+      }
     }
   </style>
 </head>

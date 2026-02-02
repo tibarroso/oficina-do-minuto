@@ -6,6 +6,11 @@ const containerPedidos = document.getElementById("containerPedidos");
 // Referência para a mensagem de sucesso
 const successMessage = document.getElementById("successMessage");
 
+// Referência para o indicador de carregamento
+const loadingMessage = document.createElement('div');
+loadingMessage.classList.add('loading-indicator');
+loadingMessage.innerHTML = 'Carregando pedidos...';
+
 // Variável para armazenar os pedidos carregados anteriormente
 let pedidosAnteriores = [];
 
@@ -15,7 +20,8 @@ let pedidosAnteriores = [];
 async function carregarPedidos() {
   try {
     // Exibe feedback de carregamento
-    containerPedidos.innerHTML = '<p class="loading">Carregando pedidos...</p>';
+    containerPedidos.innerHTML = ''; // Limpa o conteúdo anterior
+    containerPedidos.appendChild(loadingMessage);
 
     // Buscar apenas pedidos com status "Entregue na Loja 5"
     const { data, error } = await supabase
@@ -76,6 +82,7 @@ function criarCardPedido(pedido) {
     <textarea id="obs_loja5_${pedido.id}" placeholder="Digite uma observação para a Loja 5" ${pedido.status === "Finalizado" ? "disabled" : ""}>${pedido.obs_loja5 || ""}</textarea><br>
 
     ${pedido.status !== "Finalizado" ? `<button onclick="atualizarPedido('${pedido.id}')">Salvar Observação</button>` : ""}
+
     ${pedido.status === "Em serviço" ? `<button onclick="mudarStatusParaTransporte('${pedido.id}')">Mover para Transporte</button>` : ''}
     ${pedido.status === "Entregue na Loja 5" || pedido.status === "Finalizado" ? `<button onclick="mudarStatusParaFinalizado('${pedido.id}')">Finalizar Pedido</button>` : ''}
   `;

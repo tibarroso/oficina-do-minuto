@@ -16,7 +16,7 @@ async function carregarPedidos() {
       containerPedidos.innerHTML = '<p class="loading">Carregando pedidos...</p>';
     }
 
-    // Buscar pedidos com status 'Entregue na Loja 5' ou 'Em serviço'
+    // Buscar pedidos com status 'Entregue na Loja 5' ou 'Em serviço' ou 'Finalizado'
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
@@ -186,6 +186,7 @@ window.mudarStatusParaFinalizado = async function(pedidoId) {
 
     alert("Pedido finalizado com sucesso!");
 
+    // Atualiza o pedido na interface
     carregarPedidos(); // Atualiza os pedidos após a atualização
   } catch (err) {
     console.error("Erro inesperado:", err);

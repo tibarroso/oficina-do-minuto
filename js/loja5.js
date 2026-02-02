@@ -6,19 +6,15 @@ const containerPedidos = document.getElementById("containerPedidos");
 // Variável para armazenar os pedidos carregados anteriormente
 let pedidosAnteriores = [];
 
-let isLoading = false;
-
 // =========================
 // CARREGAR PEDIDOS
 // =========================
 async function carregarPedidos() {
-  if (isLoading) return; // Evita sobrecarga de requisições, aguarda o carregamento atual
-
-  isLoading = true;
-
   try {
     // Exibe feedback de carregamento
-    containerPedidos.innerHTML = '<p class="loading">Carregando pedidos...</p>';
+    if (containerPedidos.innerHTML === '') {
+      containerPedidos.innerHTML = '<p class="loading">Carregando pedidos...</p>';
+    }
 
     // Buscar pedidos com status 'Entregue na Loja 5' ou 'Em serviço'
     const { data, error } = await supabase
@@ -29,15 +25,17 @@ async function carregarPedidos() {
 
     if (error) throw error;
 
-    // Limpar o conteúdo anterior e substituir os pedidos
-    containerPedidos.innerHTML = "";
+    // Limpar o conteúdo anterior apenas se for necessário
+    if (pedidosAnteriores.length === 0) {
+      containerPedidos.innerHTML = "";  // Limpa o conteúdo apenas uma vez no início
+    }
 
     if (!data.length) {
       containerPedidos.innerHTML = "<p class='error'>Nenhum pedido encontrado.</p>";
       return;
     }
 
-    // Atualiza os pedidos que foram alterados
+    // Atualiza os pedidos apenas se houve alteração (status ou observação)
     data.forEach(pedido => {
       const pedidoAnterior = pedidosAnteriores.find(p => p.id === pedido.id);
 
@@ -45,11 +43,17 @@ async function carregarPedidos() {
         // Se o pedido foi alterado (status ou observação diferente), cria ou atualiza o card
         const card = criarCardPedido(pedido);
         const existingCard = document.getElementById(`pedido-${pedido.id}`);
-
+        
         if (existingCard) {
           existingCard.replaceWith(card);  // Substitui o card antigo com o novo
         } else {
           containerPedidos.appendChild(card);  // Adiciona o novo card caso não exista
+        }
+      } else {
+        // Caso não tenha alteração, apenas mantemos o card atual
+        const existingCard = document.getElementById(`pedido-${pedido.id}`);
+        if (existingCard) {
+          existingCard.querySelector(`#obs_loja5_${pedido.id}`).value = pedido.obs_loja5 || ""; // Mantém a observação
         }
       }
     });
@@ -60,8 +64,6 @@ async function carregarPedidos() {
   } catch (err) {
     console.error("Erro ao carregar pedidos:", err);
     containerPedidos.innerHTML = `<p class="error">Erro ao carregar pedidos. Tente novamente.</p>`;
-  } finally {
-    isLoading = false; // Libera o bloqueio de requisição
   }
 }
 
@@ -189,4 +191,8 @@ function getStatusClass(status) {
   return "status-Aguardando";
 }
 
-
+// =========================
+// INICIALIZAÇÃO
+// =========================
+carregarPedidos();
+setInterval(carregarPedidos, 5000); // Atualiza a cada 5 segundos

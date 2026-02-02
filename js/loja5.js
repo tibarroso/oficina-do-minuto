@@ -95,7 +95,6 @@ window.mudarStatusParaFinalizado = async function(pedidoId) {
 
     if (error) {
       console.error("Erro ao atualizar status para Finalizado:", error);
-      alert("Erro ao finalizar o pedido.");
       return;
     }
 
@@ -107,7 +106,7 @@ window.mudarStatusParaFinalizado = async function(pedidoId) {
       .update({ obs_loja5: obsLoja5 })
       .eq("id", pedidoId);
 
-    // Exibir a mensagem de sucesso
+    // Exibir a mensagem de sucesso na tela (sem precisar de `alert()`)
     successMessage.style.display = "block"; // Exibe a mensagem de sucesso
 
     // Após 2 segundos, redireciona para a tela de pedidos
@@ -120,7 +119,6 @@ window.mudarStatusParaFinalizado = async function(pedidoId) {
 
   } catch (err) {
     console.error("Erro inesperado:", err);
-    alert("Erro inesperado ao atualizar pedido.");
   }
 };
 

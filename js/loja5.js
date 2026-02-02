@@ -3,6 +3,9 @@ import { supabase } from "./supabase.js";
 // Referência para o container onde os pedidos serão exibidos
 const containerPedidos = document.getElementById("containerPedidos");
 
+// Referência para a mensagem de sucesso
+const successMessage = document.getElementById("successMessage");
+
 // Variável para armazenar os pedidos carregados anteriormente
 let pedidosAnteriores = [];
 
@@ -81,70 +84,6 @@ function criarCardPedido(pedido) {
 }
 
 // =========================
-// ATUALIZAR PEDIDO COM A OBSERVAÇÃO DA LOJA 5
-// =========================
-window.atualizarPedido = async function(pedidoId) {
-  const obsLoja5 = document.getElementById(`obs_loja5_${pedidoId}`).value;
-
-  try {
-    const { error } = await supabase
-      .from("pedidos")
-      .update({ obs_loja5: obsLoja5 })
-      .eq("id", pedidoId);
-
-    if (error) {
-      console.error("Erro ao atualizar pedido:", error);
-      alert("Erro ao atualizar pedido.");
-      return;
-    }
-
-    // Atualiza a observação localmente na lista de pedidos
-    pedidosAnteriores = pedidosAnteriores.map(p => {
-      if (p.id === pedidoId) {
-        p.obs_loja5 = obsLoja5;
-      }
-      return p;
-    });
-
-    // Atualiza a interface sem recarregar a página
-    const card = document.getElementById(`pedido-${pedidoId}`);
-    if (card) {
-      card.querySelector(`#obs_loja5_${pedidoId}`).value = obsLoja5;  // Atualiza a observação no card
-    }
-
-    alert("Observação da Loja 5 salva com sucesso!");
-
-  } catch (err) {
-    console.error("Erro inesperado:", err);
-    alert("Erro inesperado ao atualizar pedido.");
-  }
-};
-
-// =========================
-// MUDAR STATUS PARA 'TRANSPORTE'
-// =========================
-window.mudarStatusParaTransporte = async function(pedidoId) {
-  try {
-    const { error } = await supabase
-      .from("pedidos")
-      .update({ status: "Transporte" })
-      .eq("id", pedidoId);
-
-    if (error) {
-      console.error("Erro ao atualizar status para Transporte:", error);
-      alert("Erro ao mover para Transporte.");
-      return;
-    }
-
-    alert("Pedido movido para Transporte com sucesso!");
-    carregarPedidos(); // Atualiza os pedidos após a atualização
-  } catch (err) {
-    console.error("Erro inesperado:", err);
-    alert("Erro inesperado ao atualizar pedido.");
-  }
-};
-
-// =========================
 // MUDAR STATUS PARA 'FINALIZADO'
 // =========================
 window.mudarStatusParaFinalizado = async function(pedidoId) {
@@ -168,20 +107,15 @@ window.mudarStatusParaFinalizado = async function(pedidoId) {
       .update({ obs_loja5: obsLoja5 })
       .eq("id", pedidoId);
 
-    // Exibir mensagem de sucesso na tela
-    const messageDiv = document.createElement("div");
-    messageDiv.className = "success-message";
-    messageDiv.innerHTML = "Pedido finalizado com sucesso!";
+    // Exibir a mensagem de sucesso
+    successMessage.style.display = "block"; // Exibe a mensagem de sucesso
 
-    // Adicionar a mensagem ao body
-    document.body.appendChild(messageDiv);
-
-    // Após 2 segundos, redirecionar para a tela de pedidos
+    // Após 2 segundos, redireciona para a tela de pedidos
     setTimeout(() => {
       window.location.href = "loja5.html"; // Redireciona para a tela de pedidos
-    }, 2000); // Aguarda 2 segundos antes do redirecionamento
+    }, 2000); // Aguardar 2 segundos antes do redirecionamento
 
-    // Atualiza os pedidos após a finalização
+    // Recarregar a lista de pedidos após a finalização
     carregarPedidos(); // Atualiza os pedidos após a finalização
 
   } catch (err) {

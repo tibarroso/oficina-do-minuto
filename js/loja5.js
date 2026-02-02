@@ -7,12 +7,14 @@ const containerPedidos = document.getElementById("containerPedidos");
 let pedidosAnteriores = [];
 
 // =========================
-// CARREGAR PEDIDOS (MANUAL)
+// CARREGAR PEDIDOS
 // =========================
 async function carregarPedidos() {
   try {
     // Exibe feedback de carregamento
-    containerPedidos.innerHTML = '<p class="loading">Carregando pedidos...</p>';
+    if (!containerPedidos.innerHTML.includes("Carregando")) {
+      containerPedidos.innerHTML = '<p class="loading">Carregando pedidos...</p>';
+    }
 
     // Buscar pedidos com status 'Entregue na Loja 5' ou 'Em serviço'
     const { data, error } = await supabase
@@ -23,8 +25,10 @@ async function carregarPedidos() {
 
     if (error) throw error;
 
-    // Limpar o conteúdo anterior
-    containerPedidos.innerHTML = "";
+    // Limpar o conteúdo anterior apenas se for necessário
+    if (pedidosAnteriores.length === 0) {
+      containerPedidos.innerHTML = "";  // Limpa o conteúdo apenas uma vez no início
+    }
 
     if (!data.length) {
       containerPedidos.innerHTML = "<p class='error'>Nenhum pedido encontrado.</p>";
@@ -46,7 +50,7 @@ async function carregarPedidos() {
           containerPedidos.appendChild(card);  // Adiciona o novo card caso não exista
         }
       } else {
-        // Caso não tenha alteração, apenas mantemos o card atual
+        // Caso não tenha alteração, apenas mantém o card atual
         const existingCard = document.getElementById(`pedido-${pedido.id}`);
         if (existingCard) {
           existingCard.querySelector(`#obs_loja5_${pedido.id}`).value = pedido.obs_loja5 || ""; // Mantém a observação
@@ -112,7 +116,7 @@ window.atualizarPedido = async function(pedidoId) {
       return;
     }
 
-    // Atualiza a observação localmente
+    // Atualiza a observação localmente na lista de pedidos
     pedidosAnteriores = pedidosAnteriores.map(p => {
       if (p.id === pedidoId) {
         p.obs_loja5 = obsLoja5;
@@ -120,8 +124,14 @@ window.atualizarPedido = async function(pedidoId) {
       return p;
     });
 
+    // Atualiza a interface sem recarregar a página
+    const card = document.getElementById(`pedido-${pedidoId}`);
+    if (card) {
+      card.querySelector(`#obs_loja5_${pedidoId}`).value = obsLoja5;  // Atualiza a observação no card
+    }
+
     alert("Observação da Loja 5 salva com sucesso!");
-    carregarPedidos(); // Atualiza os pedidos após a atualização
+
   } catch (err) {
     console.error("Erro inesperado:", err);
     alert("Erro inesperado ao atualizar pedido.");
@@ -192,5 +202,5 @@ function getStatusClass(status) {
 // =========================
 document.getElementById("btnAtualizar").addEventListener("click", carregarPedidos); // Adicionando o botão de atualização manual
 
-// Atualiza os pedidos quando a página for carregada
+// Carrega os pedidos assim que a página for carregada
 carregarPedidos();

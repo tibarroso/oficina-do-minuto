@@ -20,7 +20,7 @@ async function carregarPedidos() {
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
-      .in("status", ["Entregue na Loja 5", "Em serviço"]) // Status para pedidos entregues ou em serviço
+      .in("status", ["Entregue na Loja 5", "Em serviço", "Finalizado"]) // Incluindo "Finalizado"
       .order("criado_em", { ascending: false }); // Ordenar do mais recente para o mais antigo
 
     if (error) throw error;
@@ -86,13 +86,11 @@ function criarCardPedido(pedido) {
     <em>${pedido.obs_loja_origem || "Nenhuma observação"}</em><br>
 
     <label for="obs_loja5_${pedido.id}"><strong>Observação Loja 5:</strong></label><br>
-    <textarea id="obs_loja5_${pedido.id}" placeholder="Digite uma observação para a Loja 5">${pedido.obs_loja5 || ""}</textarea><br>
+    <textarea id="obs_loja5_${pedido.id}" placeholder="Digite uma observação para a Loja 5" ${pedido.status === "Finalizado" ? "disabled" : ""}>${pedido.obs_loja5 || ""}</textarea><br>
 
-    <button onclick="atualizarPedido('${pedido.id}')">Salvar Observação</button>
-
-    <!-- Botões de status -->
+    ${pedido.status !== "Finalizado" ? `<button onclick="atualizarPedido('${pedido.id}')">Salvar Observação</button>` : ""}
     ${pedido.status === "Em serviço" ? `<button onclick="mudarStatusParaTransporte('${pedido.id}')">Mover para Transporte</button>` : ''}
-    ${pedido.status === "Entregue na Loja 5" ? `<button onclick="mudarStatusParaFinalizado('${pedido.id}')">Finalizar Pedido</button>` : ''}
+    ${pedido.status === "Entregue na Loja 5" || pedido.status === "Finalizado" ? `<button onclick="mudarStatusParaFinalizado('${pedido.id}')">Finalizar Pedido</button>` : ''}
   `;
 
   return card;
@@ -178,7 +176,16 @@ window.mudarStatusParaFinalizado = async function(pedidoId) {
       return;
     }
 
+    // Salvar a observação automaticamente quando finalizar
+    const obsLoja5 = document.getElementById(`obs_loja5_${pedidoId}`).value;
+
+    await supabase
+      .from("pedidos")
+      .update({ obs_loja5: obsLoja5 })
+      .eq("id", pedidoId);
+
     alert("Pedido finalizado com sucesso!");
+
     carregarPedidos(); // Atualiza os pedidos após a atualização
   } catch (err) {
     console.error("Erro inesperado:", err);

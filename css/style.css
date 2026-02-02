@@ -203,6 +203,14 @@ section {
   margin-bottom: 32px;
 }
 
+/* Ajuste no título "Pedidos Recebidos" */
+section h2 {
+  margin-top: 60px; /* Adiciona mais espaço acima do título */
+  color: #222;
+  font-size: 24px;
+  font-weight: 600;
+}
+
 /* =========================
    RESPONSIVO
 ========================= */
@@ -221,6 +229,7 @@ section {
 
   .card {
     padding: 14px;
+    margin-top: 10px; /* Adiciona margem superior aos cards */
   }
 
   button {
@@ -238,6 +247,12 @@ section {
 
   .timeline-step::before {
     display: none;
+  }
+
+  /* Ajuste nas cartas para não ficarem coladas no topo */
+  .cards-container {
+    padding: 0;
+    margin-top: 30px;
   }
 }
 
@@ -492,11 +507,4 @@ button:active {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
-}
-/* Ajuste no título "Pedidos Recebidos" */
-section h2 {
-  margin-top: 60px; /* Adiciona mais espaço acima do título */
-  color: #222;
-  font-size: 24px;
-  font-weight: 600;
 }

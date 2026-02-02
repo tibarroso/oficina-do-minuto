@@ -16,7 +16,7 @@ async function carregarPedidos() {
       containerPedidos.innerHTML = '<p class="loading">Carregando pedidos...</p>';
     }
 
-    // Buscar pedidos apenas com status 'Entregue na Loja 5'
+    // Buscar apenas pedidos com status "Entregue na Loja 5"
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")

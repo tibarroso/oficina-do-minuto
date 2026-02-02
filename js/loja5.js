@@ -3,6 +3,9 @@ import { supabase } from "./supabase.js";
 // Referência para o container onde os pedidos serão exibidos
 const containerPedidos = document.getElementById("containerPedidos");
 
+// Variável para armazenar os pedidos carregados anteriormente
+let pedidosAnteriores = [];
+
 // =========================
 // CARREGAR PEDIDOS
 // =========================
@@ -15,7 +18,7 @@ async function carregarPedidos() {
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
-      .in("status", ["Entregue na Loja 5", "Em serviço"]) // Status para pedidos entregues
+      .in("status", ["Entregue na Loja 5", "Em serviço"]) // Status para pedidos entregues ou em serviço
       .order("criado_em", { ascending: false }); // Ordenar do mais recente para o mais antigo
 
     if (error) throw error;
@@ -28,11 +31,20 @@ async function carregarPedidos() {
       return;
     }
 
-    // Criar um card para cada pedido
+    // Verificar se houve alguma alteração
     data.forEach(pedido => {
-      const card = criarCardPedido(pedido);
-      containerPedidos.appendChild(card);
+      const pedidoAnterior = pedidosAnteriores.find(p => p.id === pedido.id);
+
+      if (!pedidoAnterior || pedido.status !== pedidoAnterior.status || pedido.obs_loja5 !== pedidoAnterior.obs_loja5) {
+        // Se o pedido foi alterado (status ou observação diferente), recria o card
+        const card = criarCardPedido(pedido);
+        containerPedidos.appendChild(card);
+      }
     });
+
+    // Atualiza o estado anterior com os novos pedidos
+    pedidosAnteriores = data;
+
   } catch (err) {
     console.error("Erro ao carregar pedidos:", err);
     containerPedidos.innerHTML = `<p class="error">Erro ao carregar pedidos. Tente novamente.</p>`;
@@ -67,12 +79,6 @@ function criarCardPedido(pedido) {
     ${pedido.status === "Entregue na Loja 5" ? `<button onclick="mudarStatusParaFinalizado('${pedido.id}')">Finalizar Pedido</button>` : ''}
   `;
 
-  // Verificando se existe uma observação salva localmente para o pedido
-  const savedObservation = localStorage.getItem(`obs_loja5_${pedido.id}`);
-  if (savedObservation) {
-    document.getElementById(`obs_loja5_${pedido.id}`).value = savedObservation;
-  }
-
   return card;
 }
 
@@ -94,8 +100,13 @@ window.atualizarPedido = async function(pedidoId) {
       return;
     }
 
-    // Salvando a observação no localStorage para não perder após atualização
-    localStorage.setItem(`obs_loja5_${pedidoId}`, obsLoja5);
+    // Atualiza o pedido nos dados carregados
+    pedidosAnteriores = pedidosAnteriores.map(p => {
+      if (p.id === pedidoId) {
+        p.obs_loja5 = obsLoja5;
+      }
+      return p;
+    });
 
     alert("Observação da Loja 5 salva com sucesso!");
     carregarPedidos(); // Recarrega os pedidos após a atualização

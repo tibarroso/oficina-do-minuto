@@ -11,7 +11,7 @@ let pedidosAnteriores = [];
 // =========================
 async function carregarPedidos() {
   try {
-    // Exibe feedback de carregamento apenas se necessário
+    // Exibe feedback de carregamento
     if (!containerPedidos.innerHTML.includes("Carregando pedidos...")) {
       containerPedidos.innerHTML = '<p class="loading">Carregando pedidos...</p>';
     }
@@ -26,7 +26,7 @@ async function carregarPedidos() {
     if (error) throw error;
 
     // Limpar o conteúdo anterior apenas se for necessário
-    containerPedidos.innerHTML = "";  // Limpar antes de adicionar os novos pedidos
+    containerPedidos.innerHTML = "";  // Limpa antes de adicionar os novos pedidos
 
     if (!data.length) {
       containerPedidos.innerHTML = "<p class='error'>Nenhum pedido encontrado.</p>";
@@ -40,7 +40,19 @@ async function carregarPedidos() {
       if (!pedidoAnterior || pedido.status !== pedidoAnterior.status || pedido.obs_loja5 !== pedidoAnterior.obs_loja5) {
         // Se o pedido foi alterado (status ou observação diferente), cria ou atualiza o card
         const card = criarCardPedido(pedido);
-        containerPedidos.appendChild(card);
+        const existingCard = document.getElementById(`pedido-${pedido.id}`);
+        
+        if (existingCard) {
+          existingCard.replaceWith(card);  // Substitui o card antigo com o novo
+        } else {
+          containerPedidos.appendChild(card);  // Adiciona o novo card caso não exista
+        }
+      } else {
+        // Caso não tenha alteração, apenas mantemos o card atual
+        const existingCard = document.getElementById(`pedido-${pedido.id}`);
+        if (existingCard) {
+          existingCard.querySelector(`#obs_loja5_${pedido.id}`).value = pedido.obs_loja5 || ""; // Mantém a observação
+        }
       }
     });
 
@@ -172,7 +184,7 @@ window.mudarStatusParaFinalizado = async function(pedidoId) {
 
     alert("Pedido finalizado com sucesso!");
 
-    // Atualiza a lista de pedidos após a finalização
+    // Após a finalização, recarregamos os pedidos e removemos o pedido finalizado da interface
     carregarPedidos(); // Atualiza os pedidos após a atualização
   } catch (err) {
     console.error("Erro inesperado:", err);

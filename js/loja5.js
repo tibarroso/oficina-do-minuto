@@ -186,7 +186,14 @@ window.mudarStatusParaFinalizado = async function(pedidoId) {
 
     alert("Pedido finalizado com sucesso!");
 
-    // Atualiza o pedido na interface
+    // Atualiza a lista de pedidos sem recarregar a página
+    const card = document.getElementById(`pedido-${pedidoId}`);
+    if (card) {
+      // Remover o card do pedido finalizado da interface
+      card.remove();
+    }
+
+    // Atualiza os pedidos novamente
     carregarPedidos(); // Atualiza os pedidos após a atualização
   } catch (err) {
     console.error("Erro inesperado:", err);

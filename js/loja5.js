@@ -168,16 +168,20 @@ window.mudarStatusParaFinalizado = async function(pedidoId) {
       .update({ obs_loja5: obsLoja5 })
       .eq("id", pedidoId);
 
-    // Exibir mensagem de sucesso
-    alert("Pedido finalizado com sucesso!");
+    // Exibir mensagem de sucesso na tela
+    const messageDiv = document.createElement("div");
+    messageDiv.className = "success-message";
+    messageDiv.innerHTML = "Pedido finalizado com sucesso!";
 
-    // Exibir mensagem de sucesso e redirecionar
+    // Adicionar a mensagem ao body
+    document.body.appendChild(messageDiv);
+
+    // Após 2 segundos, redirecionar para a tela de pedidos
     setTimeout(() => {
-      alert("Pedido finalizado com sucesso! Você será redirecionado para a tela de pedidos.");
-      window.location.href = "loja5.html"; // Redireciona para a tela de pedidos após 2 segundos
-    }, 2000); // Aguardar 2 segundos antes do redirecionamento
+      window.location.href = "loja5.html"; // Redireciona para a tela de pedidos
+    }, 2000); // Aguarda 2 segundos antes do redirecionamento
 
-    // Recarregar a lista de pedidos após a finalização
+    // Atualiza os pedidos após a finalização
     carregarPedidos(); // Atualiza os pedidos após a finalização
 
   } catch (err) {

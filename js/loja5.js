@@ -45,6 +45,7 @@ async function carregarPedidos() {
 function criarCardPedido(pedido) {
   const card = document.createElement("div");
   card.className = "card";
+  card.id = `pedido-${pedido.id}`; // Atribuindo um ID para facilitar a manipulação do card
 
   // Classe de status baseada no status do pedido
   const statusClass = getStatusClass(pedido.status);
@@ -66,6 +67,12 @@ function criarCardPedido(pedido) {
     ${pedido.status === "Entregue na Loja 5" ? `<button onclick="mudarStatusParaFinalizado('${pedido.id}')">Finalizar Pedido</button>` : ''}
   `;
 
+  // Verificando se existe uma observação salva localmente para o pedido
+  const savedObservation = localStorage.getItem(`obs_loja5_${pedido.id}`);
+  if (savedObservation) {
+    document.getElementById(`obs_loja5_${pedido.id}`).value = savedObservation;
+  }
+
   return card;
 }
 
@@ -86,6 +93,9 @@ window.atualizarPedido = async function(pedidoId) {
       alert("Erro ao atualizar pedido.");
       return;
     }
+
+    // Salvando a observação no localStorage para não perder após atualização
+    localStorage.setItem(`obs_loja5_${pedidoId}`, obsLoja5);
 
     alert("Observação da Loja 5 salva com sucesso!");
     carregarPedidos(); // Recarrega os pedidos após a atualização

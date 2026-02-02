@@ -10,7 +10,7 @@ const successMessage = document.getElementById("successMessage");
 let pedidosAnteriores = [];
 
 // =========================
-// CARREGAR PEDIDOS (Somente com status "Entregue na Loja 5")
+// CARREGAR PEDIDOS AUTOMATICAMENTE
 // =========================
 async function carregarPedidos() {
   try {
@@ -133,5 +133,8 @@ function getStatusClass(status) {
   return "status-Aguardando";
 }
 
-// Carrega os pedidos assim que a página for carregada
+// =========================
+// INICIALIZAÇÃO AUTOMÁTICA
+// =========================
+// Carrega os pedidos automaticamente quando a página for carregada
 carregarPedidos();

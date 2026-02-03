@@ -48,7 +48,7 @@ async function verificarLogin() {
   lojaUsuario = userData.loja;  // A loja do usuário logado
   usuarioLogado = data.user;
 
-  // Verificando no console se o valor de lojaUsuario está correto
+  // Log para garantir que a loja foi recuperada corretamente
   console.log("Loja do usuário logado:", lojaUsuario);  // Debug
 
   return data.user;
@@ -75,14 +75,14 @@ btnCriarPedido?.addEventListener("click", async () => {
   const statusInicial = "Aguardando coleta";
 
   try {
-    // Verificando se o valor de lojaUsuario está correto antes da inserção
-    console.log("Criando pedido para a loja:", lojaUsuario);  // Debug
+    // Verificando o valor de lojaUsuario antes da inserção
+    console.log("Valor de lojaUsuario sendo gravado no pedido:", lojaUsuario);  // Debug
 
     // Inserir o pedido e associar a loja de origem
     const { data, error } = await supabase
       .from("pedidos")
       .insert([{
-        loja_origem: lojaUsuario,  // Aqui usamos o código da loja, não o email
+        loja_origem: lojaUsuario,  // Aqui usamos o código da loja (ex: '2')
         tipo_servico: tipo,
         eh_orcamento: orcamento,
         status: statusInicial,
@@ -92,7 +92,7 @@ btnCriarPedido?.addEventListener("click", async () => {
       .select()
       .single();
 
-    // Verificando se ocorreu erro na inserção
+    // Verificando erro na inserção
     if (error) {
       console.error("Erro na inserção do pedido:", error);
       alert("Erro ao criar pedido: " + error.message);

@@ -15,10 +15,11 @@ const fotoDepoisInput = document.getElementById("fotoDepois");
 const btnUploadDepois = document.getElementById("btnUploadDepois");
 
 let usuarioLogado = null;
+let lojaUsuario = null;      // ← Aqui guardamos o código da loja
 let pedidoAtualId = null;
 
 // ===============================
-// Verificar login
+// Verificar login e buscar loja
 // ===============================
 async function verificarLogin() {
   const { data, error } = await supabase.auth.getUser();
@@ -28,6 +29,25 @@ async function verificarLogin() {
     window.location.href = "login.html";
     return null;
   }
+
+  // Buscar loja e perfil na tabela usuario
+  const email = data.user.email.trim().toLowerCase();
+
+  const { data: userData, error: userError } = await supabase
+    .from("usuario")
+    .select("perfil, loja")
+    .eq("email", email)
+    .single();
+
+  if (userError || !userData) {
+    alert("Usuário não encontrado na tabela!");
+    window.location.href = "login.html";
+    return null;
+  }
+
+  lojaUsuario = userData.loja;  // pode ser '1', '2', 'admin', 'transporte' etc.
+  usuarioLogado = data.user;
+
   return data.user;
 }
 
@@ -49,17 +69,13 @@ btnCriarPedido?.addEventListener("click", async () => {
     return;
   }
 
-  /**
-   * STATUS PADRONIZADO
-   * ⚠️ NÃO usar status que não existam no fluxo
-   */
   const statusInicial = "Aguardando coleta";
 
   try {
     const { data, error } = await supabase
       .from("pedidos")
       .insert([{
-        loja_origem: usuarioLogado.email,
+        loja_origem: lojaUsuario,   // <-- aqui usamos o código da loja, não o email
         tipo_servico: tipo,
         eh_orcamento: orcamento,
         status: statusInicial,
@@ -73,7 +89,6 @@ btnCriarPedido?.addEventListener("click", async () => {
 
     pedidoAtualId = data.id;
 
-    // Evento inicial
     await registrarEvento(
       pedidoAtualId,
       "Pedido criado",

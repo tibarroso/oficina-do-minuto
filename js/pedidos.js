@@ -48,7 +48,7 @@ async function verificarLogin() {
   lojaUsuario = userData.loja;  // A loja do usuário logado
   usuarioLogado = data.user;
 
-  // Adicionamos um log para garantir que a loja está sendo recuperada corretamente
+  // Verificando no console se o valor de lojaUsuario está correto
   console.log("Loja do usuário logado:", lojaUsuario);  // Debug
 
   return data.user;
@@ -100,6 +100,7 @@ btnCriarPedido?.addEventListener("click", async () => {
     }
 
     pedidoAtualId = data.id;  // Garantir que o pedido foi criado com sucesso
+    console.log("Pedido criado com sucesso, ID:", pedidoAtualId);  // Debug
 
     // Registrar o evento de criação
     await registrarEvento(

@@ -48,6 +48,9 @@ async function verificarLogin() {
   lojaUsuario = userData.loja;  // A loja do usuário logado
   usuarioLogado = data.user;
 
+  // Adicionamos um log para garantir que a loja está sendo recuperada corretamente
+  console.log("Loja do usuário logado:", lojaUsuario);  // Debug
+
   return data.user;
 }
 
@@ -72,11 +75,14 @@ btnCriarPedido?.addEventListener("click", async () => {
   const statusInicial = "Aguardando coleta";
 
   try {
+    // Adicionamos log para garantir que o valor de lojaUsuario está sendo passado corretamente
+    console.log("Criando pedido para a loja:", lojaUsuario);  // Debug
+
     // Inserir o pedido e associar a loja de origem
     const { data, error } = await supabase
       .from("pedidos")
       .insert([{
-        loja_origem: lojaUsuario,   // Aqui usamos o código da loja, não o email
+        loja_origem: lojaUsuario,  // Aqui usamos o código da loja, não o email
         tipo_servico: tipo,
         eh_orcamento: orcamento,
         status: statusInicial,

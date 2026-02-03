@@ -48,7 +48,7 @@ async function verificarLogin() {
   lojaUsuario = userData.loja;  // A loja do usuário logado
   usuarioLogado = data.user;
 
-  // Log para garantir que a loja foi recuperada corretamente
+  // Verificando no console se o valor de lojaUsuario está correto
   console.log("Loja do usuário logado:", lojaUsuario);  // Debug
 
   return data.user;
@@ -76,7 +76,7 @@ btnCriarPedido?.addEventListener("click", async () => {
 
   try {
     // Verificando o valor de lojaUsuario antes da inserção
-    console.log("Valor de lojaUsuario sendo gravado no pedido:", lojaUsuario);  // Debug
+    console.log("Valor de lojaUsuario que será gravado em loja_origem:", lojaUsuario);  // Debug
 
     // Inserir o pedido e associar a loja de origem
     const { data, error } = await supabase

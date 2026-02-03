@@ -15,7 +15,7 @@ const fotoDepoisInput = document.getElementById("fotoDepois");
 const btnUploadDepois = document.getElementById("btnUploadDepois");
 
 let usuarioLogado = null;
-let lojaUsuario = null;      // ← Aqui guardamos o código da loja
+let lojaUsuario = null;      // Aqui guardamos o código da loja
 let pedidoAtualId = null;
 
 // ===============================
@@ -35,7 +35,7 @@ async function verificarLogin() {
 
   const { data: userData, error: userError } = await supabase
     .from("usuario")
-    .select("perfil, loja")
+    .select("perfil, loja")  // Buscamos o campo "loja" na tabela usuario
     .eq("email", email)
     .single();
 
@@ -45,7 +45,7 @@ async function verificarLogin() {
     return null;
   }
 
-  lojaUsuario = userData.loja;  // pode ser '1', '2', 'admin', 'transporte' etc.
+  lojaUsuario = userData.loja;  // A loja do usuário logado
   usuarioLogado = data.user;
 
   return data.user;
@@ -55,8 +55,8 @@ async function verificarLogin() {
 // Criar pedido
 // ===============================
 btnCriarPedido?.addEventListener("click", async () => {
-  if (!usuarioLogado) {
-    alert("Usuário não logado!");
+  if (!usuarioLogado || !lojaUsuario) {
+    alert("Usuário não logado ou loja não encontrada!");
     return;
   }
 
@@ -72,10 +72,11 @@ btnCriarPedido?.addEventListener("click", async () => {
   const statusInicial = "Aguardando coleta";
 
   try {
+    // Inserir o pedido e associar a loja de origem
     const { data, error } = await supabase
       .from("pedidos")
       .insert([{
-        loja_origem: lojaUsuario,   // <-- aqui usamos o código da loja, não o email
+        loja_origem: lojaUsuario,   // Aqui usamos o código da loja, não o email
         tipo_servico: tipo,
         eh_orcamento: orcamento,
         status: statusInicial,
@@ -87,8 +88,9 @@ btnCriarPedido?.addEventListener("click", async () => {
 
     if (error) throw error;
 
-    pedidoAtualId = data.id;
+    pedidoAtualId = data.id;  // Garantir que o pedido foi criado com sucesso
 
+    // Registrar o evento de criação
     await registrarEvento(
       pedidoAtualId,
       "Pedido criado",
@@ -97,7 +99,7 @@ btnCriarPedido?.addEventListener("click", async () => {
 
     alert(`Pedido criado com sucesso!\nOS: ${pedidoAtualId}`);
 
-    // Limpar formulário
+    // Limpar formulário após criar o pedido
     tipoInput.value = "";
     orcamentoInput.checked = false;
     observacaoInput.value = "";
@@ -140,11 +142,13 @@ async function uploadFoto(fileInput, tipo) {
 
     const field = tipo === "antes" ? "foto_antes" : "foto_depois";
 
+    // Atualizar o pedido com o link da foto
     await supabase
       .from("pedidos")
       .update({ [field]: urlData.publicUrl })
       .eq("id", pedidoAtualId);
 
+    // Registrar o evento de upload de foto
     await registrarEvento(
       pedidoAtualId,
       `Foto ${tipo.toUpperCase()} enviada`,

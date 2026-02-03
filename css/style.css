@@ -8,16 +8,15 @@
 }
 
 body {
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
   background: #f4f6f9;
   color: #333;
   padding: 20px 16px;
-  margin-top: 60px; /* Espaço para o header fixo */
+  margin-top: 70px;
 }
 
 h1, h2, h3 {
   font-weight: 600;
-  margin-bottom: 12px;
 }
 
 h1 {
@@ -29,14 +28,15 @@ h1 {
    HEADER
 ========================= */
 header {
-  background-color: #007bff;
-  color: white;
-  padding: 15px 20px;
+  background: linear-gradient(135deg, #1a73e8, #1565c0);
+  color: #fff;
+  padding: 14px 20px;
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   z-index: 100;
+  box-shadow: 0 4px 14px rgba(0,0,0,.15);
 }
 
 header .container {
@@ -46,22 +46,22 @@ header .container {
 }
 
 header nav a {
-  color: white;
+  color: #fff;
   text-decoration: none;
-  padding: 8px 15px;
-  border-radius: 5px;
-  transition: background-color 0.3s ease;
+  padding: 8px 14px;
+  border-radius: 8px;
+  transition: background 0.2s ease;
 }
 
 header nav a:hover {
-  background-color: #0056b3;
+  background: rgba(255,255,255,.15);
 }
 
 /* =========================
    SEÇÕES
 ========================= */
 main {
-  margin-top: 80px;
+  margin-top: 30px;
 }
 
 section {
@@ -69,15 +69,14 @@ section {
 }
 
 section h2 {
-  font-size: 24px;
-  font-weight: 600;
-  margin-bottom: 16px;
-  color: #007bff;
+  font-size: 22px;
+  margin-bottom: 10px;
+  color: #1a73e8;
 }
 
 section p {
   color: #666;
-  font-size: 16px;
+  font-size: 15px;
   margin-bottom: 20px;
 }
 
@@ -88,129 +87,138 @@ section p {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
-  padding: 0;
 }
 
 .card {
-  background-color: white;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.08);
+  transition: all .25s ease;
 }
 
 .card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-}
-
-.card h3 {
-  font-size: 18px;
-  color: #007bff;
-  margin-bottom: 10px;
-}
-
-.card p {
-  font-size: 14px;
-  color: #555;
-  margin-bottom: 10px;
-}
-
-.card em {
-  font-size: 14px;
-  color: #666;
+  transform: translateY(-4px);
+  box-shadow: 0 10px 26px rgba(0,0,0,.12);
 }
 
 .card strong {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   display: block;
-  margin-bottom: 6px;
+  margin-top: 6px;
+}
+
+.card em {
+  font-size: 13px;
+  color: #555;
+}
+
+.card textarea {
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-family: inherit;
+  font-size: 13px;
+  resize: vertical;
 }
 
 /* =========================
-   STATUS
+   STATUS TAG
 ========================= */
 .status-tag {
   display: inline-block;
-  padding: 4px 10px;
+  margin: 8px 0;
+  padding: 4px 12px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
-  margin-bottom: 6px;
   color: #fff;
 }
 
-.status-Aguardando {
-  background: #f59e0b;
+.status-Aguardando { background: #f59e0b; }
+.status-Transporte { background: #0ea5e9; }
+.status-Loja5      { background: #6366f1; }
+.status-Finalizado { background: #22c55e; }
+.status-Retrabalho { background: #ef4444; }
+
+/* =========================
+   BOTÃO PADRÃO
+========================= */
+button {
+  background: #e5e7eb;
+  color: #333;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .2s ease;
 }
 
-.status-Transporte {
-  background: #0ea5e9;
-}
-
-.status-Loja5 {
-  background: #6366f1;
-}
-
-.status-Finalizado {
-  background: #22c55e;
-}
-
-.status-Retrabalho {
-  background: #ef4444;
+button:hover {
+  background: #d1d5db;
 }
 
 /* =========================
-   TIMELINE
+   BOTÕES DOS CARDS
 ========================= */
-.timeline {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid #e5e7eb;
-}
-
-.timeline-step {
-  flex: 1;
-  text-align: center;
-  font-size: 12px;
-  padding: 4px 0;
-  border-radius: 12px;
-  color: #fff;
-  position: relative;
-}
-
-.timeline-step::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: -50%;
+.card button {
   width: 100%;
-  height: 4px;
-  background-color: #ddd;
-  z-index: -1;
+  margin-top: 8px;
+  padding: 12px;
+  border-radius: 999px;
+  font-size: 13px;
 }
 
-.timeline-step:first-child::before {
-  content: none;
+/* Azul – Transporte / Status */
+.card button.status {
+  background: linear-gradient(135deg, #1a73e8, #1565c0);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(26,115,232,.35);
 }
 
-.step-Aguardando { background-color: #f59e0b; }
-.step-Transporte { background-color: #0ea5e9; }
-.step-Loja5 { background-color: #6366f1; }
-.step-Finalizado { background-color: #22c55e; }
-.step-Retrabalho { background-color: #ef4444; }
+.card button.status:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(26,115,232,.45);
+}
+
+/* Verde – Entregar / Finalizar */
+.card button.entregar {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(34,197,94,.35);
+}
+
+.card button.entregar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(34,197,94,.45);
+}
+
+/* Vermelho – Alerta / Retrabalho */
+.card button.alerta {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  color: #fff;
+}
+
+/* Desabilitado */
+.card button:disabled {
+  background: #d1d5db;
+  color: #6b7280;
+  cursor: not-allowed;
+  box-shadow: none;
+}
 
 /* =========================
-   IMAGENS
+   LOADING / MENSAGENS
 ========================= */
-img.preview {
-  max-width: 100%;
-  margin-top: 6px;
-  border-radius: 8px;
-  border: 1px solid #ddd;
+.loading {
+  text-align: center;
+  font-size: 15px;
+  color: #1a73e8;
 }
 
 /* =========================
@@ -218,112 +226,15 @@ img.preview {
 ========================= */
 @media (max-width: 768px) {
   body {
-    padding: 16px;
+    padding: 14px;
   }
 
-  header {
-    padding: 10px 20px;
-  }
-
-  section h2 {
-    font-size: 20px;
+  header .container {
+    flex-direction: column;
+    gap: 10px;
   }
 
   .cards-container {
     grid-template-columns: 1fr;
   }
-
-  .card {
-    padding: 14px;
-  }
-
-  button {
-    width: 100%;
-    margin-top: 6px;
-  }
-
-  .timeline {
-    flex-direction: column;
-  }
-
-  .timeline-step::before {
-    display: none;
-  }
-}
-
-@media (max-width: 600px) {
-  body {
-    padding: 12px;
-  }
-
-  h1 {
-    font-size: 20px;
-  }
-
-  .cards-container {
-    grid-template-columns: 1fr;
-  }
-
-  .card {
-    padding: 14px;
-    margin-top: 10px;
-  }
-
-  button {
-    width: 100%;
-    margin-top: 6px;
-  }
-
-  button + button {
-    margin-left: 0;
-  }
-
-  .timeline {
-    flex-direction: column;
-  }
-
-  .timeline-step::before {
-    display: none;
-  }
-
-  .cards-container {
-    padding: 0;
-    margin-top: 30px;
-  }
-}
-/* =========================
-   BOTÕES MODERNOS
-========================= */
-button {
-  background: linear-gradient(135deg, #1a73e8, #0d47a1);
-  color: #fff;
-  border: none;
-  border-radius: 30px;
-  padding: 12px 26px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.25s ease;
-  box-shadow: 0 8px 18px rgba(26, 115, 232, 0.25);
-}
-
-/* Hover */
-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 24px rgba(26, 115, 232, 0.35);
-  background: linear-gradient(135deg, #1e88e5, #1565c0);
-}
-
-/* Clique */
-button:active {
-  transform: scale(0.97);
-  box-shadow: 0 6px 12px rgba(26, 115, 232, 0.25);
-}
-
-/* Botão desabilitado */
-button:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-  box-shadow: none;
 }

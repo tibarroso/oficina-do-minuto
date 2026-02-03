@@ -1,6 +1,7 @@
 import { supabase } from "./supabase.js";
 
 const form = document.getElementById("formLogin");
+const BASE_PATH = "/oficina-do-minuto/";
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -33,22 +34,22 @@ form.addEventListener("submit", async (e) => {
 
     // 🔹 Redirecionamento baseado no email
     if (email === "admin@minuto.com") {
-      window.location.href = "admin.html";
+      window.location.href = BASE_PATH + "admin.html";
 
     } else if (/^loja\d+@minuto\.com$/.test(email)) {
-      window.location.href = "pedidos.html";
+      window.location.href = BASE_PATH + "pedidos.html";
 
     } else if (/^transporte\d*@minuto\.com$/.test(email)) {
-      window.location.href = "transporte.html";
+      window.location.href = BASE_PATH + "transporte.html";
 
     } else if (email === "financeiro@minuto.com") {
-      window.location.href = "financeiro.html";
+      window.location.href = BASE_PATH + "financeiro.html";
 
     } else if (/^gerente\d*@minuto\.com$/.test(email)) {
-      window.location.href = "gerente.html";
+      window.location.href = BASE_PATH + "gerente.html";
 
     } else {
-      window.location.href = "dashboard.html";
+      window.location.href = BASE_PATH + "dashboard.html";
     }
 
   } catch (err) {

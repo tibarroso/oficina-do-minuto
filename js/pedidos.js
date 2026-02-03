@@ -92,7 +92,12 @@ btnCriarPedido?.addEventListener("click", async () => {
       .select()
       .single();
 
-    if (error) throw error;
+    // Verificar se há erro na inserção
+    if (error) {
+      console.error("Erro na inserção do pedido:", error);
+      alert("Erro ao criar pedido: " + error.message);
+      return;
+    }
 
     pedidoAtualId = data.id;  // Garantir que o pedido foi criado com sucesso
 

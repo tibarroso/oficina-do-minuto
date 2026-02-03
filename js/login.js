@@ -23,22 +23,23 @@ form.addEventListener("submit", async (e) => {
   }
 
   try {
-    const { data: { user }, error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: emailInput,
       password: senha
     });
 
     if (error) throw error;
-    if (!user) {
-      alert("Usuário não encontrado!");
+    if (!data.session) {
+      alert("Usuário ou senha inválidos!");
       return;
     }
 
-    const email = (user.email || "").trim();
-    console.log("Email retornado pelo Supabase:", email); // debug
+    // 🔹 Email logado
+    const email = (data.session.user.email || "").trim().toLowerCase();
+    console.log("Email logado:", email); // debug
 
+    // 🔹 Redirecionamento baseado no mapa de roles
     const role = rolesMap.find(r => r.pattern.test(email));
-
     if (role) {
       window.location.href = BASE_PATH + role.page;
     } else {

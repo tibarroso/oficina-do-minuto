@@ -3,13 +3,12 @@ import { supabase } from "./supabase.js";
 const form = document.getElementById("formLogin");
 const BASE_PATH = "/oficina-do-minuto/";
 
-// 🔹 Mapa de roles → pattern (regex ou string) : página de destino
 const rolesMap = [
-  { pattern: /^admin@minuto\.com$/, page: "admin.html" },
-  { pattern: /^loja\d+@minuto\.com$/, page: "pedidos.html" },
-  { pattern: /^transporte\d*@minuto\.com$/, page: "transporte.html" },
-  { pattern: /^financeiro@minuto\.com$/, page: "financeiro.html" },
-  { pattern: /^gerente\d*@minuto\.com$/, page: "gerente.html" }
+  { pattern: /^admin@minuto\.com$/i, page: "admin.html" },
+  { pattern: /^loja\d+@minuto\.com$/i, page: "pedidos.html" },
+  { pattern: /^transporte\d*@minuto\.com$/i, page: "transporte.html" },
+  { pattern: /^financeiro@minuto\.com$/i, page: "financeiro.html" },
+  { pattern: /^gerente\d*@minuto\.com$/i, page: "gerente.html" }
 ];
 
 form.addEventListener("submit", async (e) => {
@@ -35,17 +34,14 @@ form.addEventListener("submit", async (e) => {
       return;
     }
 
-    // 🔹 Normaliza email
-    const email = user.email.trim().toLowerCase();
-    console.log("Email logado:", email); // debug
+    const email = (user.email || "").trim();
+    console.log("Email retornado pelo Supabase:", email); // debug
 
-    // 🔹 Encontra o role correspondente
     const role = rolesMap.find(r => r.pattern.test(email));
 
     if (role) {
       window.location.href = BASE_PATH + role.page;
     } else {
-      // fallback
       window.location.href = BASE_PATH + "dashboard.html";
     }
 

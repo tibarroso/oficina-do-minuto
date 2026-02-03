@@ -8,6 +8,9 @@ const orcamentoInput = document.getElementById("orcamento");
 const observacaoInput = document.getElementById("observacao");
 const btnCriarPedido = document.getElementById("btnCriarPedido");
 
+// Novo campo de seleção de loja
+const lojaSelect = document.getElementById("lojaSelect");  // Captura o campo de seleção da loja
+
 const fotoAntesInput = document.getElementById("fotoAntes");
 const btnUploadAntes = document.getElementById("btnUploadAntes");
 
@@ -15,11 +18,10 @@ const fotoDepoisInput = document.getElementById("fotoDepois");
 const btnUploadDepois = document.getElementById("btnUploadDepois");
 
 let usuarioLogado = null;
-let lojaUsuario = null;      // Aqui guardamos o código da loja
 let pedidoAtualId = null;
 
 // ===============================
-// Verificar login e buscar loja
+// Verificar login
 // ===============================
 async function verificarLogin() {
   const { data, error } = await supabase.auth.getUser();
@@ -30,27 +32,7 @@ async function verificarLogin() {
     return null;
   }
 
-  // Buscar loja e perfil na tabela usuario
-  const email = data.user.email.trim().toLowerCase();
-
-  const { data: userData, error: userError } = await supabase
-    .from("usuario")
-    .select("perfil, loja")  // Buscamos o campo "loja" na tabela usuario
-    .eq("email", email)
-    .single();
-
-  if (userError || !userData) {
-    alert("Usuário não encontrado na tabela!");
-    window.location.href = "login.html";
-    return null;
-  }
-
-  lojaUsuario = userData.loja;  // A loja do usuário logado
   usuarioLogado = data.user;
-
-  // Verificando no console se o valor de lojaUsuario está correto
-  console.log("Loja do usuário logado:", lojaUsuario);  // Debug
-
   return data.user;
 }
 
@@ -58,14 +40,15 @@ async function verificarLogin() {
 // Criar pedido
 // ===============================
 btnCriarPedido?.addEventListener("click", async () => {
-  if (!usuarioLogado || !lojaUsuario) {
-    alert("Usuário não logado ou loja não encontrada!");
+  if (!usuarioLogado) {
+    alert("Usuário não logado!");
     return;
   }
 
   const tipo = tipoInput.value.trim();
   const orcamento = orcamentoInput.checked;
   const observacao = observacaoInput.value.trim();
+  const lojaSelecionada = lojaSelect.value; // Valor selecionado para loja
 
   if (!tipo) {
     alert("Selecione o tipo de serviço.");
@@ -75,14 +58,14 @@ btnCriarPedido?.addEventListener("click", async () => {
   const statusInicial = "Aguardando coleta";
 
   try {
-    // Verificando o valor de lojaUsuario antes da inserção
-    console.log("Valor de lojaUsuario que será gravado em loja_origem:", lojaUsuario);  // Debug
+    // Verificando o valor de lojaSelecionada antes da inserção
+    console.log("Loja selecionada:", lojaSelecionada);  // Debug
 
     // Inserir o pedido e associar a loja de origem
     const { data, error } = await supabase
       .from("pedidos")
       .insert([{
-        loja_origem: lojaUsuario,  // Aqui usamos o código da loja (ex: '2')
+        loja_origem: lojaSelecionada,  // A loja selecionada (ex: '1', '2')
         tipo_servico: tipo,
         eh_orcamento: orcamento,
         status: statusInicial,

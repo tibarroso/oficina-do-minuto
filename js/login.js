@@ -3,6 +3,15 @@ import { supabase } from "./supabase.js";
 const form = document.getElementById("formLogin");
 const BASE_PATH = "/oficina-do-minuto/";
 
+// 🔹 Mapa de roles → pattern (regex ou string) : página de destino
+const rolesMap = [
+  { pattern: /^admin@minuto\.com$/, page: "admin.html" },
+  { pattern: /^loja\d+@minuto\.com$/, page: "pedidos.html" },
+  { pattern: /^transporte\d*@minuto\.com$/, page: "transporte.html" },
+  { pattern: /^financeiro@minuto\.com$/, page: "financeiro.html" },
+  { pattern: /^gerente\d*@minuto\.com$/, page: "gerente.html" }
+];
+
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -15,10 +24,7 @@ form.addEventListener("submit", async (e) => {
   }
 
   try {
-    const {
-      data: { user },
-      error
-    } = await supabase.auth.signInWithPassword({
+    const { data: { user }, error } = await supabase.auth.signInWithPassword({
       email: emailInput,
       password: senha
     });
@@ -33,23 +39,13 @@ form.addEventListener("submit", async (e) => {
     const email = user.email.trim().toLowerCase();
     console.log("Email logado:", email); // debug
 
-    // 🔹 Redirecionamento baseado no email
-    if (email === "admin@minuto.com") {
-      window.location.href = BASE_PATH + "admin.html";
+    // 🔹 Encontra o role correspondente
+    const role = rolesMap.find(r => r.pattern.test(email));
 
-    } else if (/^loja\d+@minuto\.com$/.test(email)) {
-      window.location.href = BASE_PATH + "pedidos.html";
-
-    } else if (/^transporte\d*@minuto\.com$/.test(email)) {
-      window.location.href = BASE_PATH + "transporte.html";
-
-    } else if (email === "financeiro@minuto.com") {
-      window.location.href = BASE_PATH + "financeiro.html";
-
-    } else if (/^gerente\d*@minuto\.com$/.test(email)) {
-      window.location.href = BASE_PATH + "gerente.html";
-
+    if (role) {
+      window.location.href = BASE_PATH + role.page;
     } else {
+      // fallback
       window.location.href = BASE_PATH + "dashboard.html";
     }
 

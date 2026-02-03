@@ -8,12 +8,11 @@ const orcamentoInput = document.getElementById("orcamento");
 const observacaoInput = document.getElementById("observacao");
 const btnCriarPedido = document.getElementById("btnCriarPedido");
 
-// Novo campo de seleção de loja
-const lojaSelect = document.getElementById("lojaSelect");  // Captura o campo de seleção da loja
+// Capturando o select de lojas
+const lojaSelect = document.getElementById("lojaSelect");
 
 const fotoAntesInput = document.getElementById("fotoAntes");
 const btnUploadAntes = document.getElementById("btnUploadAntes");
-
 const fotoDepoisInput = document.getElementById("fotoDepois");
 const btnUploadDepois = document.getElementById("btnUploadDepois");
 
@@ -33,6 +32,8 @@ async function verificarLogin() {
   }
 
   usuarioLogado = data.user;
+
+  console.log("Usuário logado:", usuarioLogado.email);
   return data.user;
 }
 
@@ -48,24 +49,32 @@ btnCriarPedido?.addEventListener("click", async () => {
   const tipo = tipoInput.value.trim();
   const orcamento = orcamentoInput.checked;
   const observacao = observacaoInput.value.trim();
-  const lojaSelecionada = lojaSelect.value; // Valor selecionado para loja
+  let lojaSelecionada = lojaSelect.value; // pega o valor do select
 
   if (!tipo) {
     alert("Selecione o tipo de serviço.");
     return;
   }
 
+  if (!lojaSelecionada) {
+    alert("Selecione a loja de origem.");
+    return;
+  }
+
+  // Se o campo no Supabase for integer, converta:
+  lojaSelecionada = isNaN(lojaSelecionada) ? lojaSelecionada : parseInt(lojaSelecionada);
+
   const statusInicial = "Aguardando coleta";
 
   try {
-    // Verificando o valor de lojaSelecionada antes da inserção
-    console.log("Loja selecionada:", lojaSelecionada);  // Debug
+    console.log("Dados que serão enviados:");
+    console.log({ tipo, orcamento, observacao, lojaSelecionada });
 
-    // Inserir o pedido e associar a loja de origem
+    // Inserir o pedido
     const { data, error } = await supabase
       .from("pedidos")
       .insert([{
-        loja_origem: lojaSelecionada,  // A loja selecionada (ex: '1', '2')
+        loja_origem: lojaSelecionada,
         tipo_servico: tipo,
         eh_orcamento: orcamento,
         status: statusInicial,
@@ -75,17 +84,16 @@ btnCriarPedido?.addEventListener("click", async () => {
       .select()
       .single();
 
-    // Verificando erro na inserção
     if (error) {
       console.error("Erro na inserção do pedido:", error);
       alert("Erro ao criar pedido: " + error.message);
       return;
     }
 
-    pedidoAtualId = data.id;  // Garantir que o pedido foi criado com sucesso
-    console.log("Pedido criado com sucesso, ID:", pedidoAtualId);  // Debug
+    pedidoAtualId = data.id;
+    console.log("Pedido criado com sucesso, ID:", pedidoAtualId);
 
-    // Registrar o evento de criação
+    // Registrar evento
     await registrarEvento(
       pedidoAtualId,
       "Pedido criado",
@@ -94,11 +102,11 @@ btnCriarPedido?.addEventListener("click", async () => {
 
     alert(`Pedido criado com sucesso!\nOS: ${pedidoAtualId}`);
 
-    // Limpar formulário após criar o pedido
+    // Limpar formulário
     tipoInput.value = "";
     orcamentoInput.checked = false;
     observacaoInput.value = "";
-
+    lojaSelect.value = ""; // limpa select
   } catch (err) {
     console.error("Erro ao criar pedido:", err);
     alert("Erro ao criar pedido: " + err.message);
@@ -137,13 +145,11 @@ async function uploadFoto(fileInput, tipo) {
 
     const field = tipo === "antes" ? "foto_antes" : "foto_depois";
 
-    // Atualizar o pedido com o link da foto
     await supabase
       .from("pedidos")
       .update({ [field]: urlData.publicUrl })
       .eq("id", pedidoAtualId);
 
-    // Registrar o evento de upload de foto
     await registrarEvento(
       pedidoAtualId,
       `Foto ${tipo.toUpperCase()} enviada`,
@@ -181,13 +187,8 @@ async function registrarEvento(pedidoId, evento, observacao = "") {
 // ===============================
 // Eventos de botão
 // ===============================
-btnUploadAntes?.addEventListener("click", () =>
-  uploadFoto(fotoAntesInput, "antes")
-);
-
-btnUploadDepois?.addEventListener("click", () =>
-  uploadFoto(fotoDepoisInput, "depois")
-);
+btnUploadAntes?.addEventListener("click", () => uploadFoto(fotoAntesInput, "antes"));
+btnUploadDepois?.addEventListener("click", () => uploadFoto(fotoDepoisInput, "depois"));
 
 // ===============================
 // Inicialização

@@ -23,22 +23,26 @@ form.addEventListener("submit", async (e) => {
   }
 
   try {
+    // 🔹 Login no Supabase
     const { data, error } = await supabase.auth.signInWithPassword({
       email: emailInput,
       password: senha
     });
 
     if (error) throw error;
-    if (!data.session) {
-      alert("Usuário ou senha inválidos!");
+
+    // 🔹 Pega o usuário logado de forma confiável
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError) throw userError;
+    if (!userData.user || !userData.user.email) {
+      alert("Não foi possível obter o usuário logado!");
       return;
     }
 
-    // 🔹 Email logado
-    const email = (data.session.user.email || "").trim().toLowerCase();
+    const email = userData.user.email.trim().toLowerCase();
     console.log("Email logado:", email); // debug
 
-    // 🔹 Redirecionamento baseado no mapa de roles
+    // 🔹 Redirecionamento
     const role = rolesMap.find(r => r.pattern.test(email));
     if (role) {
       window.location.href = BASE_PATH + role.page;

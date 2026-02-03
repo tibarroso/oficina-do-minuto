@@ -15,7 +15,6 @@ form.addEventListener("submit", async (e) => {
   }
 
   try {
-    // 🔹 Login no Supabase
     const {
       data: { user },
       error
@@ -30,7 +29,9 @@ form.addEventListener("submit", async (e) => {
       return;
     }
 
-    const email = user.email;
+    // 🔹 Normaliza email
+    const email = user.email.trim().toLowerCase();
+    console.log("Email logado:", email); // debug
 
     // 🔹 Redirecionamento baseado no email
     if (email === "admin@minuto.com") {

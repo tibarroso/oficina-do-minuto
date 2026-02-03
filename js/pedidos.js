@@ -75,7 +75,7 @@ btnCriarPedido?.addEventListener("click", async () => {
   const statusInicial = "Aguardando coleta";
 
   try {
-    // Adicionamos log para garantir que o valor de lojaUsuario está sendo passado corretamente
+    // Verificando se o valor de lojaUsuario está correto antes da inserção
     console.log("Criando pedido para a loja:", lojaUsuario);  // Debug
 
     // Inserir o pedido e associar a loja de origem
@@ -92,7 +92,7 @@ btnCriarPedido?.addEventListener("click", async () => {
       .select()
       .single();
 
-    // Verificar se há erro na inserção
+    // Verificando se ocorreu erro na inserção
     if (error) {
       console.error("Erro na inserção do pedido:", error);
       alert("Erro ao criar pedido: " + error.message);

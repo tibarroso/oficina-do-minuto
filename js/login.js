@@ -30,23 +30,22 @@ form.addEventListener("submit", async (e) => {
     });
 
     if (error) throw error;
-
-    // 🔹 Pega o usuário logado de forma confiável
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    if (userError) throw userError;
-    if (!userData.user || !userData.user.email) {
-      alert("Não foi possível obter o usuário logado!");
+    if (!data.user) {
+      alert("Usuário não encontrado!");
       return;
     }
 
-    const email = userData.user.email.trim().toLowerCase();
+    // 🔹 Pega o usuário logado diretamente do 'data'
+    const email = data.user.email.trim().toLowerCase(); // Normaliza o email para evitar problemas de case-sensitive
     console.log("Email logado:", email); // debug
 
-    // 🔹 Redirecionamento
+    // 🔹 Redirecionamento baseado no email
     const role = rolesMap.find(r => r.pattern.test(email));
     if (role) {
+      // Redireciona para a página associada ao perfil
       window.location.href = BASE_PATH + role.page;
     } else {
+      // Caso não encontre um perfil correspondente, redireciona para a página padrão (dashboard)
       window.location.href = BASE_PATH + "dashboard.html";
     }
 

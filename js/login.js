@@ -5,18 +5,21 @@ const form = document.getElementById("formLogin");
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const email = document.getElementById("email").value.trim();
+  const emailInput = document.getElementById("email").value.trim();
   const senha = document.getElementById("senha").value.trim();
 
-  if (!email || !senha) {
+  if (!emailInput || !senha) {
     alert("Preencha email e senha!");
     return;
   }
 
   try {
-    // Login no Supabase
-    const { data: { session, user }, error } = await supabase.auth.signInWithPassword({
-      email,
+    // 🔹 Login no Supabase
+    const {
+      data: { user },
+      error
+    } = await supabase.auth.signInWithPassword({
+      email: emailInput,
       password: senha
     });
 
@@ -26,19 +29,25 @@ form.addEventListener("submit", async (e) => {
       return;
     }
 
-    // Salvar sessão localmente se quiser (opcional)
-    // localStorage.setItem("userEmail", user.email);
+    const email = user.email;
 
     // 🔹 Redirecionamento baseado no email
-    if (user.email === "admin@minuto.com") {
+    if (email === "admin@minuto.com") {
       window.location.href = "admin.html";
-    } else if (user.email.startsWith("loja")) {
-      // todas as lojas com email tipo lojaX@minuto.com
+
+    } else if (/^loja\d+@minuto\.com$/.test(email)) {
       window.location.href = "pedidos.html";
-    } else if (user.email.startsWith("transporte")) {
+
+    } else if (/^transporte\d*@minuto\.com$/.test(email)) {
       window.location.href = "transporte.html";
+
+    } else if (email === "financeiro@minuto.com") {
+      window.location.href = "financeiro.html";
+
+    } else if (/^gerente\d*@minuto\.com$/.test(email)) {
+      window.location.href = "gerente.html";
+
     } else {
-      // fallback
       window.location.href = "dashboard.html";
     }
 

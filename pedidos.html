@@ -203,27 +203,41 @@
     <button id="btnCriarPedido">Criar Pedido</button>
   </section>
 
-  <!-- ========================= -->
-  <!-- FILTROS DE PEDIDOS -->
-  <!-- ========================= -->
-  <section class="filtros card">
-    <h2>Filtrar Pedidos</h2>
+<!-- ========================= -->
+<!-- FILTROS DE PEDIDOS -->
+<!-- ========================= -->
+<section class="filtros card">
+  <h2>Filtrar Pedidos</h2>
 
-    <label for="filtroStatus">Status:</label>
-    <select id="filtroStatus">
-      <option value="">Todos</option>
-      <option value="Aguardando coleta">Aguardando coleta</option>
-      <option value="Em transporte para Loja 5">Em transporte (ida)</option>
-      <option value="Entregue na Loja 5">Recebido na Loja 5</option>
-      <option value="Em serviço">Em serviço</option>
-      <option value="Aguardando retorno do transporte">Aguardando retorno</option>
-      <option value="Em transporte para loja de origem">Em transporte (volta)</option>
-      <option value="Recebido na loja de origem">Recebido na loja de origem</option>
-      <option value="Finalizado">Finalizado</option>
-      <option value="Retrabalho">Retrabalho</option>
-    </select>
-    <button id="btnFiltrar">Filtrar</button>
-  </section>
+  <!-- Filtro de Status -->
+  <label for="filtroStatus">Status:</label>
+  <select id="filtroStatus">
+    <option value="">Todos</option>
+    <option value="Aguardando coleta">Aguardando coleta</option>
+    <option value="Em transporte para Loja 5">Em transporte (ida)</option>
+    <option value="Entregue na Loja 5">Recebido na Loja 5</option>
+    <option value="Em serviço">Em serviço</option>
+    <option value="Aguardando retorno do transporte">Aguardando retorno</option>
+    <option value="Em transporte para loja de origem">Em transporte (volta)</option>
+    <option value="Recebido na loja de origem">Recebido na loja de origem</option>
+    <option value="Finalizado">Finalizado</option>
+    <option value="Retrabalho">Retrabalho</option>
+  </select>
+
+  <!-- Filtro de Loja -->
+  <label for="filtroLoja">Loja:</label>
+  <select id="filtroLoja">
+    <option value="">Todas</option>
+    <option value="Loja 1">Loja 1</option>
+    <option value="Loja 2">Loja 2</option>
+    <option value="Loja 3">Loja 3</option>
+    <option value="Loja 4">Loja 4</option>
+    <option value="Loja 5">Loja 5</option>
+  </select>
+
+  <button id="btnFiltrar">Filtrar</button>
+</section>
+
 
   <!-- ========================= -->
   <!-- LISTA DE PEDIDOS -->

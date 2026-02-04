@@ -3,11 +3,51 @@ import { supabase } from "./supabase.js";
 // =========================
 // CARREGAR PEDIDOS
 // =========================
-async function carregarPedidos(filtro = "") {
+//async function carregarPedidos(filtro = "") {
+//  try {
+//    let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false });
+//    if (filtro && filtro !== "Todos") {
+//      query = query.eq("status", filtro);
+//    }
+
+//    const { data, error } = await query;
+//    if (error) throw error;
+
+//    const pedidos = data || [];
+ //   const container = document.getElementById("containerPedidos");
+ //   container.innerHTML = "";
+
+//    if (!pedidos.length) {
+//      container.innerHTML = "<p>Nenhum pedido encontrado.</p>";
+//      return;
+//    }
+//
+//    pedidos.forEach(pedido => {
+//      const card = criarCardPedido(pedido);
+//      container.appendChild(card);
+//      carregarTimeline(pedido.id);
+//    });
+//  } catch (err) {
+//    console.error("Erro ao carregar pedidos:", err);
+//    const container = document.getElementById("containerPedidos");
+//    container.innerHTML = `<p style="color:red;">Erro ao carregar pedidos.</p>`;
+//  }
+//}
+// =========================
+// CARREGAR PEDIDOS
+// =========================
+async function carregarPedidos(filtroStatus = "", filtroLoja = "") {
   try {
     let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false });
-    if (filtro && filtro !== "Todos") {
-      query = query.eq("status", filtro);
+
+    // Aplicando filtro de status
+    if (filtroStatus && filtroStatus !== "Todos") {
+      query = query.eq("status", filtroStatus);
+    }
+
+    // Aplicando filtro de loja
+    if (filtroLoja && filtroLoja !== "Todas") {
+      query = query.eq("loja", filtroLoja);
     }
 
     const { data, error } = await query;
@@ -135,16 +175,33 @@ document.getElementById("btnCriarPedido").addEventListener("click", async () => 
 // =========================
 // FILTRO DE PEDIDOS
 // =========================
+//document.getElementById("btnFiltrar").addEventListener("click", () => {
+//  const filtro = document.getElementById("filtroStatus").value;
+//  carregarPedidos(filtro);
+//});
+// =========================
+// FILTRO DE PEDIDOS
+// =========================
 document.getElementById("btnFiltrar").addEventListener("click", () => {
-  const filtro = document.getElementById("filtroStatus").value;
-  carregarPedidos(filtro);
+  const filtroStatus = document.getElementById("filtroStatus").value;
+  const filtroLoja = document.getElementById("filtroLoja").value;
+  carregarPedidos(filtroStatus, filtroLoja);
 });
+
 
 // =========================
 // AUTO-ATUALIZAÇÃO
 // =========================
-carregarPedidos();
+//carregarPedidos();
+//setInterval(() => {
+//  const filtro = document.getElementById("filtroStatus").value;
+//  carregarPedidos(filtro);
+//}, 5000);
+// =========================
+// AUTO-ATUALIZAÇÃO
+// =========================
 setInterval(() => {
-  const filtro = document.getElementById("filtroStatus").value;
-  carregarPedidos(filtro);
+  const filtroStatus = document.getElementById("filtroStatus").value;
+  const filtroLoja = document.getElementById("filtroLoja").value;
+  carregarPedidos(filtroStatus, filtroLoja);
 }, 5000);

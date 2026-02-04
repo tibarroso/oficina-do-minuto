@@ -4,6 +4,7 @@ import { supabase } from "./supabase.js";
 // Elementos
 // ===============================
 const tipoInput = document.getElementById("tipo");
+const lojaInput = document.getElementById("loja");
 const orcamentoInput = document.getElementById("orcamento");
 const observacaoInput = document.getElementById("observacao");
 const btnCriarPedido = document.getElementById("btnCriarPedido");
@@ -35,6 +36,7 @@ btnCriarPedido?.addEventListener("click", async () => {
   }
 
   const tipo = tipoInput.value.trim();
+  const loja = lojaInput.value.trim();
   const orcamento = orcamentoInput.checked;
   const observacao = observacaoInput.value.trim();
 
@@ -55,6 +57,7 @@ btnCriarPedido?.addEventListener("click", async () => {
       .insert([{
         loja_origem: usuarioLogado.email,
         tipo_servico: tipo,
+        loja:loja,
         eh_orcamento: orcamento,
         status: statusInicial,
         obs_loja_origem: observacao || null,

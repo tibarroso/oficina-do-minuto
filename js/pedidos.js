@@ -167,13 +167,13 @@ async function registrarEvento(pedidoId, evento, observacao = "") {
 // ===============================
 // Eventos de botão
 // ===============================
-btnUploadAntes?.addEventListener("click", () =>
-  uploadFoto(fotoAntesInput, "antes")
-);
+//btnUploadAntes?.addEventListener("click", () =>
+//  uploadFoto(fotoAntesInput, "antes")
+//);
 
-btnUploadDepois?.addEventListener("click", () =>
-  uploadFoto(fotoDepoisInput, "depois")
-);
+//btnUploadDepois?.addEventListener("click", () =>
+//  uploadFoto(fotoDepoisInput, "depois")
+//);
 
 // ===============================
 // Inicialização

@@ -44,6 +44,7 @@ function criarCardPedido(pedido) {
   const statusClass = getStatusClass(pedido.status);
 
   card.innerHTML = `
+    <strong>LOJA:</strong> ${pedido_eventos.criado_por}<br>
     <strong>OS:</strong> ${pedido.id}<br>
     <strong>Serviço:</strong> ${pedido.tipo_servico}<br>
     <span class="status-tag ${statusClass}">${pedido.status}</span><br>

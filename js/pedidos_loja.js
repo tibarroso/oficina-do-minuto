@@ -200,8 +200,13 @@ document.getElementById("btnFiltrar").addEventListener("click", () => {
 // =========================
 // AUTO-ATUALIZAÇÃO
 // =========================
+//setInterval(() => {
+//  const filtroStatus = document.getElementById("filtroStatus").value;
+//  const filtroLoja = document.getElementById("filtroLoja").value;
+//  carregarPedidos(filtroStatus, filtroLoja);
+//}, 5000);
 setInterval(() => {
   const filtroStatus = document.getElementById("filtroStatus").value;
   const filtroLoja = document.getElementById("filtroLoja").value;
   carregarPedidos(filtroStatus, filtroLoja);
-}, 5000);
+}, 30000); // Atualiza a cada 30 segundos

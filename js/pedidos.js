@@ -8,12 +8,6 @@ const orcamentoInput = document.getElementById("orcamento");
 const observacaoInput = document.getElementById("observacao");
 const btnCriarPedido = document.getElementById("btnCriarPedido");
 
-//const fotoAntesInput = document.getElementById("fotoAntes");
-//const btnUploadAntes = document.getElementById("btnUploadAntes");
-
-//const fotoDepoisInput = document.getElementById("fotoDepois");
-//const btnUploadDepois = document.getElementById("btnUploadDepois");
-
 let usuarioLogado = null;
 let pedidoAtualId = null;
 
@@ -93,55 +87,6 @@ btnCriarPedido?.addEventListener("click", async () => {
   }
 });
 
-// ===============================
-// Upload de foto (ANTES / DEPOIS)
-// ===============================
-//async function uploadFoto(fileInput, tipo) {
-//  if (!pedidoAtualId) {
-//    alert("Crie o pedido antes de enviar fotos!");
-//    return;
-//  }
-
-//  const file = fileInput.files[0];
-//  if (!file) {
-//    alert("Selecione uma foto!");
-//    return;
-//  }
-
-//  const path = `${tipo}_${pedidoAtualId}_${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
-
-//  try {
- //   const { error: uploadError } = await supabase
- //     .storage
- //     .from("fotos")
- //     .upload(path, file);
-
- //   if (uploadError) throw uploadError;
-
- //   const { data: urlData } = supabase
- //     .storage
- //     .from("fotos")
- //     .getPublicUrl(path);
-
- //   const field = tipo === "antes" ? "foto_antes" : "foto_depois";
-
- //   await supabase
- //     .from("pedidos")
- //     .update({ [field]: urlData.publicUrl })
-//      .eq("id", pedidoAtualId);
-
-//    await registrarEvento(
-//      pedidoAtualId,
-//      `Foto ${tipo.toUpperCase()} enviada`,
- //     urlData.publicUrl
- //   );
-
-//    alert("Foto enviada com sucesso!");
-//  } catch (err) {
-//    console.error("Erro ao enviar foto:", err);
-//    alert("Erro ao enviar foto: " + err.message);
-//  }
-//}
 
 // ===============================
 // Registrar evento
@@ -163,17 +108,6 @@ async function registrarEvento(pedidoId, evento, observacao = "") {
     console.error("Erro ao registrar evento:", err);
   }
 }
-
-// ===============================
-// Eventos de botão
-// ===============================
-//btnUploadAntes?.addEventListener("click", () =>
-//  uploadFoto(fotoAntesInput, "antes")
-//);
-
-//btnUploadDepois?.addEventListener("click", () =>
-//  uploadFoto(fotoDepoisInput, "depois")
-//);
 
 // ===============================
 // Inicialização

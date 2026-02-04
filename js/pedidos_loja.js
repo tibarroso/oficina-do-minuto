@@ -100,6 +100,7 @@ function getStatusClass(status) {
 // =========================
 document.getElementById("btnCriarPedido").addEventListener("click", async () => {
   const tipoServico = document.getElementById("tipo").value;
+  const loja = document.getElementById("loja").value;
   const orcamento = document.getElementById("orcamento").checked;
   const observacao = document.getElementById("observacao").value.trim();
 
@@ -111,6 +112,7 @@ document.getElementById("btnCriarPedido").addEventListener("click", async () => 
   try {
     const { data, error } = await supabase.from("pedidos").insert([{
       tipo_servico: tipoServico,
+      loja: loja,
       orcamento,
       obs_loja_origem: observacao,
       status: "Aguardando coleta",

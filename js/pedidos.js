@@ -4,7 +4,8 @@ import { supabase } from "./supabase.js";
 // Elementos
 // ===============================
 const tipoInput = document.getElementById("tipo");
-const lojaInput = document.getElementById("loja");
+const lojaOrigemInput = document.getElementById("lojaOrigem"); // Novo campo: Loja de Origem
+const lojaDestinoInput = document.getElementById("lojaDestino"); // Campo de Loja de Destino
 const orcamentoInput = document.getElementById("orcamento");
 const observacaoInput = document.getElementById("observacao");
 const btnCriarPedido = document.getElementById("btnCriarPedido");
@@ -36,12 +37,18 @@ btnCriarPedido?.addEventListener("click", async () => {
   }
 
   const tipo = tipoInput.value.trim();
-  const loja = lojaInput.value.trim();
+  const lojaOrigem = lojaOrigemInput.value.trim(); // Obter o valor de Loja de Origem
+  const lojaDestino = lojaDestinoInput.value.trim(); // Obter o valor de Loja de Destino
   const orcamento = orcamentoInput.checked;
   const observacao = observacaoInput.value.trim();
 
   if (!tipo) {
     alert("Selecione o tipo de serviço.");
+    return;
+  }
+
+  if (!lojaOrigem || !lojaDestino) {
+    alert("Por favor, selecione as lojas de origem e destino.");
     return;
   }
 
@@ -55,9 +62,9 @@ btnCriarPedido?.addEventListener("click", async () => {
     const { data, error } = await supabase
       .from("pedidos")
       .insert([{
-        loja_origem: usuarioLogado.email,
+        loja_origem: lojaOrigem, // A loja de origem agora recebe o valor correto
+        loja: lojaDestino, // A loja de destino é inserida no campo correto
         tipo_servico: tipo,
-        loja:loja,
         eh_orcamento: orcamento,
         status: statusInicial,
         obs_loja_origem: observacao || null,
@@ -81,6 +88,8 @@ btnCriarPedido?.addEventListener("click", async () => {
 
     // Limpar formulário
     tipoInput.value = "";
+    lojaOrigemInput.value = ""; // Limpa o campo Loja de Origem
+    lojaDestinoInput.value = ""; // Limpa o campo Loja de Destino
     orcamentoInput.checked = false;
     observacaoInput.value = "";
 
@@ -89,7 +98,6 @@ btnCriarPedido?.addEventListener("click", async () => {
     alert("Erro ao criar pedido: " + err.message);
   }
 });
-
 
 // ===============================
 // Registrar evento

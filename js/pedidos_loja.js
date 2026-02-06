@@ -106,7 +106,9 @@ function getStatusClass(status) {
 // CRIAR PEDIDO
 // =========================
 document.addEventListener("DOMContentLoaded", () => {  // Garantir que o código seja executado após o carregamento completo do DOM
-  document.getElementById("btnCriarPedido").addEventListener("click", async () => {
+  const btnCriarPedido = document.getElementById("btnCriarPedido");
+
+  btnCriarPedido?.addEventListener("click", async () => {
     const tipoServico = document.getElementById("tipo").value;
     const lojaOrigem = document.getElementById("lojaOrigem").value;  // Loja de origem capturada corretamente
     const lojaDestino = document.getElementById("lojaDestino").value;

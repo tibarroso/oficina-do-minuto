@@ -107,30 +107,33 @@ function getStatusClass(status) {
 // =========================
 document.getElementById("btnCriarPedido").addEventListener("click", async () => {
   const tipoServico = document.getElementById("tipo").value;
-  const loja = document.getElementById("loja").value;
+  const lojaOrigem = document.getElementById("lojaOrigem").value;
+  const lojaDestino = document.getElementById("lojaDestino").value;
   const orcamento = document.getElementById("orcamento").checked;
   const observacao = document.getElementById("observacao").value.trim();
 
-  if (!tipoServico) {
-    alert("Selecione um tipo de serviço!");
+  if (!tipoServico || !lojaOrigem || !lojaDestino) {
+    alert("Preencha todos os campos obrigatórios!");
     return;
   }
 
   try {
     const { data, error } = await supabase.from("pedidos").insert([{
       tipo_servico: tipoServico,
-      loja: loja,
+      loja_origem: lojaOrigem,
+      loja_destino: lojaDestino,
       orcamento,
       obs_loja_origem: observacao,
       status: "Aguardando coleta",
       criado_em: new Date().toISOString()
     }]);
 
-
     if (error) throw error;
 
     alert("Pedido criado com sucesso!");
     document.getElementById("tipo").value = "";
+    document.getElementById("lojaOrigem").value = "";
+    document.getElementById("lojaDestino").value = "";
     document.getElementById("orcamento").checked = false;
     document.getElementById("observacao").value = "";
     carregarPedidos();

@@ -2,6 +2,16 @@ import { supabase } from "./supabase.js";
 
 let usuarioLogado = null;
 
+// Enum de Status
+const Status = {
+  AGUARDANDO_COLETA: "Aguardando coleta",
+  EM_TRANSPORTE_LOJA5: "Em transporte para Loja 5",
+  EM_TRANSPORTE_ORIGEM: "Em transporte para loja de origem",
+  AGUARDANDO_RETORNO: "Aguardando retorno do transporte",
+  RETRABALHO: "Retrabalho",
+  FINALIZADO: "Finalizado",
+};
+
 // =====================
 // Inicialização
 // =====================
@@ -21,7 +31,7 @@ async function carregarAguardando() {
   const { data, error } = await supabase
     .from("pedidos")
     .select("*")
-    .eq("status", "Aguardando coleta")
+    .eq("status", Status.AGUARDANDO_COLETA)
     .order("criado_em", { ascending: false });
 
   if (error) return erro(div, error);
@@ -32,20 +42,27 @@ async function carregarAguardando() {
 }
 
 // =====================
-// EM TRANSPORTE
+// EM TRANSPORTE (IDA OU VOLTA)
 // =====================
 async function carregarEmTransporte() {
   const div = document.getElementById("transporte");
   div.innerHTML = "<p>Carregando pedidos...</p>";
 
-  const { data, error } = await supabase
-    .from("pedidos")
-    .select("*")
-    .in("status", [
-      "Em transporte para Loja 5",
-      "Em transporte para loja de origem"
-    ])
-    .order("criado_em", { ascending: false });
+  const filtroLoja = document.getElementById("filtroLoja").value;
+  
+  let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false });
+  
+  // Filtro de status e loja
+  if (filtroLoja !== "Todas") {
+    query = query.eq("loja", filtroLoja);
+  }
+  
+  query = query.in("status", [
+    Status.EM_TRANSPORTE_LOJA5,
+    Status.EM_TRANSPORTE_ORIGEM,
+  ]);
+
+  const { data, error } = await query;
 
   if (error) return erro(div, error);
   if (!data?.length) return vazio(div, "Nenhum pedido em transporte.");
@@ -55,7 +72,7 @@ async function carregarEmTransporte() {
 }
 
 // =====================
-// RETORNO / RETRABALHO
+// AGUARDANDO RETORNO / RETRABALHO
 // =====================
 async function carregarRetorno() {
   const div = document.getElementById("retorno");
@@ -64,7 +81,7 @@ async function carregarRetorno() {
   const { data, error } = await supabase
     .from("pedidos")
     .select("*")
-    .in("status", ["Aguardando retorno do transporte", "Retrabalho"])
+    .in("status", [Status.AGUARDANDO_RETORNO, Status.RETRABALHO])
     .order("criado_em", { ascending: false });
 
   if (error) return erro(div, error);
@@ -75,7 +92,7 @@ async function carregarRetorno() {
 }
 
 // =====================
-// CARD
+// CRIAR CARD DE PEDIDO
 // =====================
 function criarCard(pedido, tipo) {
   const card = document.createElement("div");
@@ -84,8 +101,9 @@ function criarCard(pedido, tipo) {
   const origem = pedido.loja;
   let destino = "-";
 
-  if (pedido.status === "Em transporte para Loja 5") destino = "Loja 5";
-  if (pedido.status === "Em transporte para loja de origem") destino = origem;
+  // Definindo destinos
+  if (pedido.status === Status.EM_TRANSPORTE_LOJA5) destino = "Loja 5";
+  if (pedido.status === Status.EM_TRANSPORTE_ORIGEM) destino = origem;
   if (tipo === "ida") destino = "Loja 5";
 
   card.innerHTML = `
@@ -104,11 +122,11 @@ function criarCard(pedido, tipo) {
   if (tipo === "ida") {
     btn.textContent = "Iniciar Transporte (Ida)";
     btn.onclick = () =>
-      atualizarStatus(pedido.id, "Em transporte para Loja 5", "Transporte iniciado (ida)");
+      atualizarStatus(pedido.id, Status.EM_TRANSPORTE_LOJA5, "Transporte iniciado (ida)");
   }
 
   if (tipo === "emTransporte") {
-    if (pedido.status === "Em transporte para Loja 5") {
+    if (pedido.status === Status.EM_TRANSPORTE_LOJA5) {
       btn.textContent = "Entregar na Loja 5";
       btn.onclick = () =>
         atualizarStatus(pedido.id, "Entregue na Loja 5", "Entregue na Loja 5");
@@ -128,7 +146,7 @@ function criarCard(pedido, tipo) {
     btn.onclick = () =>
       atualizarStatus(
         pedido.id,
-        "Em transporte para loja de origem",
+        Status.EM_TRANSPORTE_ORIGEM,
         "Transporte iniciado (volta)"
       );
   }
@@ -138,19 +156,26 @@ function criarCard(pedido, tipo) {
 }
 
 // =====================
-// STATUS
+// MAPEAR STATUS PARA CLASSE CSS
 // =====================
 function statusClasse(status) {
-  if (status.includes("Aguardando")) return "Aguardando";
-  if (status.includes("transporte")) return "Transporte";
-  if (status.includes("Loja 5") || status.includes("Entregue")) return "Loja5";
-  if (status.includes("Retrabalho")) return "Retrabalho";
-  if (status.includes("Finalizado")) return "Finalizado";
-  return "Aguardando";
+  switch (status) {
+    case Status.AGUARDANDO_COLETA:
+      return "Aguardando";
+    case Status.EM_TRANSPORTE_LOJA5:
+    case Status.EM_TRANSPORTE_ORIGEM:
+      return "Transporte";
+    case Status.FINALIZADO:
+      return "Finalizado";
+    case Status.RETRABALHO:
+      return "Retrabalho";
+    default:
+      return "Aguardando";
+  }
 }
 
 // =====================
-// UPDATE
+// ATUALIZAR STATUS E REGISTRAR EVENTO
 // =====================
 async function atualizarStatus(id, status, evento) {
   const { error } = await supabase.from("pedidos").update({ status }).eq("id", id);
@@ -160,6 +185,8 @@ async function atualizarStatus(id, status, evento) {
   carregarPedidos();
 }
 
+// =====================
+// REGISTRAR EVENTO
 // =====================
 async function registrarEvento(pedidoId, evento) {
   const { data } = await supabase.auth.getUser();
@@ -174,6 +201,8 @@ async function registrarEvento(pedidoId, evento) {
 }
 
 // =====================
+// MANIPULAR ERRO
+// =====================
 function erro(div, e) {
   console.error(e);
   div.innerHTML = "<p>Erro ao carregar pedidos.</p>";
@@ -184,12 +213,12 @@ function vazio(div, msg) {
 }
 
 // =====================
-// BOOT
+// INICIALIZAÇÃO GLOBAL
 // =====================
 (async () => {
   const { data } = await supabase.auth.getUser();
   usuarioLogado = data?.user || null;
 
   carregarPedidos();
-  setInterval(carregarPedidos, 5000);
+  setInterval(carregarPedidos, 5000); // Atualiza a cada 5 segundos
 })();

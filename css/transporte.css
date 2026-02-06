@@ -1,0 +1,153 @@
+/* ==================== Estilo geral ==================== */
+body {
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f7fa;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* ==================== Estilo da Barra de Navegação ==================== */
+header {
+  background-color: #3b3b3b;
+  padding: 15px 0;
+}
+
+header h1 {
+  color: #fff;
+  font-size: 24px;
+  margin: 0;
+  padding-left: 20px;
+  display: inline-block;
+}
+
+header nav {
+  display: inline-block;
+  float: right;
+  padding-right: 20px;
+}
+
+header nav a {
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  margin-left: 20px;
+}
+
+header nav a:hover {
+  color: #f1f1f1;
+}
+
+/* ==================== Estilo do Filtro ==================== */
+.filter-section {
+  margin: 20px 0;
+}
+
+.filter-section label {
+  font-size: 18px;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.filter-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.filter-select {
+  padding: 10px;
+  font-size: 16px;
+  border: 2px solid #ccc;
+  border-radius: 5px;
+  width: 250px;
+}
+
+.filter-btn {
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.filter-btn:hover {
+  background-color: #0056b3;
+}
+
+/* ==================== Estilo das Seções ==================== */
+.section {
+  margin-bottom: 30px;
+}
+
+h2 {
+  font-size: 22px;
+  margin-bottom: 15px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* ==================== Estilo dos Cards de Pedido ==================== */
+.cards-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.card {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: 250px;
+  text-align: left;
+  font-size: 14px;
+}
+
+.card h3 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.card .status-tag {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-weight: bold;
+}
+
+.status-Aguardando {
+  background-color: #f0ad4e;
+  color: white;
+}
+
+.status-Transporte {
+  background-color: #0275d8;
+  color: white;
+}
+
+.status-Loja5 {
+  background-color: #5bc0de;
+  color: white;
+}
+
+.status-Finalizado {
+  background-color: #5cb85c;
+  color: white;
+}
+
+.status-Retrabalho {
+  background-color: #d9534f;
+  color: white;
+}

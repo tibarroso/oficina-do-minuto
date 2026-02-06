@@ -12,9 +12,9 @@ async function carregarPedidos(filtroStatus = "", filtroLoja = "") {
       query = query.eq("status", filtroStatus);
     }
 
-    // Aplicando filtro de loja
+    // Aplicando filtro de loja (verifica tanto loja_origem quanto loja_destino)
     if (filtroLoja && filtroLoja !== "Todas") {
-      query = query.eq("loja", filtroLoja);
+      query = query.or(`loja_origem.eq.${filtroLoja},loja_destino.eq.${filtroLoja}`);
     }
 
     const { data, error } = await query;
@@ -51,7 +51,8 @@ function criarCardPedido(pedido) {
   const statusClass = getStatusClass(pedido.status);
 
   card.innerHTML = `
-    <strong>LOJA:</strong> ${pedido.loja}<br>
+    <strong>Loja de Origem:</strong> ${pedido.loja_origem || "Não especificada"}<br>
+    <strong>Loja de Destino:</strong> ${pedido.loja_destino || "Não especificada"}<br>
     <strong>OS:</strong> ${pedido.id}<br>
     <strong>Serviço:</strong> ${pedido.tipo_servico}<br>
     <span class="status-tag ${statusClass}">${pedido.status}</span><br>
@@ -105,12 +106,12 @@ function getStatusClass(status) {
 // =========================
 // CRIAR PEDIDO
 // =========================
-document.addEventListener("DOMContentLoaded", () => {  // Garantir que o código seja executado após o carregamento completo do DOM
+document.addEventListener("DOMContentLoaded", () => {
   const btnCriarPedido = document.getElementById("btnCriarPedido");
 
   btnCriarPedido?.addEventListener("click", async () => {
     const tipoServico = document.getElementById("tipo").value;
-    const lojaOrigem = document.getElementById("lojaOrigem").value;  // Loja de origem capturada corretamente
+    const lojaOrigem = document.getElementById("lojaOrigem").value;
     const lojaDestino = document.getElementById("lojaDestino").value;
     const orcamento = document.getElementById("orcamento").checked;
     const observacao = document.getElementById("observacao").value.trim();
@@ -123,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {  // Garantir que o código
     try {
       const { data, error } = await supabase.from("pedidos").insert([{
         tipo_servico: tipoServico,
-        loja_origem: lojaOrigem,  // Gravando a loja de origem
+        loja_origem: lojaOrigem,
         loja_destino: lojaDestino,
         orcamento,
         obs_loja_origem: observacao,
@@ -135,7 +136,7 @@ document.addEventListener("DOMContentLoaded", () => {  // Garantir que o código
 
       alert("Pedido criado com sucesso!");
       document.getElementById("tipo").value = "";
-      document.getElementById("lojaOrigem").value = "";  // Limpando a loja de origem
+      document.getElementById("lojaOrigem").value = "";
       document.getElementById("lojaDestino").value = "";
       document.getElementById("orcamento").checked = false;
       document.getElementById("observacao").value = "";

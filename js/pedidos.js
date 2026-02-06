@@ -30,7 +30,7 @@ async function verificarLogin() {
 // ===============================
 // Criar pedido
 // ===============================
-btnCriarPedido?.addEventListener("click", async () => {
+async function criarPedido() {
   if (!usuarioLogado) {
     alert("Usuário não logado!");
     return;
@@ -42,18 +42,16 @@ btnCriarPedido?.addEventListener("click", async () => {
   const orcamento = orcamentoInput.checked;
   const observacao = observacaoInput.value.trim();
 
+  // Verificação de campos obrigatórios
   if (!tipo || !lojaOrigem || !lojaDestino) {
     alert("Por favor, preencha todos os campos obrigatórios.");
     return;
   }
 
-  /**
-   * STATUS PADRONIZADO
-   * ⚠️ NÃO usar status que não existam no fluxo
-   */
-  const statusInicial = "Aguardando coleta";
+  const statusInicial = "Aguardando coleta";  // Status inicial do pedido
 
   try {
+    // Inserir o pedido na tabela 'pedidos'
     const { data, error } = await supabase
       .from("pedidos")
       .insert([{
@@ -72,7 +70,7 @@ btnCriarPedido?.addEventListener("click", async () => {
 
     pedidoAtualId = data.id;
 
-    // Evento inicial
+    // Registrar evento de criação
     await registrarEvento(
       pedidoAtualId,
       "Pedido criado",
@@ -81,18 +79,14 @@ btnCriarPedido?.addEventListener("click", async () => {
 
     alert(`Pedido criado com sucesso!\nOS: ${pedidoAtualId}`);
 
-    // Limpar formulário
-    tipoInput.value = "";
-    lojaOrigemInput.value = "";
-    lojaDestinoInput.value = "";
-    orcamentoInput.checked = false;
-    observacaoInput.value = "";
+    // Limpar formulário após a criação
+    limparFormulario();
 
   } catch (err) {
     console.error("Erro ao criar pedido:", err);
     alert("Erro ao criar pedido: " + err.message);
   }
-});
+}
 
 // ===============================
 // Registrar evento
@@ -116,8 +110,24 @@ async function registrarEvento(pedidoId, evento, observacao = "") {
 }
 
 // ===============================
+// Limpar formulário
+// ===============================
+function limparFormulario() {
+  tipoInput.value = "";
+  lojaOrigemInput.value = "";
+  lojaDestinoInput.value = "";
+  orcamentoInput.checked = false;
+  observacaoInput.value = "";
+}
+
+// ===============================
 // Inicialização
 // ===============================
 document.addEventListener("DOMContentLoaded", async () => {
   usuarioLogado = await verificarLogin();
+
+  // Adicionar listener para criar pedido
+  if (btnCriarPedido) {
+    btnCriarPedido.addEventListener("click", criarPedido);
+  }
 });

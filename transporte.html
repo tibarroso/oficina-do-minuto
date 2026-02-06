@@ -10,6 +10,7 @@
 
   <!-- CSS global -->
   <link rel="stylesheet" href="./css/style.css">
+  <link rel="stylesheet" href="./css/transporte.css"> <!-- Importando o CSS que iremos criar -->
 </head>
 <body>
 
@@ -34,15 +35,17 @@
     <!-- Filtro de Loja -->
     <section class="filter-section">
       <label for="filtroLoja">Filtrar por Loja:</label>
-      <select id="filtroLoja">
-        <option value="Todas">Todas</option>
-        <option value="Oficina do Minuto I">Oficina do Minuto I</option>
-        <option value="Oficina do Minuto II">Oficina do Minuto II</option>
-        <option value="Oficina do Minuto III">Oficina do Minuto III</option>
-        <option value="Oficina do Minuto IV">Oficina do Minuto IV</option>
-        <!-- Adicione mais opções conforme necessário -->
-      </select>
-      <button id="btnFiltrar">Filtrar</button>
+      <div class="filter-container">
+        <select id="filtroLoja" class="filter-select">
+          <option value="Todas">Todas</option>
+          <option value="Oficina do Minuto I">Oficina do Minuto I</option>
+          <option value="Oficina do Minuto II">Oficina do Minuto II</option>
+          <option value="Oficina do Minuto III">Oficina do Minuto III</option>
+          <option value="Oficina do Minuto IV">Oficina do Minuto IV</option>
+          <!-- Adicione mais opções conforme necessário -->
+        </select>
+        <button id="btnFiltrar" class="filter-btn">Filtrar</button>
+      </div>
     </section>
 
     <!-- ========================= -->
@@ -101,7 +104,10 @@
       carregarPedidos("Todas");
 
       // Atualiza automaticamente a cada 5 segundos
-      setInterval(() => carregarPedidos("Todas"), 5000);
+      setInterval(() => {
+        const filtroLoja = document.getElementById("filtroLoja").value;
+        carregarPedidos(filtroLoja);  // Agora considera o filtro ao atualizar
+      }, 5000);
     })();
   </script>
 

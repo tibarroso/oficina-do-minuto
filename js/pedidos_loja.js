@@ -105,58 +105,60 @@ function getStatusClass(status) {
 // =========================
 // CRIAR PEDIDO
 // =========================
-document.getElementById("btnCriarPedido").addEventListener("click", async () => {
-  const tipoServico = document.getElementById("tipo").value;
-  const lojaOrigem = document.getElementById("lojaOrigem").value;  // Loja de origem capturada corretamente
-  const lojaDestino = document.getElementById("lojaDestino").value;
-  const orcamento = document.getElementById("orcamento").checked;
-  const observacao = document.getElementById("observacao").value.trim();
+document.addEventListener("DOMContentLoaded", () => {  // Garantir que o código seja executado após o carregamento completo do DOM
+  document.getElementById("btnCriarPedido").addEventListener("click", async () => {
+    const tipoServico = document.getElementById("tipo").value;
+    const lojaOrigem = document.getElementById("lojaOrigem").value;  // Loja de origem capturada corretamente
+    const lojaDestino = document.getElementById("lojaDestino").value;
+    const orcamento = document.getElementById("orcamento").checked;
+    const observacao = document.getElementById("observacao").value.trim();
 
-  if (!tipoServico || !lojaOrigem || !lojaDestino) {
-    alert("Preencha todos os campos obrigatórios!");
-    return;
-  }
+    if (!tipoServico || !lojaOrigem || !lojaDestino) {
+      alert("Preencha todos os campos obrigatórios!");
+      return;
+    }
 
-  try {
-    const { data, error } = await supabase.from("pedidos").insert([{
-      tipo_servico: tipoServico,
-      loja_origem: lojaOrigem,  // Gravando a loja de origem
-      loja_destino: lojaDestino,
-      orcamento,
-      obs_loja_origem: observacao,
-      status: "Aguardando coleta",
-      criado_em: new Date().toISOString()
-    }]);
+    try {
+      const { data, error } = await supabase.from("pedidos").insert([{
+        tipo_servico: tipoServico,
+        loja_origem: lojaOrigem,  // Gravando a loja de origem
+        loja_destino: lojaDestino,
+        orcamento,
+        obs_loja_origem: observacao,
+        status: "Aguardando coleta",
+        criado_em: new Date().toISOString()
+      }]);
 
-    if (error) throw error;
+      if (error) throw error;
 
-    alert("Pedido criado com sucesso!");
-    document.getElementById("tipo").value = "";
-    document.getElementById("lojaOrigem").value = "";  // Limpando a loja de origem
-    document.getElementById("lojaDestino").value = "";
-    document.getElementById("orcamento").checked = false;
-    document.getElementById("observacao").value = "";
-    carregarPedidos();
-  } catch (err) {
-    console.error("Erro ao criar pedido:", err);
-    alert("Erro ao criar pedido. Veja o console.");
-  }
+      alert("Pedido criado com sucesso!");
+      document.getElementById("tipo").value = "";
+      document.getElementById("lojaOrigem").value = "";  // Limpando a loja de origem
+      document.getElementById("lojaDestino").value = "";
+      document.getElementById("orcamento").checked = false;
+      document.getElementById("observacao").value = "";
+      carregarPedidos();
+    } catch (err) {
+      console.error("Erro ao criar pedido:", err);
+      alert("Erro ao criar pedido. Veja o console.");
+    }
+  });
+
+  // =========================
+  // FILTRO DE PEDIDOS
+  // =========================
+  document.getElementById("btnFiltrar").addEventListener("click", () => {
+    const filtroStatus = document.getElementById("filtroStatus").value;
+    const filtroLoja = document.getElementById("filtroLoja").value;
+    carregarPedidos(filtroStatus, filtroLoja);
+  });
+
+  // =========================
+  // AUTO-ATUALIZAÇÃO
+  // =========================
+  setInterval(() => {
+    const filtroStatus = document.getElementById("filtroStatus").value;
+    const filtroLoja = document.getElementById("filtroLoja").value;
+    carregarPedidos(filtroStatus, filtroLoja);
+  }, 30000); // Atualiza a cada 30 segundos
 });
-
-// =========================
-// FILTRO DE PEDIDOS
-// =========================
-document.getElementById("btnFiltrar").addEventListener("click", () => {
-  const filtroStatus = document.getElementById("filtroStatus").value;
-  const filtroLoja = document.getElementById("filtroLoja").value;
-  carregarPedidos(filtroStatus, filtroLoja);
-});
-
-// =========================
-// AUTO-ATUALIZAÇÃO
-// =========================
-setInterval(() => {
-  const filtroStatus = document.getElementById("filtroStatus").value;
-  const filtroLoja = document.getElementById("filtroLoja").value;
-  carregarPedidos(filtroStatus, filtroLoja);
-}, 30000); // Atualiza a cada 30 segundos

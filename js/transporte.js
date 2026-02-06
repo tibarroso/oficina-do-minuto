@@ -18,14 +18,14 @@ async function carregarAguardando(filtroLoja) {
 
   let query = supabase.from("pedidos").select("*").eq("status", "Aguardando coleta").order("criado_em", { ascending: false });
 
-  // Filtrando por loja
+  // Filtrando por loja (loja_origem)
   if (filtroLoja !== "Todas") {
     query = query.eq("loja_origem", filtroLoja);
   }
 
   const { data, error } = await query;
   if (error) {
-    div.innerHTML = `<p>Erro ao carregar pedidos.</p>`;
+    div.innerHTML = "<p>Erro ao carregar pedidos.</p>";
     console.error(error);
     return;
   }
@@ -52,7 +52,7 @@ async function carregarEmTransporte(filtroLoja) {
     .in("status", ["Em transporte para Loja 5", "Em transporte para loja de origem"]) // Incluindo os pedidos "Em transporte para loja de origem"
     .order("criado_em", { ascending: false });
 
-  // Filtrando por loja
+  // Filtrando por loja (loja_origem)
   if (filtroLoja !== "Todas") {
     query = query.eq("loja_origem", filtroLoja);
   }
@@ -86,7 +86,7 @@ async function carregarRetorno(filtroLoja) {
     .in("status", ["Aguardando retorno do transporte", "Retrabalho"])
     .order("criado_em", { ascending: false });
 
-  // Filtrando por loja
+  // Filtrando por loja (loja_origem)
   if (filtroLoja !== "Todas") {
     query = query.eq("loja_origem", filtroLoja);
   }

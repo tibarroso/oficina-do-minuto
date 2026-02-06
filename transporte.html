@@ -42,7 +42,6 @@
           <option value="Oficina do Minuto II">Oficina do Minuto II</option>
           <option value="Oficina do Minuto III">Oficina do Minuto III</option>
           <option value="Oficina do Minuto IV">Oficina do Minuto IV</option>
-          <!-- Adicione mais opções conforme necessário -->
         </select>
         <button id="btnFiltrar" class="filter-btn">Filtrar</button>
       </div>
@@ -82,14 +81,11 @@
   <!-- Script do Transporte -->
   <script type="module">
     import { supabase } from "./js/supabase.js";
-
-    // Funções do transporte
     import { carregarPedidos } from "./js/transporte.js";
 
-    // Função para carregar pedidos com o filtro
     document.getElementById("btnFiltrar").addEventListener("click", () => {
       const filtroLoja = document.getElementById("filtroLoja").value;
-      carregarPedidos(filtroLoja); // Passando o filtro de loja para carregarPedidos
+      carregarPedidos(filtroLoja);
     });
 
     (async () => {
@@ -100,13 +96,11 @@
         return;
       }
 
-      // Carrega pedidos inicialmente
       carregarPedidos("Todas");
 
-      // Atualiza automaticamente a cada 5 segundos
       setInterval(() => {
         const filtroLoja = document.getElementById("filtroLoja").value;
-        carregarPedidos(filtroLoja);  // Agora considera o filtro ao atualizar
+        carregarPedidos(filtroLoja);
       }, 5000);
     })();
   </script>

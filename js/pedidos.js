@@ -4,8 +4,8 @@ import { supabase } from "./supabase.js";
 // Elementos
 // ===============================
 const tipoInput = document.getElementById("tipo");
-const lojaOrigemInput = document.getElementById("lojaOrigem"); // Novo campo: Loja de Origem
-const lojaDestinoInput = document.getElementById("lojaDestino"); // Campo de Loja de Destino
+const lojaOrigemInput = document.getElementById("lojaOrigem");
+const lojaDestinoInput = document.getElementById("lojaDestino");
 const orcamentoInput = document.getElementById("orcamento");
 const observacaoInput = document.getElementById("observacao");
 const btnCriarPedido = document.getElementById("btnCriarPedido");
@@ -37,18 +37,13 @@ btnCriarPedido?.addEventListener("click", async () => {
   }
 
   const tipo = tipoInput.value.trim();
-  const lojaOrigem = lojaOrigemInput.value.trim(); // Obter o valor de Loja de Origem
-  const lojaDestino = lojaDestinoInput.value.trim(); // Obter o valor de Loja de Destino
+  const lojaOrigem = lojaOrigemInput.value.trim();
+  const lojaDestino = lojaDestinoInput.value.trim();
   const orcamento = orcamentoInput.checked;
   const observacao = observacaoInput.value.trim();
 
-  if (!tipo) {
-    alert("Selecione o tipo de serviço.");
-    return;
-  }
-
-  if (!lojaOrigem || !lojaDestino) {
-    alert("Por favor, selecione as lojas de origem e destino.");
+  if (!tipo || !lojaOrigem || !lojaDestino) {
+    alert("Por favor, preencha todos os campos obrigatórios.");
     return;
   }
 
@@ -62,8 +57,8 @@ btnCriarPedido?.addEventListener("click", async () => {
     const { data, error } = await supabase
       .from("pedidos")
       .insert([{
-        loja_origem: lojaOrigem, // A loja de origem agora recebe o valor correto
-        loja: lojaDestino, // A loja de destino é inserida no campo correto
+        loja_origem: lojaOrigem,
+        loja_destino: lojaDestino,
         tipo_servico: tipo,
         eh_orcamento: orcamento,
         status: statusInicial,
@@ -88,8 +83,8 @@ btnCriarPedido?.addEventListener("click", async () => {
 
     // Limpar formulário
     tipoInput.value = "";
-    lojaOrigemInput.value = ""; // Limpa o campo Loja de Origem
-    lojaDestinoInput.value = ""; // Limpa o campo Loja de Destino
+    lojaOrigemInput.value = "";
+    lojaDestinoInput.value = "";
     orcamentoInput.checked = false;
     observacaoInput.value = "";
 
@@ -123,6 +118,6 @@ async function registrarEvento(pedidoId, evento, observacao = "") {
 // ===============================
 // Inicialização
 // ===============================
-(async () => {
+document.addEventListener("DOMContentLoaded", async () => {
   usuarioLogado = await verificarLogin();
-})();
+});

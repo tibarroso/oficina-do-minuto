@@ -31,6 +31,19 @@
       <p>Controle a coleta, entrega e retorno dos pedidos em tempo real.</p>
     </section>
 
+    <!-- Filtro de Loja -->
+    <section class="filter-section">
+      <label for="filtroLoja">Filtrar por Loja:</label>
+      <select id="filtroLoja">
+        <option value="Todas">Todas</option>
+        <option value="Loja 1">Loja 1</option>
+        <option value="Loja 2">Loja 2</option>
+        <option value="Loja 3">Loja 3</option>
+        <!-- Adicione mais opções conforme necessário -->
+      </select>
+      <button id="btnFiltrar">Filtrar</button>
+    </section>
+
     <!-- ========================= -->
     <!-- AGUARDANDO COLETA (IDA) -->
     <!-- ========================= -->
@@ -69,6 +82,12 @@
     // Funções do transporte
     import { carregarPedidos } from "./js/transporte.js";
 
+    // Função para carregar pedidos com o filtro
+    document.getElementById("btnFiltrar").addEventListener("click", () => {
+      const filtroLoja = document.getElementById("filtroLoja").value;
+      carregarPedidos(filtroLoja); // Passando o filtro de loja para carregarPedidos
+    });
+
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -78,10 +97,10 @@
       }
 
       // Carrega pedidos inicialmente
-      carregarPedidos();
+      carregarPedidos("Todas");
 
       // Atualiza automaticamente a cada 5 segundos
-      setInterval(carregarPedidos, 50000);
+      setInterval(() => carregarPedidos("Todas"), 5000);
     })();
   </script>
 

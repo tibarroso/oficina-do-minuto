@@ -5,80 +5,74 @@ body {
   color: #333;
   margin: 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
 }
 
-.container {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 30px 20px;
-}
-
-/* ==================== Estilo da Barra de Navegação ==================== */
+/* ==================== Barra de navegação fixa ==================== */
 header {
-  background: #2C3E50;
+  background: #18BC9C;
   color: #fff;
-  padding: 20px 0;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 header h1 {
+  font-size: 22px;
+  font-weight: 600;
   margin: 0;
-  padding-left: 30px;
-  font-size: 28px;
-  display: inline-block;
-}
-
-header nav {
-  float: right;
-  padding-right: 30px;
 }
 
 header nav a {
   color: #fff;
   font-weight: 500;
-  margin-left: 20px;
   text-decoration: none;
-  transition: color 0.3s ease;
+  margin-left: 20px;
+  font-size: 16px;
+  transition: opacity 0.3s ease;
 }
 
 header nav a:hover {
-  color: #18BC9C;
+  opacity: 0.7;
 }
 
-/* ==================== Estilo do Filtro ==================== */
+/* ==================== Estilo do filtro ==================== */
 .filter-section {
   background-color: #fff;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 20px;
-  margin-bottom: 30px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  margin: 20px 15px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
 }
 
 .filter-section label {
   font-size: 18px;
-  font-weight: 600;
   color: #333;
-  display: block;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .filter-container {
   display: flex;
+  gap: 15px;
   align-items: center;
   justify-content: space-between;
-  gap: 15px;
+  margin-bottom: 15px;
 }
 
 .filter-select {
   font-size: 16px;
   padding: 12px;
-  border-radius: 5px;
+  border-radius: 8px;
   border: 1px solid #ddd;
   background-color: #fff;
   width: 100%;
-  max-width: 300px; /* Limita a largura no desktop */
-  box-sizing: border-box;
+  max-width: 300px;
   transition: border-color 0.3s ease;
 }
 
@@ -88,69 +82,71 @@ header nav a:hover {
 }
 
 .filter-btn {
-  font-size: 16px;
   padding: 12px 25px;
   background-color: #18BC9C;
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  font-size: 16px;
 }
 
 .filter-btn:hover {
   background-color: #16a085;
 }
 
-/* ==================== Estilo das Seções ==================== */
+/* ==================== Estilo das seções ==================== */
 .section {
-  margin-bottom: 40px;
+  margin: 20px 0;
 }
 
 h2 {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
   color: #333;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
   border-bottom: 2px solid #18BC9C;
-  padding-bottom: 10px;
+  padding-bottom: 8px;
 }
 
-/* ==================== Estilo dos Cards de Pedido ==================== */
+/* ==================== Estilo dos cards de pedido ==================== */
 .cards-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); /* Layout com grid responsivo */
-  gap: 15px; /* Reduzido o espaço entre os cards */
-  justify-items: center; /* Ajusta os cards para se distribuírem uniformemente */
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); /* Ajuste automático do layout */
+  gap: 20px;
+  justify-items: center;
 }
 
 .card {
   background-color: #fff;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 20px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 260px; /* Limita a largura dos cards */
+  max-width: 260px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
 }
 
 .card:hover {
-  transform: translateY(-5px); /* Efeito de elevação suavizado */
+  transform: translateY(-10px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
 }
 
 .card h3 {
   font-size: 16px;
   font-weight: 600;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .card .status-tag {
   display: inline-block;
-  margin-top: 10px;
-  padding: 5px 12px;
+  padding: 6px 14px;
   border-radius: 20px;
   font-weight: 600;
   text-transform: capitalize;
+  margin-top: 10px;
 }
 
 .status-Aguardando {
@@ -178,7 +174,7 @@ h2 {
   color: white;
 }
 
-/* ==================== Animações de Loading ==================== */
+/* ==================== Efeitos de Loading ==================== */
 .loading {
   font-size: 18px;
   font-weight: 600;
@@ -186,25 +182,14 @@ h2 {
   text-align: center;
 }
 
-/* ==================== Responsividade para dispositivos móveis ==================== */
+/* ==================== Estilo responsivo para telas pequenas ==================== */
 @media (max-width: 768px) {
   header h1 {
-    font-size: 24px;
+    font-size: 18px;
   }
 
-  header nav {
-    float: none;
-    text-align: center;
-    padding: 10px 0;
-  }
-
-  header nav a {
-    display: inline-block;
-    margin: 10px 15px;
-  }
-
-  .filter-section {
-    padding: 15px;
+  .filter-container {
+    flex-direction: column;
   }
 
   .filter-select {
@@ -213,29 +198,35 @@ h2 {
 
   .card {
     padding: 15px;
+    max-width: 90%;
   }
 
   .cards-container {
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Ajusta o número de colunas em telas pequenas */
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
   }
 }
 
 @media (max-width: 480px) {
+  header h1 {
+    font-size: 16px;
+  }
+
   .filter-section {
     padding: 10px;
-  }
-
-  .card {
-    padding: 10px;
-  }
-
-  .card h3 {
-    font-size: 14px;
   }
 
   .filter-btn {
     width: 100%;
     padding: 12px;
+  }
+
+  .card {
+    padding: 10px;
+    max-width: 100%;
+  }
+
+  .card h3 {
+    font-size: 14px;
   }
 
   .filter-select {

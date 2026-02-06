@@ -117,10 +117,15 @@ function criarCard(pedido, tipo) {
   let obs = pedido.obs_loja_origem ? `<strong>Observação Loja de Origem:</strong><br><em>${pedido.obs_loja_origem}</em><br>` : "";
   let obsLoja5 = pedido.obs_loja5 ? `<strong>Observação Loja 5:</strong><br><em>${pedido.obs_loja5}</em><br>` : "";
 
+  // Loja de Destino
+  let lojaDestino = pedido.loja_destino ? `<strong>Loja de Destino:</strong> ${pedido.loja_destino}<br>` : "";
+
+  // Construindo o card HTML
   card.innerHTML = `
     <strong>OS:</strong> ${pedido.id}<br>
     <strong>Loja:</strong> ${pedido.loja_origem}<br>
     <strong>Serviço:</strong> ${pedido.tipo_servico}<br>
+    ${lojaDestino}  <!-- Exibindo Loja de Destino -->
     ${obs}
     ${obsLoja5}
     <span class="status-tag status-${statusClasse(pedido.status)}">${pedido.status}</span>

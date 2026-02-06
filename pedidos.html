@@ -183,15 +183,24 @@
       <option value="Bordado">Bordado</option>
     </select>
     
-         <label for="loja">Loja de serviço:</label>
-    <select id="loja">
+    <label for="lojaOrigem">Loja de origem:</label>
+    <select id="lojaOrigem">
       <option value="">Selecione</option>
       <option value="Oficina do Minuto I">Oficina do Minuto I</option>
       <option value="Oficina do Minuto II">Oficina do Minuto II</option>
       <option value="Oficina do Minuto III">Oficina do Minuto III</option>
-      <option value="Oficina do Minuto VI">Oficina do Minuto IV</option>
+      <option value="Oficina do Minuto IV">Oficina do Minuto IV</option>
     </select>
     
+    <label for="lojaDestino">Loja de destino:</label>
+    <select id="lojaDestino">
+      <option value="">Selecione</option>
+      <option value="Oficina do Minuto I">Oficina do Minuto I</option>
+      <option value="Oficina do Minuto II">Oficina do Minuto II</option>
+      <option value="Oficina do Minuto III">Oficina do Minuto III</option>
+      <option value="Oficina do Minuto IV">Oficina do Minuto IV</option>
+    </select>
+
     <label>
       <input type="checkbox" id="orcamento">
       Orçamento?
@@ -231,25 +240,24 @@
     <option value="Oficina do Minuto I">Oficina do Minuto I</option>
     <option value="Oficina do Minuto II">Oficina do Minuto II</option>
     <option value="Oficina do Minuto III">Oficina do Minuto III</option>
-    <option value="Oficina do Minuto VI">Oficina do Minuto IV</option>
+    <option value="Oficina do Minuto IV">Oficina do Minuto IV</option>
   </select>
 
   <button id="btnFiltrar">Filtrar</button>
 </section>
 
+<!-- ========================= -->
+<!-- LISTA DE PEDIDOS -->
+<!-- ========================= -->
+<section>
+  <h2>Meus Pedidos</h2>
+  <div id="containerPedidos" class="cards-container">
+    <p>Carregando pedidos...</p>
+  </div>
+</section>
 
-  <!-- ========================= -->
-  <!-- LISTA DE PEDIDOS -->
-  <!-- ========================= -->
-  <section>
-    <h2>Meus Pedidos</h2>
-    <div id="containerPedidos" class="cards-container">
-      <p>Carregando pedidos...</p>
-    </div>
-  </section>
-
-  <!-- JS do pedidos -->
-  <script type="module" src="./js/pedidos_loja.js"></script>
+<!-- JS do pedidos -->
+<script type="module" src="./js/pedidos_loja.js"></script>
 
 </body>
 </html>

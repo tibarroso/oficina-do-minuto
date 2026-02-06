@@ -1,9 +1,15 @@
 import { supabase } from "./supabase.js";
 
+// Variável para armazenar o filtro de loja
+let filtroAtivo = "Todas"; // Padrão: "Todas"
+
 // =====================
 // Inicialização
 // =====================
 export async function carregarPedidos(filtroLoja = "Todas") {
+  // Atualiza a variável global com o filtro de loja
+  filtroAtivo = filtroLoja;
+
   await carregarAguardando(filtroLoja);     // Ida
   await carregarEmTransporte(filtroLoja);   // Ida e Volta
   await carregarRetorno(filtroLoja);        // Volta e Retrabalho
@@ -170,7 +176,7 @@ async function atualizarStatus(id, status, evento) {
   }
 
   await registrarEvento(id, evento);
-  carregarPedidos(); // Atualiza a tela sem recarregar
+  carregarPedidos(filtroAtivo); // Atualiza a tela considerando o filtro ativo
 }
 
 // =====================
@@ -211,7 +217,9 @@ function statusClasse(status) {
   window.carregarPedidos = carregarPedidos;
   window.atualizarStatus = atualizarStatus;
 
-  // Atualiza a cada 5 segundos
-  carregarPedidos("Todas");
-  setInterval(() => carregarPedidos("Todas"), 5000);
+  // Carrega pedidos inicialmente
+  carregarPedidos(filtroAtivo);
+
+  // Atualiza a cada 5 segundos, considerando o filtro ativo
+  setInterval(() => carregarPedidos(filtroAtivo), 5000);
 })();

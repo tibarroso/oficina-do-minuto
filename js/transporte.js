@@ -25,7 +25,7 @@ async function carregarAguardando() {
     .order("criado_em", { ascending: false });
 
   if (error) {
-    div.innerHTML = `<p>Erro ao carregar pedidos.</p>`;
+    div.innerHTML = "<p>Erro ao carregar pedidos.</p>";
     console.error(error);
     return;
   }
@@ -49,7 +49,10 @@ async function carregarEmTransporte() {
   const { data, error } = await supabase
     .from("pedidos")
     .select("*")
-    .in("status", ["Em transporte para Loja 5", "Em transporte para loja de origem"]) // Incluindo os pedidos "Em transporte para loja de origem"
+    .in("status", [
+      "Em transporte para Loja 5",
+      "Em transporte para loja de origem"
+    ])
     .order("criado_em", { ascending: false });
 
   if (error) {
@@ -102,35 +105,64 @@ function criarCard(pedido, tipo) {
   const card = document.createElement("div");
   card.classList.add("card");
 
-  let obs = pedido.obs_loja_origem ? `<strong>Observação Loja de Origem:</strong><br><em>${pedido.obs_loja_origem}</em><br>` : "";
-  let obsLoja5 = pedido.obs_loja5 ? `<strong>Observação Loja 5:</strong><br><em>${pedido.obs_loja5}</em><br>` : "";
+  let obs = pedido.obs_loja_origem
+    ? `<strong>Observação Loja:</strong><br><em>${pedido.obs_loja_origem}</em><br>`
+    : "";
+
+  let obsLoja5 = pedido.obs_loja5
+    ? `<strong>Observação Loja 5:</strong><br><em>${pedido.obs_loja5}</em><br>`
+    : "";
 
   card.innerHTML = `
     <strong>OS:</strong> ${pedido.id}<br>
-    <strong>Loja:</strong> ${pedido.loja_origem}<br>
+    <strong>Loja:</strong> ${pedido.loja}<br>
     <strong>Serviço:</strong> ${pedido.tipo_servico}<br>
     ${obs}
     ${obsLoja5}
-    <span class="status-tag status-${statusClasse(pedido.status)}">${pedido.status}</span>
+    <span class="status-tag status-${statusClasse(pedido.status)}">
+      ${pedido.status}
+    </span>
   `;
 
   const btn = document.createElement("button");
 
-  // Botões de ação
   if (tipo === "ida") {
     btn.textContent = "Iniciar Transporte (Ida)";
-    btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para Loja 5", "Transporte iniciado (ida)");
-  } else if (tipo === "emTransporte") {
+    btn.onclick = () =>
+      atualizarStatus(
+        pedido.id,
+        "Em transporte para Loja 5",
+        "Transporte iniciado (ida)"
+      );
+  } 
+  else if (tipo === "emTransporte") {
     if (pedido.status === "Em transporte para Loja 5") {
       btn.textContent = "Entregar na Loja 5";
-      btn.onclick = () => atualizarStatus(pedido.id, "Entregue na Loja 5", "Entregue na Loja 5");
-    } else if (pedido.status === "Em transporte para loja de origem") {
+      btn.onclick = () =>
+        atualizarStatus(
+          pedido.id,
+          "Entregue na Loja 5",
+          "Entregue na Loja 5"
+        );
+    } 
+    else if (pedido.status === "Em transporte para loja de origem") {
       btn.textContent = "Entregar na Loja de Origem";
-      btn.onclick = () => atualizarStatus(pedido.id, "Recebido na loja de origem", "Entregue na loja de origem");
+      btn.onclick = () =>
+        atualizarStatus(
+          pedido.id,
+          "Recebido na loja de origem",
+          "Entregue na loja de origem"
+        );
     }
-  } else if (tipo === "volta") {
+  } 
+  else if (tipo === "volta") {
     btn.textContent = "Iniciar Transporte de Retorno";
-    btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para loja de origem", "Transporte iniciado (volta)");
+    btn.onclick = () =>
+      atualizarStatus(
+        pedido.id,
+        "Em transporte para loja de origem",
+        "Transporte iniciado (volta)"
+      );
   }
 
   card.appendChild(btn);
@@ -141,7 +173,11 @@ function criarCard(pedido, tipo) {
 // Atualizar status e registrar evento
 // =====================
 async function atualizarStatus(id, status, evento) {
-  const { error } = await supabase.from("pedidos").update({ status }).eq("id", id);
+  const { error } = await supabase
+    .from("pedidos")
+    .update({ status })
+    .eq("id", id);
+
   if (error) {
     console.error(error);
     alert("Erro ao atualizar status.");
@@ -149,7 +185,7 @@ async function atualizarStatus(id, status, evento) {
   }
 
   await registrarEvento(id, evento);
-  carregarPedidos(); // Atualiza a tela sem recarregar
+  carregarPedidos();
 }
 
 // =====================
@@ -186,11 +222,9 @@ function statusClasse(status) {
   const { data } = await supabase.auth.getUser();
   usuarioLogado = data?.user || null;
 
-  // Torna funções acessíveis globalmente
   window.carregarPedidos = carregarPedidos;
   window.atualizarStatus = atualizarStatus;
 
-  // Atualiza a cada 5 segundos
   carregarPedidos();
   setInterval(carregarPedidos, 5000);
 })();

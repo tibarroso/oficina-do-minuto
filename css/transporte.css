@@ -119,32 +119,32 @@ h2 {
 .cards-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
-  justify-content: space-between;
+  gap: 15px; /* Reduzido o espaço entre os cards */
+  justify-content: space-evenly; /* Ajusta os cards para se distribuírem uniformemente */
 }
 
 .card {
   background-color: #fff;
   border-radius: 8px;
-  padding: 20px;
+  padding: 15px; /* Reduzido o padding interno */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  width: 280px;
+  width: 260px; /* Diminuído a largura dos cards */
   transition: transform 0.3s ease;
 }
 
 .card:hover {
-  transform: translateY(-10px);
+  transform: translateY(-5px); /* Efeito de elevação suavizado */
 }
 
 .card h3 {
-  font-size: 18px;
+  font-size: 16px; /* Reduzido o tamanho da fonte do título */
   font-weight: 600;
   margin-bottom: 10px;
 }
 
 .card .status-tag {
   display: inline-block;
-  margin-top: 15px;
+  margin-top: 10px;
   padding: 5px 12px;
   border-radius: 20px;
   font-weight: 600;

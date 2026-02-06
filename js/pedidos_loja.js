@@ -107,7 +107,7 @@ function getStatusClass(status) {
 // =========================
 document.getElementById("btnCriarPedido").addEventListener("click", async () => {
   const tipoServico = document.getElementById("tipo").value;
-  const lojaOrigem = document.getElementById("lojaOrigem").value;
+  const lojaOrigem = document.getElementById("lojaOrigem").value;  // Loja de origem capturada corretamente
   const lojaDestino = document.getElementById("lojaDestino").value;
   const orcamento = document.getElementById("orcamento").checked;
   const observacao = document.getElementById("observacao").value.trim();
@@ -120,7 +120,7 @@ document.getElementById("btnCriarPedido").addEventListener("click", async () => 
   try {
     const { data, error } = await supabase.from("pedidos").insert([{
       tipo_servico: tipoServico,
-      loja_origem: lojaOrigem,
+      loja_origem: lojaOrigem,  // Gravando a loja de origem
       loja_destino: lojaDestino,
       orcamento,
       obs_loja_origem: observacao,
@@ -132,7 +132,7 @@ document.getElementById("btnCriarPedido").addEventListener("click", async () => 
 
     alert("Pedido criado com sucesso!");
     document.getElementById("tipo").value = "";
-    document.getElementById("lojaOrigem").value = "";
+    document.getElementById("lojaOrigem").value = "";  // Limpando a loja de origem
     document.getElementById("lojaDestino").value = "";
     document.getElementById("orcamento").checked = false;
     document.getElementById("observacao").value = "";

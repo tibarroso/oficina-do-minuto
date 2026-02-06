@@ -98,7 +98,7 @@ btnCriarPedido?.addEventListener("click", async () => {
 // Registrar evento
 // ===============================
 async function registrarEvento(pedidoId, evento, observacao = "") {
-  if (!usuarioLogado) return;
+  if (!usuarioLogado) return; 
 
   try {
     await supabase

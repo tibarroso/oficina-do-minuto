@@ -217,7 +217,7 @@ function statusClasse(status) {
   window.carregarPedidos = carregarPedidos;
   window.atualizarStatus = atualizarStatus;
 
-  // Carrega pedidos inicialmente
+  // Carrega pedidos inicialmente com o filtro ativo
   carregarPedidos(filtroAtivo);
 
   // Atualiza a cada 5 segundos, considerando o filtro ativo

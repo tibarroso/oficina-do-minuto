@@ -1,41 +1,39 @@
 import { supabase } from "./supabase.js";
 
-let usuarioLogado = null;
-
-// Enum de Status
-const Status = {
-  AGUARDANDO_COLETA: "Aguardando coleta",
-  EM_TRANSPORTE_LOJA5: "Em transporte para Loja 5",
-  EM_TRANSPORTE_ORIGEM: "Em transporte para loja de origem",
-  AGUARDANDO_RETORNO: "Aguardando retorno do transporte",
-  RETRABALHO: "Retrabalho",
-  FINALIZADO: "Finalizado",
-};
-
 // =====================
 // Inicialização
 // =====================
-export async function carregarPedidos() {
-  await carregarAguardando();
-  await carregarEmTransporte();
-  await carregarRetorno();
+export async function carregarPedidos(filtroLoja = "Todas") {
+  await carregarAguardando(filtroLoja);     // Ida
+  await carregarEmTransporte(filtroLoja);   // Ida e Volta
+  await carregarRetorno(filtroLoja);        // Volta e Retrabalho
 }
 
 // =====================
 // AGUARDANDO COLETA (IDA)
 // =====================
-async function carregarAguardando() {
+async function carregarAguardando(filtroLoja) {
   const div = document.getElementById("aguardando");
   div.innerHTML = "<p>Carregando pedidos...</p>";
 
-  const { data, error } = await supabase
-    .from("pedidos")
-    .select("*")
-    .eq("status", Status.AGUARDANDO_COLETA)
-    .order("criado_em", { ascending: false });
+  let query = supabase.from("pedidos").select("*").eq("status", "Aguardando coleta").order("criado_em", { ascending: false });
 
-  if (error) return erro(div, error);
-  if (!data?.length) return vazio(div, "Nenhum pedido aguardando coleta.");
+  // Filtrando por loja
+  if (filtroLoja !== "Todas") {
+    query = query.eq("loja_origem", filtroLoja);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    div.innerHTML = `<p>Erro ao carregar pedidos.</p>`;
+    console.error(error);
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    div.innerHTML = "<p>Nenhum pedido aguardando coleta.</p>";
+    return;
+  }
 
   div.innerHTML = "";
   data.forEach(p => div.appendChild(criarCard(p, "ida")));
@@ -44,28 +42,32 @@ async function carregarAguardando() {
 // =====================
 // EM TRANSPORTE (IDA OU VOLTA)
 // =====================
-async function carregarEmTransporte() {
+async function carregarEmTransporte(filtroLoja) {
   const div = document.getElementById("transporte");
   div.innerHTML = "<p>Carregando pedidos...</p>";
 
-  const filtroLoja = document.getElementById("filtroLoja").value;
-  
-  let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false });
-  
-  // Filtro de status e loja
+  let query = supabase
+    .from("pedidos")
+    .select("*")
+    .in("status", ["Em transporte para Loja 5", "Em transporte para loja de origem"]) // Incluindo os pedidos "Em transporte para loja de origem"
+    .order("criado_em", { ascending: false });
+
+  // Filtrando por loja
   if (filtroLoja !== "Todas") {
-    query = query.eq("loja", filtroLoja);
+    query = query.eq("loja_origem", filtroLoja);
   }
-  
-  query = query.in("status", [
-    Status.EM_TRANSPORTE_LOJA5,
-    Status.EM_TRANSPORTE_ORIGEM,
-  ]);
 
   const { data, error } = await query;
+  if (error) {
+    div.innerHTML = "<p>Erro ao carregar pedidos.</p>";
+    console.error(error);
+    return;
+  }
 
-  if (error) return erro(div, error);
-  if (!data?.length) return vazio(div, "Nenhum pedido em transporte.");
+  if (!data || data.length === 0) {
+    div.innerHTML = "<p>Nenhum pedido em transporte.</p>";
+    return;
+  }
 
   div.innerHTML = "";
   data.forEach(p => div.appendChild(criarCard(p, "emTransporte")));
@@ -74,81 +76,73 @@ async function carregarEmTransporte() {
 // =====================
 // AGUARDANDO RETORNO / RETRABALHO
 // =====================
-async function carregarRetorno() {
+async function carregarRetorno(filtroLoja) {
   const div = document.getElementById("retorno");
   div.innerHTML = "<p>Carregando pedidos...</p>";
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("pedidos")
     .select("*")
-    .in("status", [Status.AGUARDANDO_RETORNO, Status.RETRABALHO])
+    .in("status", ["Aguardando retorno do transporte", "Retrabalho"])
     .order("criado_em", { ascending: false });
 
-  if (error) return erro(div, error);
-  if (!data?.length) return vazio(div, "Nenhum pedido aguardando retorno.");
+  // Filtrando por loja
+  if (filtroLoja !== "Todas") {
+    query = query.eq("loja_origem", filtroLoja);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    div.innerHTML = "<p>Erro ao carregar pedidos.</p>";
+    console.error(error);
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    div.innerHTML = "<p>Nenhum pedido aguardando retorno.</p>";
+    return;
+  }
 
   div.innerHTML = "";
   data.forEach(p => div.appendChild(criarCard(p, "volta")));
 }
 
 // =====================
-// CRIAR CARD DE PEDIDO
+// Criar Card de Pedido
 // =====================
 function criarCard(pedido, tipo) {
   const card = document.createElement("div");
   card.classList.add("card");
 
-  const origem = pedido.loja;
-  let destino = "-";
-
-  // Definindo destinos
-  if (pedido.status === Status.EM_TRANSPORTE_LOJA5) destino = "Loja 5";
-  if (pedido.status === Status.EM_TRANSPORTE_ORIGEM) destino = origem;
-  if (tipo === "ida") destino = "Loja 5";
+  let obs = pedido.obs_loja_origem ? `<strong>Observação Loja de Origem:</strong><br><em>${pedido.obs_loja_origem}</em><br>` : "";
+  let obsLoja5 = pedido.obs_loja5 ? `<strong>Observação Loja 5:</strong><br><em>${pedido.obs_loja5}</em><br>` : "";
 
   card.innerHTML = `
     <strong>OS:</strong> ${pedido.id}<br>
-    <strong>Origem:</strong> ${origem}<br>
-    <strong>Destino:</strong> ${destino}<br>
+    <strong>Loja:</strong> ${pedido.loja_origem}<br>
     <strong>Serviço:</strong> ${pedido.tipo_servico}<br>
-    ${pedido.obs_loja_origem ? `<em>${pedido.obs_loja_origem}</em><br>` : ""}
-    <span class="status-tag status-${statusClasse(pedido.status)}">
-      ${pedido.status}
-    </span>
+    ${obs}
+    ${obsLoja5}
+    <span class="status-tag status-${statusClasse(pedido.status)}">${pedido.status}</span>
   `;
 
   const btn = document.createElement("button");
 
+  // Botões de ação
   if (tipo === "ida") {
     btn.textContent = "Iniciar Transporte (Ida)";
-    btn.onclick = () =>
-      atualizarStatus(pedido.id, Status.EM_TRANSPORTE_LOJA5, "Transporte iniciado (ida)");
-  }
-
-  if (tipo === "emTransporte") {
-    if (pedido.status === Status.EM_TRANSPORTE_LOJA5) {
+    btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para Loja 5", "Transporte iniciado (ida)");
+  } else if (tipo === "emTransporte") {
+    if (pedido.status === "Em transporte para Loja 5") {
       btn.textContent = "Entregar na Loja 5";
-      btn.onclick = () =>
-        atualizarStatus(pedido.id, "Entregue na Loja 5", "Entregue na Loja 5");
-    } else {
+      btn.onclick = () => atualizarStatus(pedido.id, "Entregue na Loja 5", "Entregue na Loja 5");
+    } else if (pedido.status === "Em transporte para loja de origem") {
       btn.textContent = "Entregar na Loja de Origem";
-      btn.onclick = () =>
-        atualizarStatus(
-          pedido.id,
-          "Recebido na loja de origem",
-          "Entregue na loja de origem"
-        );
+      btn.onclick = () => atualizarStatus(pedido.id, "Recebido na loja de origem", "Entregue na loja de origem");
     }
-  }
-
-  if (tipo === "volta") {
+  } else if (tipo === "volta") {
     btn.textContent = "Iniciar Transporte de Retorno";
-    btn.onclick = () =>
-      atualizarStatus(
-        pedido.id,
-        Status.EM_TRANSPORTE_ORIGEM,
-        "Transporte iniciado (volta)"
-      );
+    btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para loja de origem", "Transporte iniciado (volta)");
   }
 
   card.appendChild(btn);
@@ -156,37 +150,22 @@ function criarCard(pedido, tipo) {
 }
 
 // =====================
-// MAPEAR STATUS PARA CLASSE CSS
-// =====================
-function statusClasse(status) {
-  switch (status) {
-    case Status.AGUARDANDO_COLETA:
-      return "Aguardando";
-    case Status.EM_TRANSPORTE_LOJA5:
-    case Status.EM_TRANSPORTE_ORIGEM:
-      return "Transporte";
-    case Status.FINALIZADO:
-      return "Finalizado";
-    case Status.RETRABALHO:
-      return "Retrabalho";
-    default:
-      return "Aguardando";
-  }
-}
-
-// =====================
-// ATUALIZAR STATUS E REGISTRAR EVENTO
+// Atualizar status e registrar evento
 // =====================
 async function atualizarStatus(id, status, evento) {
   const { error } = await supabase.from("pedidos").update({ status }).eq("id", id);
-  if (error) return alert("Erro ao atualizar status.");
+  if (error) {
+    console.error(error);
+    alert("Erro ao atualizar status.");
+    return;
+  }
 
   await registrarEvento(id, evento);
-  carregarPedidos();
+  carregarPedidos(); // Atualiza a tela sem recarregar
 }
 
 // =====================
-// REGISTRAR EVENTO
+// Registrar evento
 // =====================
 async function registrarEvento(pedidoId, evento) {
   const { data } = await supabase.auth.getUser();
@@ -201,24 +180,29 @@ async function registrarEvento(pedidoId, evento) {
 }
 
 // =====================
-// MANIPULAR ERRO
+// Mapear status para classe CSS
 // =====================
-function erro(div, e) {
-  console.error(e);
-  div.innerHTML = "<p>Erro ao carregar pedidos.</p>";
+function statusClasse(status) {
+  if (status.includes("Aguardando")) return "Aguardando";
+  if (status.includes("transporte")) return "Transporte";
+  if (status.includes("Loja 5") || status.includes("Entregue")) return "Loja5";
+  if (status.includes("Finalizado")) return "Finalizado";
+  if (status.includes("Retrabalho")) return "Retrabalho";
+  return "Aguardando";
 }
 
-function vazio(div, msg) {
-  div.innerHTML = `<p>${msg}</p>`;
-}
-
 // =====================
-// INICIALIZAÇÃO GLOBAL
+// Inicialização global
 // =====================
 (async () => {
   const { data } = await supabase.auth.getUser();
-  usuarioLogado = data?.user || null;
+  const usuarioLogado = data?.user || null;
 
-  carregarPedidos();
-  setInterval(carregarPedidos, 5000); // Atualiza a cada 5 segundos
+  // Torna funções acessíveis globalmente
+  window.carregarPedidos = carregarPedidos;
+  window.atualizarStatus = atualizarStatus;
+
+  // Atualiza a cada 5 segundos
+  carregarPedidos("Todas");
+  setInterval(() => carregarPedidos("Todas"), 5000);
 })();

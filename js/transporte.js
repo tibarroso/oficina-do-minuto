@@ -16,7 +16,11 @@ async function carregarAguardando(filtroLoja) {
   const div = document.getElementById("aguardando");
   div.innerHTML = "<p>Carregando pedidos...</p>";
 
-  let query = supabase.from("pedidos").select("*").eq("status", "Aguardando coleta").order("criado_em", { ascending: false });
+  let query = supabase
+    .from("pedidos")
+    .select("*")
+    .eq("status", "Aguardando coleta")
+    .order("criado_em", { ascending: false });
 
   // Filtrando por loja (loja_origem)
   if (filtroLoja !== "Todas") {

@@ -15,21 +15,17 @@
     /* Estilos Globais */
     body {
       font-family: 'Poppins', sans-serif;
-      background-color: #f1f5f9; /* Cor de fundo suave */
+      background-color: #f8f8f8; /* Fundo neutro */
       margin: 0;
       padding: 0;
       box-sizing: border-box;
       color: #333;
-    }
-
-    h1, h2 {
-      color: #333;
-      font-weight: 600;
+      overflow-x: hidden;
     }
 
     /* Barra de navegação fixa */
     header {
-      background-color: #1a73e8; /* Azul moderno */
+      background-color: #18bc9c; /* Cor vibrante */
       color: white;
       padding: 18px 40px;
       position: fixed;
@@ -38,11 +34,12 @@
       width: 100%;
       z-index: 100;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      transition: background-color 0.3s;
+      transition: background-color 0.3s ease;
+      border-radius: 0 0 15px 15px;
     }
 
     header:hover {
-      background-color: #1558b1; /* Efeito de hover */
+      background-color: #16a085; /* Efeito de hover */
     }
 
     header h1 {
@@ -51,7 +48,6 @@
     }
 
     header nav {
-      float: right;
       display: flex;
       gap: 20px;
     }
@@ -59,7 +55,7 @@
     header nav a {
       color: white;
       text-decoration: none;
-      padding: 12px 18px;
+      padding: 10px 18px;
       border-radius: 25px;
       background-color: rgba(255, 255, 255, 0.1);
       transition: background-color 0.3s ease, transform 0.2s ease;
@@ -70,23 +66,6 @@
       transform: scale(1.1);
     }
 
-    /* Estilo para a mensagem de sucesso */
-    .success-message {
-      background-color: #28a745;
-      color: white;
-      padding: 12px 30px;
-      text-align: center;
-      font-size: 18px;
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      border-radius: 25px;
-      z-index: 1000;
-      display: none;
-      transition: opacity 0.5s ease;
-    }
-
     /* Container de pedidos */
     section {
       padding-top: 120px; /* Para compensar o header fixo */
@@ -94,9 +73,8 @@
       padding-left: 40px;
       padding-right: 40px;
       background-color: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-      margin-top: 80px;
+      border-radius: 20px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
     }
 
     /* Ajuste no título "Pedidos Recebidos" */
@@ -111,13 +89,13 @@
     .cards-container {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 20px;
+      gap: 30px;
       margin-top: 20px;
     }
 
     .card {
       background-color: white;
-      border-radius: 12px;
+      border-radius: 20px; /* Borda arredondada */
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
       padding: 30px;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -128,7 +106,7 @@
 
     .card:hover {
       transform: translateY(-10px);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
     }
 
     .card h3 {

@@ -15,17 +15,15 @@
     /* Estilos Globais */
     body {
       font-family: 'Poppins', sans-serif;
-      background-color: #f8f8f8; /* Fundo neutro */
+      background-color: #f8f8f8;
       margin: 0;
       padding: 0;
       box-sizing: border-box;
       color: #333;
-      overflow-x: hidden;
     }
 
-    /* Barra de navegação fixa */
     header {
-      background-color: #18bc9c; /* Cor vibrante */
+      background-color: #18bc9c; /* Azul mais moderno */
       color: white;
       padding: 18px 40px;
       position: fixed;
@@ -34,12 +32,11 @@
       width: 100%;
       z-index: 100;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      transition: background-color 0.3s ease;
-      border-radius: 0 0 15px 15px;
+      transition: background-color 0.3s;
     }
 
     header:hover {
-      background-color: #16a085; /* Efeito de hover */
+      background-color: #1558b1;
     }
 
     header h1 {
@@ -48,6 +45,7 @@
     }
 
     header nav {
+      float: right;
       display: flex;
       gap: 20px;
     }
@@ -66,6 +64,23 @@
       transform: scale(1.1);
     }
 
+    /* Estilo para a mensagem de sucesso */
+    .success-message {
+      background-color: #28a745;
+      color: white;
+      padding: 12px 30px;
+      text-align: center;
+      font-size: 18px;
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-radius: 25px;
+      z-index: 1000;
+      display: none; /* Inicialmente oculta */
+      transition: opacity 0.5s ease;
+    }
+
     /* Container de pedidos */
     section {
       padding-top: 120px; /* Para compensar o header fixo */
@@ -73,17 +88,15 @@
       padding-left: 40px;
       padding-right: 40px;
       background-color: #ffffff;
-      border-radius: 20px;
+      border-radius: 10px;
       box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
     }
 
-    /* Ajuste no título "Pedidos Recebidos" */
     section h2 {
       color: #333;
       font-size: 28px;
       font-weight: 600;
       margin-top: 30px;
-      text-align: center;
     }
 
     .cards-container {
@@ -95,18 +108,17 @@
 
     .card {
       background-color: white;
-      border-radius: 20px; /* Borda arredondada */
+      border-radius: 12px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
       padding: 30px;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
       overflow: hidden;
       font-size: 16px;
-      cursor: pointer;
     }
 
     .card:hover {
-      transform: translateY(-10px);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+      transform: translateY(-12px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
     }
 
     .card h3 {
@@ -180,6 +192,7 @@
   </style>
 </head>
 <body>
+
   <header>
     <h1>Loja 5</h1>
     <nav>
@@ -206,6 +219,23 @@
   </section>
 
   <!-- Script do JavaScript -->
-  <script type="module" src="./js/loja5.js"></script>
+  <script type="module">
+    // Função para exibir a mensagem de sucesso
+    function showSuccessMessage() {
+      const successMessage = document.getElementById("successMessage");
+
+      // Mostrar a mensagem
+      successMessage.style.display = "block";
+
+      // Após 5 segundos, esconder a mensagem
+      setTimeout(() => {
+        successMessage.style.display = "none";
+      }, 5000); // Mensagem desaparece após 5 segundos
+    }
+
+    // Exemplo de quando a função pode ser chamada (quando o pedido for finalizado)
+    // showSuccessMessage(); // Chame esta função após finalizar um pedido
+  </script>
+
 </body>
 </html>

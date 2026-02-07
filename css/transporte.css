@@ -1,30 +1,38 @@
-/* ==================== Estilo geral do Transporte ==================== */
+/* ==================== Estilo geral ==================== */
 body {
   font-family: 'Poppins', sans-serif;
-  background: #f4f7fa;
+  background: #f4f7fa; /* Fundo suave */
   color: #333;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
   height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* ==================== Barra de navegação fixa ==================== */
 header {
-  background: #18BC9C;
+  background: #18BC9C; /* Cor de fundo suave */
   color: #fff;
-  padding: 15px 20px;
+  padding: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  border-bottom: 2px solid #ddd;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 10;
 }
 
 header h1 {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 600;
   margin: 0;
+  letter-spacing: 0.5px;
 }
 
 header nav a {
@@ -40,22 +48,22 @@ header nav a:hover {
   opacity: 0.7;
 }
 
-/* ==================== Filtro de Loja ==================== */
+/* ==================== Estilo do filtro ==================== */
 .filter-section {
   background-color: #fff;
   border-radius: 12px;
   padding: 20px;
-  margin: 20px 15px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin: 80px 15px 20px 15px; /* Ajuste para não cobrir o header fixo */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  gap: 15px;
 }
 
 .filter-section label {
   font-size: 18px;
   color: #333;
   margin-bottom: 12px;
+  font-weight: 500;
 }
 
 .filter-container {
@@ -63,6 +71,7 @@ header nav a:hover {
   gap: 15px;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 15px;
 }
 
 .filter-select {
@@ -74,6 +83,7 @@ header nav a:hover {
   width: 100%;
   max-width: 300px;
   transition: border-color 0.3s ease;
+  box-sizing: border-box;
 }
 
 .filter-select:focus {
@@ -90,6 +100,9 @@ header nav a:hover {
   cursor: pointer;
   transition: background-color 0.3s ease;
   font-size: 16px;
+  width: 100%;
+  max-width: 130px;
+  margin-top: 15px;
 }
 
 .filter-btn:hover {
@@ -102,31 +115,35 @@ header nav a:hover {
 }
 
 h2 {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 600;
   color: #333;
   margin-bottom: 15px;
   border-bottom: 2px solid #18BC9C;
   padding-bottom: 8px;
+  font-family: 'Poppins', sans-serif;
 }
 
 /* ==================== Estilo dos cards de pedido ==================== */
 .cards-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); /* Ajuste automático do layout */
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Layout adaptável */
   gap: 20px;
   justify-items: center;
+  margin: 0 20px;
 }
 
 .card {
   background-color: #fff;
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 20px;
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 260px;
+  max-width: 280px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
+  overflow: hidden;
+  position: relative;
 }
 
 .card:hover {
@@ -138,6 +155,7 @@ h2 {
   font-size: 16px;
   font-weight: 600;
   margin-bottom: 12px;
+  color: #333;
 }
 
 .card .status-tag {
@@ -147,6 +165,7 @@ h2 {
   font-weight: 600;
   text-transform: capitalize;
   margin-top: 10px;
+  letter-spacing: 1px;
 }
 
 .status-Aguardando {
@@ -180,12 +199,13 @@ h2 {
   font-weight: 600;
   color: #18BC9C;
   text-align: center;
+  margin-top: 50px;
 }
 
 /* ==================== Estilo responsivo para telas pequenas ==================== */
 @media (max-width: 768px) {
   header h1 {
-    font-size: 18px;
+    font-size: 20px;
   }
 
   .filter-container {

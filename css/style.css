@@ -116,6 +116,7 @@ h2 {
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); /* Ajuste automático do layout */
   gap: 20px;
   justify-items: center;
+  justify-content: center; /* Centraliza os cards no espaço disponível */
 }
 
 .card {
@@ -203,6 +204,7 @@ h2 {
 
   .cards-container {
     grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    justify-content: center; /* Centraliza os cards em telas menores */
   }
 }
 

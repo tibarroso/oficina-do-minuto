@@ -9,19 +9,18 @@ body {
   flex-direction: column;
   height: 100vh;
   overflow-y: auto;
-  overflow-x: hidden;
 }
 
 /* ==================== Barra de navegação fixa ==================== */
 header {
   background: #18BC9C; /* Cor suave */
   color: #fff;
-  padding: 20px;
+  padding: 15px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-  border-bottom: 2px solid #ddd;
+  border-bottom: 1px solid #ddd;
   position: fixed;
   width: 100%;
   top: 0;
@@ -29,10 +28,9 @@ header {
 }
 
 header h1 {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 600;
   margin: 0;
-  letter-spacing: 0.5px;
 }
 
 header nav a {
@@ -52,7 +50,7 @@ header nav a:hover {
 .filter-section {
   background-color: #fff;
   border-radius: 12px;
-  padding: 20px;
+  padding: 15px 20px;
   margin: 80px 15px 20px 15px; /* Ajuste para não cobrir o header fixo */
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
   display: flex;
@@ -60,30 +58,28 @@ header nav a:hover {
 }
 
 .filter-section label {
-  font-size: 18px;
+  font-size: 16px;
   color: #333;
-  margin-bottom: 12px;
-  font-weight: 500;
+  margin-bottom: 8px;
 }
 
 .filter-container {
   display: flex;
-  gap: 15px;
+  gap: 10px;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 15px;
 }
 
 .filter-select {
-  font-size: 16px;
-  padding: 12px;
+  font-size: 14px;
+  padding: 8px;
   border-radius: 8px;
   border: 1px solid #ddd;
   background-color: #fff;
   width: 100%;
-  max-width: 300px;
+  max-width: 250px;
   transition: border-color 0.3s ease;
-  box-sizing: border-box;
 }
 
 .filter-select:focus {
@@ -92,17 +88,14 @@ header nav a:hover {
 }
 
 .filter-btn {
-  padding: 12px 25px;
+  padding: 8px 20px;
   background-color: #18BC9C;
   color: white;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.3s ease;
-  font-size: 16px;
-  width: 100%;
-  max-width: 130px;
-  margin-top: 15px;
+  font-size: 14px;
 }
 
 .filter-btn:hover {
@@ -115,57 +108,54 @@ header nav a:hover {
 }
 
 h2 {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 600;
   color: #333;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
   border-bottom: 2px solid #18BC9C;
   padding-bottom: 8px;
-  font-family: 'Poppins', sans-serif;
 }
 
 /* ==================== Estilo dos cards de pedido ==================== */
 .cards-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Layout adaptável */
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); /* Ajuste automático */
+  gap: 15px;
   justify-items: center;
-  margin: 0 20px;
+  margin: 0 15px;
 }
 
 .card {
   background-color: #fff;
-  border-radius: 16px;
-  padding: 20px;
+  border-radius: 12px;
+  padding: 15px;
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 280px;
+  max-width: 270px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
-  overflow: hidden;
   position: relative;
 }
 
 .card:hover {
-  transform: translateY(-10px);
+  transform: translateY(-8px);
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
 }
 
 .card h3 {
   font-size: 16px;
   font-weight: 600;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   color: #333;
 }
 
 .card .status-tag {
   display: inline-block;
-  padding: 6px 14px;
+  padding: 6px 12px;
   border-radius: 20px;
   font-weight: 600;
   text-transform: capitalize;
   margin-top: 10px;
-  letter-spacing: 1px;
 }
 
 .status-Aguardando {

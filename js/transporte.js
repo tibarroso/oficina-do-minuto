@@ -221,5 +221,5 @@ function statusClasse(status) {
   carregarPedidos(filtroAtivo);
 
   // Atualiza a cada 5 segundos, considerando o filtro ativo
-  setInterval(() => carregarPedidos(filtroAtivo), 500000);
+  setInterval(() => carregarPedidos(filtroAtivo), 300000); // 300,000 milissegundos = 5 minutos
 })();

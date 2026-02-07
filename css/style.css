@@ -9,11 +9,12 @@ body {
   flex-direction: column;
   height: 100vh;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* ==================== Barra de navegação fixa ==================== */
 header {
-  background: #18BC9C; /* Cor de fundo suave */
+  background: #18BC9C; /* Cor suave */
   color: #fff;
   padding: 20px;
   display: flex;

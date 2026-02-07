@@ -2,11 +2,11 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Loja 5 – Lavanderia & Sapataria</title>
 
   <!-- Google Font: Poppins -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
 
   <!-- CSS global do sistema -->
   <link rel="stylesheet" href="./css/style.css" />
@@ -15,15 +15,21 @@
     /* Estilos Globais */
     body {
       font-family: 'Poppins', sans-serif;
-      background-color: #f8f8f8;
+      background-color: #f1f5f9; /* Cor de fundo mais suave */
       margin: 0;
       padding: 0;
       box-sizing: border-box;
       color: #333;
     }
 
+    h1, h2 {
+      color: #333;
+      font-weight: 600; /* Deixar os títulos mais destacados */
+    }
+
+    /* Barra de navegação fixa */
     header {
-      background-color: #18bc9c; /* Azul mais moderno */
+      background-color: #1a73e8; /* Azul mais moderno */
       color: white;
       padding: 18px 40px;
       position: fixed;
@@ -36,7 +42,7 @@
     }
 
     header:hover {
-      background-color: #1558b1;
+      background-color: #1558b1; /* Efeito de hover na barra de navegação */
     }
 
     header h1 {
@@ -55,13 +61,13 @@
       text-decoration: none;
       padding: 10px 18px;
       border-radius: 25px;
-      background-color: rgba(255, 255, 255, 0.1);
+      background-color: rgba(255, 255, 255, 0.1); /* Fundo sutil */
       transition: background-color 0.3s ease, transform 0.2s ease;
     }
 
     header nav a:hover {
       background-color: rgba(255, 255, 255, 0.3);
-      transform: scale(1.1);
+      transform: scale(1.1); /* Pequena animação de zoom */
     }
 
     /* Estilo para a mensagem de sucesso */
@@ -77,7 +83,7 @@
       transform: translateX(-50%);
       border-radius: 25px;
       z-index: 1000;
-      display: none; /* Inicialmente oculta */
+      display: none;
       transition: opacity 0.5s ease;
     }
 
@@ -92,6 +98,7 @@
       box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
     }
 
+    /* Ajuste no título "Pedidos Recebidos" */
     section h2 {
       color: #333;
       font-size: 28px;
@@ -192,7 +199,6 @@
   </style>
 </head>
 <body>
-
   <header>
     <h1>Loja 5</h1>
     <nav>
@@ -219,23 +225,6 @@
   </section>
 
   <!-- Script do JavaScript -->
-  <script type="module">
-    // Função para exibir a mensagem de sucesso
-    function showSuccessMessage() {
-      const successMessage = document.getElementById("successMessage");
-
-      // Mostrar a mensagem
-      successMessage.style.display = "block";
-
-      // Após 5 segundos, esconder a mensagem
-      setTimeout(() => {
-        successMessage.style.display = "none";
-      }, 5000); // Mensagem desaparece após 5 segundos
-    }
-
-    // Exemplo de quando a função pode ser chamada (quando o pedido for finalizado)
-    // showSuccessMessage(); // Chame esta função após finalizar um pedido
-  </script>
-
+  <script type="module" src="./js/loja5.js"></script>
 </body>
 </html>

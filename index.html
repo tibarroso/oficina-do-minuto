@@ -118,6 +118,24 @@
       text-shadow: 0 1px 5px rgba(0, 123, 255, 0.5);
     }
 
+    /* Loader de carregamento */
+    #loader {
+      display: none;
+      width: 30px;
+      height: 30px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #007BFF;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    /* Animação do loader */
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
     /* Responsividade para telas menores */
     @media (max-width: 600px) {
       .container {
@@ -170,8 +188,45 @@
     <h2>Oficina do Minuto</h2>
     <input id="email" type="email" placeholder="Email" required>
     <input id="senha" type="password" placeholder="Senha" required>
-    <button onclick="login()">Entrar</button>
+    <button id="loginButton" onclick="login()">Entrar</button>
+    <div id="loader"></div>
     <a href="#" class="forgot-password">Esqueci minha senha</a>
   </div>
+
+  <script>
+    // Função de login
+    async function login() {
+      const email = document.getElementById("email").value.trim().toLowerCase();
+      const senha = document.getElementById("senha").value.trim();
+
+      if (!email || !senha) {
+        alert("Preencha email e senha!");
+        return;
+      }
+
+      const loader = document.getElementById("loader");
+      const loginButton = document.getElementById("loginButton");
+
+      // Exibe o loader e desabilita o botão durante o processo de login
+      loader.style.display = "block";
+      loginButton.disabled = true;
+
+      try {
+        // Simulação de processo de login (Exemplo com supabase)
+        // Aqui você pode integrar com o seu serviço de login real (supabase, firebase, etc.)
+        setTimeout(() => {
+          alert("Login bem-sucedido!");
+          window.location.href = "/dashboard.html"; // Redireciona para o dashboard (ou outra página)
+        }, 2000); // Simula o tempo de resposta do login
+
+      } catch (err) {
+        alert("Erro no login: " + err.message);
+      } finally {
+        // Esconde o loader e habilita o botão novamente
+        loader.style.display = "none";
+        loginButton.disabled = false;
+      }
+    }
+  </script>
 </body>
 </html>

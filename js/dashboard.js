@@ -1,6 +1,3 @@
-import { supabase } from "./supabase.js";
-import Chart from "chart.js/auto";
-
 const container = document.getElementById("containerPedidos");
 const filtroStatus = document.getElementById("filtroStatus");
 const pesquisaOS = document.getElementById("pesquisaOS");

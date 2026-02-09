@@ -8,7 +8,7 @@ const BASE_PATH = "/oficina-do-minuto/";
 // Mapa de papéis e páginas
 const rolesMap = [
   { pattern: /^admin@minuto\.com$/i, page: "admin.html" },
-  { pattern: /^loja\d+@minuto\.com$/i, page: "pedidos.html" },
+  { pattern: /^loja\d+@minuto\.com$/i, page: "pedidos.html" },  // Para qualquer "lojaX@minuto.com"
   { pattern: /^transporte\d*@minuto\.com$/i, page: "transporte.html" },
   { pattern: /^financeiro@minuto\.com$/i, page: "financeiro.html" },
   { pattern: /^gerente\d*@minuto\.com$/i, page: "gerente.html" }
@@ -61,6 +61,11 @@ form.addEventListener("submit", async (e) => {
 
     // 🔹 Verifica qual página redirecionar baseado no email
     const role = rolesMap.find(r => r.pattern.test(data.user.email));
+
+    // Debug: verificar se o email foi correspondido corretamente
+    console.log("E-mail do usuário:", data.user.email);
+    console.log("Padrão encontrado:", role);
+
     if (role) {
       // Redireciona para a página associada ao perfil
       window.location.href = BASE_PATH + role.page;

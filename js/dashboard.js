@@ -52,9 +52,11 @@ async function carregarPedidos() {
     // Se for loja, filtra pelos pedidos da loja
     if (usuarioTipo === "loja") query = query.eq("loja_origem", usuarioLogado.email);
 
-    // Filtro de status
+    // Filtro de status: Verifica se o filtro de status foi selecionado
     const status = filtroStatus.value;
-    if (status) query = query.eq("status", status);
+    if (status) {
+      query = query.eq("status", status);
+    }
 
     // Filtro de pesquisa por OS ou Loja
     const pesquisa = pesquisaOS.value.trim();

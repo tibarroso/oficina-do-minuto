@@ -12,27 +12,23 @@ let chartStatus = null;
 let chartServico = null;
 
 // ===============================
-// Verificar login do usuário
+// Função para realizar o login
 // ===============================
-async function verificarLogin() {
-  try {
-    // Recupera a sessão do usuário logado
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error || !user) {
-      alert("Usuário não logado!");
-      window.location.href = "login.html"; // Redireciona para a página de login
-      return null;
-    }
-    return user;
-  } catch (err) {
-    console.error("Erro ao verificar o login:", err);
-    alert("Erro ao verificar o login.");
+async function realizarLogin() {
+  // Verificando se o usuário já está logado
+  const { data, error } = await supabase.auth.getUser();
+
+  if (error || !data.user) {
+    alert("Usuário não logado. Realize o login.");
+    window.location.href = "login.html"; // Redireciona para a página de login
     return null;
   }
+
+  return data.user;
 }
 
 // ===============================
-// Criar botão para loja, caso o usuário seja uma loja
+// Criar botão Criar Pedido (somente para loja)
 // ===============================
 function criarBotaoPedido() {
   if (usuarioTipo === "loja" && btnCriarPedidoContainer) {
@@ -45,7 +41,7 @@ function criarBotaoPedido() {
 }
 
 // ===============================
-// Carregar pedidos do Supabase com filtros
+// Carregar pedidos com filtros
 // ===============================
 async function carregarPedidos() {
   if (!usuarioLogado) return;
@@ -53,7 +49,7 @@ async function carregarPedidos() {
   try {
     let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false });
 
-    // Filtra pelos pedidos da loja, caso o usuário seja uma loja
+    // Se for loja, filtra pelos pedidos da loja
     if (usuarioTipo === "loja") {
       query = query.eq("loja_origem", usuarioLogado.email);
     }
@@ -162,7 +158,7 @@ function atualizarGraficos() {
 // ===============================
 (async () => {
   // Verifica o login e obtém os dados do usuário
-  usuarioLogado = await verificarLogin();
+  usuarioLogado = await realizarLogin();
   if (!usuarioLogado) return; // Se não estiver logado, encerra a execução
 
   // Definir tipo de usuário (admin ou loja)

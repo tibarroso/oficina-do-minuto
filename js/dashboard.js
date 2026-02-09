@@ -14,7 +14,7 @@ let chartServico = null;
 // Verificar login
 // ===============================
 async function verificarLogin() {
-  const { data: { user }, error } = await supabase.auth.getUser(); // Usando 'supabase' diretamente
+  const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) {
     alert("Usuário não logado!");
     window.location.href = "login.html";
@@ -58,7 +58,8 @@ async function carregarPedidos() {
     // Filtro de pesquisa por OS ou Loja
     const pesquisa = pesquisaOS.value.trim();
     if (pesquisa) {
-      query = query.or(`id::text.ilike.%${pesquisa}%,loja_origem.ilike.%${pesquisa}%`);
+      // Usando o `or` corretamente para pesquisar tanto ID quanto Loja
+      query = query.or(`id.ilike.%${pesquisa}%,loja_origem.ilike.%${pesquisa}%`);
     }
 
     // Executando a consulta no Supabase

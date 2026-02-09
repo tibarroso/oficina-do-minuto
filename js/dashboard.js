@@ -1,5 +1,3 @@
-import { supabase } from "./supabase.js";  // Certifique-se de que o caminho esteja correto
-
 const container = document.getElementById("containerPedidos");
 const filtroStatus = document.getElementById("filtroStatus");
 const pesquisaOS = document.getElementById("pesquisaOS");
@@ -16,7 +14,7 @@ let chartServico = null;
 // Verificar login
 // ===============================
 async function verificarLogin() {
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const { data: { user }, error } = await supabase.auth.getUser(); // Usando 'supabase' diretamente
   if (error || !user) {
     alert("Usuário não logado!");
     window.location.href = "login.html";

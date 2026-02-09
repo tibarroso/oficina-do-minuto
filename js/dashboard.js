@@ -14,6 +14,7 @@ let chartServico = null;
 // Verificar login
 // ===============================
 async function verificarLogin() {
+  // O cliente do Supabase agora está disponível globalmente
   const { data: { user }, error } = await supabase.auth.getUser(); // Usando 'supabase' diretamente
   if (error || !user) {
     alert("Usuário não logado!");

@@ -55,11 +55,12 @@ async function carregarPedidos() {
       query = query.eq("status", status);
     }
 
-    // Filtro de pesquisa por OS ou Loja
+    // Filtro de pesquisa por ID, loja_origem, tipo_servico, etc.
     const pesquisa = pesquisaOS.value.trim();
     if (pesquisa) {
-      // Usando o `or` corretamente para pesquisar tanto ID quanto Loja
-      query = query.or(`id.ilike.%${pesquisa}%,loja_origem.ilike.%${pesquisa}%`);
+      query = query.or(
+        `id.ilike.%${pesquisa}%,loja_origem.ilike.%${pesquisa}%,tipo_servico.ilike.%${pesquisa}%,status.ilike.%${pesquisa}%`
+      );
     }
 
     // Executando a consulta no Supabase
@@ -92,9 +93,11 @@ function renderizarPedidos(pedidos) {
     card.innerHTML = `
       <h3>OS: ${p.id}</h3>
       <span>Status: ${p.status}</span><br>
-      <strong>Loja:</strong> ${p.loja_origem}<br>
-      <strong>Serviço:</strong> ${p.tipo_servico}<br>
+      <strong>Loja de Origem:</strong> ${p.loja_origem}<br>
+      <strong>Tipo de Serviço:</strong> ${p.tipo_servico}<br>
       <strong>Orçamento:</strong> ${p.eh_orcamento ? "Sim" : "Não"}<br><br>
+      <strong>Loja Destino:</strong> ${p.loja_destino || "Não especificada"}<br>
+      <strong>Observação da Loja:</strong> ${p.obs_loja_origem || "Nenhuma"}<br><br>
     `;
     container.appendChild(card);
   });

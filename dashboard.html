@@ -1,36 +1,51 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Dashboard - Oficina do Minuto</title>
-<link rel="stylesheet" href="./css/style.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Oficina do Minuto</title>
+  
+  <!-- Link para o estilo -->
+  <link rel="stylesheet" href="./css/style.css">
+  
+  <!-- Biblioteca Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-<h1>Dashboard - Oficina do Minuto</h1>
+  <h1>Dashboard - Oficina do Minuto</h1>
 
-<div class="filtros">
-  <label>Status:</label>
-  <select id="filtroStatus">
-    <option value="">Todos</option>
-    <option value="Aguardando coleta">Aguardando coleta</option>
-    <option value="Entregue na Loja 5">Entregue na Loja 5</option>
-    <option value="Finalizado">Finalizado</option>
-  </select>
+  <!-- Filtros -->
+  <div class="filtros">
+    <label for="filtroStatus">Status:</label>
+    <select id="filtroStatus">
+      <option value="">Todos</option>
+      <option value="Aguardando coleta">Aguardando coleta</option>
+      <option value="Entregue na Loja 5">Entregue na Loja 5</option>
+      <option value="Finalizado">Finalizado</option>
+    </select>
 
-  <label>Pesquisar OS/Loja:</label>
-  <input type="text" id="pesquisaOS" placeholder="Digite OS ou Loja">
-  <button id="btnFiltrar">Filtrar</button>
-</div>
+    <label for="pesquisaOS">Pesquisar OS/Loja:</label>
+    <input type="text" id="pesquisaOS" placeholder="Digite OS ou Loja">
+    <button id="btnFiltrar">Filtrar</button>
+  </div>
 
-<h2>Gráficos de Pedidos</h2>
-<canvas id="graficoStatus" width="400" height="150"></canvas>
-<canvas id="graficoServico" width="400" height="150"></canvas>
+  <!-- Gráficos -->
+  <h2>Gráficos de Pedidos</h2>
+  <div class="charts-container">
+    <canvas id="graficoStatus" width="400" height="150"></canvas>
+    <canvas id="graficoServico" width="400" height="150"></canvas>
+  </div>
 
-<h2>Lista de Pedidos</h2>
-<div id="containerPedidos" class="cards-container"></div>
+  <!-- Lista de Pedidos -->
+  <h2>Lista de Pedidos</h2>
+  <div id="containerPedidos" class="cards-container">
+    <!-- Aqui a lista de pedidos será exibida dinamicamente -->
+    <p class="loading">Carregando pedidos...</p>
+  </div>
 
-<script type="module" src="./js/dashboard.js"></script>
+  <!-- Script -->
+  <script type="module" src="./js/dashboard.js"></script>
+
 </body>
 </html>

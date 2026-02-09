@@ -14,14 +14,20 @@ let chartServico = null;
 // Verificar login
 // ===============================
 async function verificarLogin() {
-  // O cliente do Supabase agora está disponível globalmente
-  const { data: { user }, error } = await supabase.auth.getUser(); // Usando 'supabase' diretamente
-  if (error || !user) {
-    alert("Usuário não logado!");
-    window.location.href = "login.html";
+  try {
+    // Aqui supabase deve ser acessado diretamente, já que foi carregado via CDN
+    const { data: { user }, error } = await supabase.auth.getUser(); // Usando 'supabase' diretamente
+    if (error || !user) {
+      alert("Usuário não logado!");
+      window.location.href = "login.html";
+      return null;
+    }
+    return user;
+  } catch (err) {
+    console.error("Erro ao verificar o login:", err);
+    alert("Erro ao verificar o login.");
     return null;
   }
-  return user;
 }
 
 // ===============================

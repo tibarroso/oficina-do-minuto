@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Oficina do Minuto - Login</title>
   <link rel="stylesheet" href="css/style.css">
-  <script type="module" src="js/auth.js"></script>
+  <script type="module" src="js/auth.js"></script> <!-- Importando o script JS de autenticação -->
   <style>
     /* Resetando margens e paddings */
     * {
@@ -102,22 +102,6 @@
       transform: translateY(-3px);
     }
 
-    /* Estilo para o link de 'Esqueci minha senha' */
-    .forgot-password {
-      display: block;
-      margin-top: 15px;
-      font-size: 14px;
-      color: #007BFF;
-      text-decoration: none;
-      transition: color 0.3s ease, text-shadow 0.3s ease;
-    }
-
-    /* Efeito hover no link */
-    .forgot-password:hover {
-      color: #0056b3;
-      text-shadow: 0 1px 5px rgba(0, 123, 255, 0.5);
-    }
-
     /* Loader de carregamento */
     #loader {
       display: none;
@@ -161,26 +145,6 @@
         font-size: 13px;
       }
     }
-
-    @media (max-width: 400px) {
-      h2 {
-        font-size: 24px;
-      }
-
-      input {
-        padding: 12px;
-        font-size: 14px;
-      }
-
-      button {
-        font-size: 14px;
-        padding: 12px;
-      }
-
-      .forgot-password {
-        font-size: 12px;
-      }
-    }
   </style>
 </head>
 <body>
@@ -193,7 +157,7 @@
     <a href="#" class="forgot-password">Esqueci minha senha</a>
   </div>
 
-  <script>
+  <script type="module">
     // Função de login
     async function login() {
       const email = document.getElementById("email").value.trim().toLowerCase();
@@ -212,13 +176,16 @@
       loginButton.disabled = true;
 
       try {
-        // Simulação de processo de login (Exemplo com supabase)
-        // Aqui você pode integrar com o seu serviço de login real (supabase, firebase, etc.)
-        setTimeout(() => {
-          alert("Login bem-sucedido!");
-          window.location.href = "/dashboard.html"; // Redireciona para o dashboard (ou outra página)
-        }, 2000); // Simula o tempo de resposta do login
+        // Login no Supabase
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password: senha
+        });
 
+        if (error) throw error;
+
+        alert("Login bem-sucedido!");
+        window.location.href = "/dashboard.html"; // Redireciona para o dashboard após o login
       } catch (err) {
         alert("Erro no login: " + err.message);
       } finally {

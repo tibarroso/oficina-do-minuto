@@ -1,3 +1,5 @@
+import { supabase } from "./supabase.js";  // Certifique-se de que o caminho está correto
+
 const container = document.getElementById("containerPedidos");
 const filtroStatus = document.getElementById("filtroStatus");
 const pesquisaOS = document.getElementById("pesquisaOS");

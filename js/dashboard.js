@@ -1,4 +1,4 @@
-import { supabase } from "./supabase.js";  // Certifique-se de que isso está correto
+import { supabase } from "./supabase.js";  // Importando corretamente o Supabase
 
 const container = document.getElementById("containerPedidos");
 const filtroStatus = document.getElementById("filtroStatus");
@@ -16,8 +16,10 @@ let chartServico = null;
 // Verificar login
 // ===============================
 async function verificarLogin() {
+  console.log(supabase);  // Verifique se o Supabase está disponível
+
   try {
-    const { data: { user }, error } = await supabase.auth.getUser(); // Usando 'supabase' corretamente
+    const { data: { user }, error } = await supabase.auth.getUser();
     if (error || !user) {
       alert("Usuário não logado!");
       window.location.href = "login.html";

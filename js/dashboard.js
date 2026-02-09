@@ -46,12 +46,13 @@ async function carregarPedidos() {
   if (!usuarioLogado) return;
 
   try {
+    // Inicializando a query para buscar pedidos
     let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false });
 
-    // Filtragem por tipo de usuário
+    // Se for loja, filtra pelos pedidos da loja
     if (usuarioTipo === "loja") query = query.eq("loja_origem", usuarioLogado.email);
 
-    // Filtro por status
+    // Filtro de status
     const status = filtroStatus.value;
     if (status) query = query.eq("status", status);
 
@@ -61,6 +62,7 @@ async function carregarPedidos() {
       query = query.or(`id::text.ilike.%${pesquisa}%,loja_origem.ilike.%${pesquisa}%`);
     }
 
+    // Executando a consulta no Supabase
     const { data, error } = await query;
     if (error) throw error;
 

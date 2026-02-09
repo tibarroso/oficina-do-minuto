@@ -1,4 +1,4 @@
-import { supabase } from "./supabase.js";
+import { supabase } from "./supabase.js";  // Certifique-se de que isso está correto
 
 const container = document.getElementById("containerPedidos");
 const filtroStatus = document.getElementById("filtroStatus");
@@ -17,8 +17,7 @@ let chartServico = null;
 // ===============================
 async function verificarLogin() {
   try {
-    // Aqui supabase deve ser acessado diretamente, já que foi carregado via CDN
-    const { data: { user }, error } = await supabase.auth.getUser(); // Usando 'supabase' diretamente
+    const { data: { user }, error } = await supabase.auth.getUser(); // Usando 'supabase' corretamente
     if (error || !user) {
       alert("Usuário não logado!");
       window.location.href = "login.html";
@@ -52,19 +51,15 @@ async function carregarPedidos() {
   if (!usuarioLogado) return;
 
   try {
-    // Inicializando a query para buscar pedidos
     let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false });
 
-    // Se for loja, filtra pelos pedidos da loja
     if (usuarioTipo === "loja") query = query.eq("loja_origem", usuarioLogado.email);
 
-    // Filtro de status: Verifica se o filtro de status foi selecionado
     const status = filtroStatus.value;
     if (status && status !== "Todos") {
       query = query.eq("status", status);
     }
 
-    // Filtro de pesquisa por ID, loja_origem, tipo_servico, etc.
     const pesquisa = pesquisaOS.value.trim();
     if (pesquisa) {
       query = query.or(
@@ -72,7 +67,6 @@ async function carregarPedidos() {
       );
     }
 
-    // Executando a consulta no Supabase
     const { data, error } = await query;
     if (error) throw error;
 
@@ -162,18 +156,13 @@ function atualizarGraficos() {
   usuarioLogado = await verificarLogin();
   if (!usuarioLogado) return;
 
-  // Definir tipo de usuário (admin ou loja)
   usuarioTipo = usuarioLogado.email.includes("loja") ? "loja" : "admin";
 
-  // Criar botão para loja se for necessário
   criarBotaoPedido();
 
-  // Evento de filtro
   btnFiltrar?.addEventListener("click", carregarPedidos);
 
-  // Carregar pedidos inicialmente
   carregarPedidos();
 
-  // Atualizar automaticamente a cada 5s
   setInterval(carregarPedidos, 5000);
 })();

@@ -30,6 +30,7 @@ form.addEventListener("submit", async (e) => {
   const email = emailInput.value.trim().toLowerCase();
   const senha = senhaInput.value.trim();
 
+  // Verificar se email e senha estão preenchidos
   if (!email || !senha) {
     alert("Preencha email e senha!");
     return;
@@ -58,7 +59,7 @@ form.addEventListener("submit", async (e) => {
       return;
     }
 
-    // 🔹 Redirecionamento baseado no email
+    // 🔹 Verifica qual página redirecionar baseado no email
     const role = rolesMap.find(r => r.pattern.test(data.user.email));
     if (role) {
       // Redireciona para a página associada ao perfil
@@ -69,7 +70,7 @@ form.addEventListener("submit", async (e) => {
     }
   } catch (err) {
     console.error("Erro no login:", err);
-    alert("Erro no login: " + (err.message || err));
+    alert("Erro no login: " + (err.message || "Erro desconhecido"));
   } finally {
     // 🔹 Esconde o loader após o processamento
     toggleLoader(false);

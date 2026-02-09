@@ -40,7 +40,7 @@ function criarBotaoPedido() {
 }
 
 // ===============================
-// Carregar pedidos
+// Carregar pedidos com filtros
 // ===============================
 async function carregarPedidos() {
   if (!usuarioLogado) return;
@@ -54,7 +54,7 @@ async function carregarPedidos() {
 
     // Filtro de status: Verifica se o filtro de status foi selecionado
     const status = filtroStatus.value;
-    if (status) {
+    if (status && status !== "Todos") {
       query = query.eq("status", status);
     }
 

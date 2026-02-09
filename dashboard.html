@@ -23,6 +23,9 @@
       <option value="Aguardando coleta">Aguardando coleta</option>
       <option value="Entregue na Loja 5">Entregue na Loja 5</option>
       <option value="Finalizado">Finalizado</option>
+      <!-- Adicionando mais status, se necessário -->
+      <option value="Em serviço">Em serviço</option>
+      <option value="Retrabalho">Retrabalho</option>
     </select>
 
     <label for="pesquisaOS">Pesquisar OS/Loja:</label>
@@ -43,6 +46,9 @@
     <!-- Aqui a lista de pedidos será exibida dinamicamente -->
     <p class="loading">Carregando pedidos...</p>
   </div>
+
+  <!-- Botão Criar Pedido (exibido apenas para loja) -->
+  <div id="btnCriarPedidoContainer"></div>
 
   <!-- Script -->
   <script type="module" src="./js/dashboard.js"></script>

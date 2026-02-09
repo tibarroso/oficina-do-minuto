@@ -1,3 +1,5 @@
+import { supabase } from "./supabase.js";  // Importando o cliente Supabase
+
 // Seleção dos elementos DOM
 const container = document.getElementById("containerPedidos");
 const filtroStatus = document.getElementById("filtroStatus");
@@ -15,7 +17,6 @@ let chartServico = null;
 // Função para realizar o login
 // ===============================
 async function realizarLogin() {
-  // Verificando se o usuário já está logado
   const { data, error } = await supabase.auth.getUser();
 
   if (error || !data.user) {
@@ -63,7 +64,6 @@ async function carregarPedidos() {
     // Filtro de pesquisa por OS ou Loja
     const pesquisa = pesquisaOS.value.trim();
     if (pesquisa) {
-      // Realiza a busca com `ilike` nos campos texto
       query = query.or(
         `id.ilike.%${pesquisa}%,loja_origem.ilike.%${pesquisa}%,tipo_servico.ilike.%${pesquisa}%,status.ilike.%${pesquisa}%`
       );
@@ -93,7 +93,6 @@ function renderizarPedidos(pedidos) {
     return;
   }
 
-  // Para cada pedido, cria um cartão com as informações
   pedidos.forEach(p => {
     const card = document.createElement("div");
     card.className = "card";
@@ -122,7 +121,6 @@ function atualizarGraficos() {
     servicoCount[p.tipo_servico] = (servicoCount[p.tipo_servico] || 0) + 1;
   });
 
-  // Gráfico de status
   const ctxStatus = document.getElementById("graficoStatus").getContext("2d");
   if (chartStatus) chartStatus.destroy(); // Se o gráfico já existir, destrói o anterior
   chartStatus = new Chart(ctxStatus, {
@@ -136,7 +134,6 @@ function atualizarGraficos() {
     }
   });
 
-  // Gráfico de tipos de serviço
   const ctxServico = document.getElementById("graficoServico").getContext("2d");
   if (chartServico) chartServico.destroy(); // Se o gráfico já existir, destrói o anterior
   chartServico = new Chart(ctxServico, {
@@ -157,22 +154,12 @@ function atualizarGraficos() {
 // Inicialização do Dashboard
 // ===============================
 (async () => {
-  // Verifica o login e obtém os dados do usuário
   usuarioLogado = await realizarLogin();
-  if (!usuarioLogado) return; // Se não estiver logado, encerra a execução
+  if (!usuarioLogado) return;
 
-  // Definir tipo de usuário (admin ou loja)
   usuarioTipo = usuarioLogado.email.includes("loja") ? "loja" : "admin";
-
-  // Criar botão para loja, caso seja necessário
   criarBotaoPedido();
-
-  // Adiciona o evento de filtro
   btnFiltrar?.addEventListener("click", carregarPedidos);
-
-  // Carregar pedidos inicialmente
   carregarPedidos();
-
-  // Atualiza os pedidos a cada 5 segundos
   setInterval(carregarPedidos, 5000);
 })();

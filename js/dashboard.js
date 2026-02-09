@@ -16,10 +16,8 @@ let chartServico = null;
 // Verificar login
 // ===============================
 async function verificarLogin() {
-  console.log(supabase);  // Verifique se o Supabase está disponível
-
   try {
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const { data: { user }, error } = await supabase.auth.getUser();  // Aqui o supabase está disponível globalmente
     if (error || !user) {
       alert("Usuário não logado!");
       window.location.href = "login.html";
@@ -69,6 +67,7 @@ async function carregarPedidos() {
       );
     }
 
+    // Executando a consulta no Supabase
     const { data, error } = await query;
     if (error) throw error;
 

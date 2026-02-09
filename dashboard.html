@@ -12,7 +12,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- CDN do Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script> <!-- Garantir que o Supabase seja carregado primeiro -->
 
 </head>
 <body>
@@ -44,12 +44,11 @@
   <!-- Lista de Pedidos -->
   <h2>Lista de Pedidos</h2>
   <div id="containerPedidos" class="cards-container">
-    <!-- Aqui a lista de pedidos será exibida dinamicamente -->
     <p class="loading">Carregando pedidos...</p>
   </div>
 
   <!-- Script -->
-  <script type="module" src="./js/dashboard.js"></script>
+  <script type="module" src="./js/dashboard.js"></script> <!-- Carregar depois -->
 
 </body>
 </html>

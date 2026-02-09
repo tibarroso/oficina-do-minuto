@@ -48,11 +48,14 @@ async function carregarPedidos() {
   try {
     let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false });
 
+    // Filtragem por tipo de usuário
     if (usuarioTipo === "loja") query = query.eq("loja_origem", usuarioLogado.email);
 
+    // Filtro por status
     const status = filtroStatus.value;
     if (status) query = query.eq("status", status);
 
+    // Filtro de pesquisa por OS ou Loja
     const pesquisa = pesquisaOS.value.trim();
     if (pesquisa) {
       query = query.or(`id::text.ilike.%${pesquisa}%,loja_origem.ilike.%${pesquisa}%`);
@@ -132,7 +135,7 @@ function atualizarGraficos() {
         label: "Pedidos por Serviço",
         data: Object.values(servicoCount),
         backgroundColor: "#337ab7"
-      }]
+      }],
     },
     options: { scales: { y: { beginAtZero: true } } }
   });
@@ -145,12 +148,16 @@ function atualizarGraficos() {
   usuarioLogado = await verificarLogin();
   if (!usuarioLogado) return;
 
+  // Definir tipo de usuário (admin ou loja)
   usuarioTipo = usuarioLogado.email.includes("loja") ? "loja" : "admin";
+
+  // Criar botão para loja se for necessário
   criarBotaoPedido();
 
+  // Evento de filtro
   btnFiltrar?.addEventListener("click", carregarPedidos);
 
-  // Carregar inicialmente
+  // Carregar pedidos inicialmente
   carregarPedidos();
 
   // Atualizar automaticamente a cada 5s

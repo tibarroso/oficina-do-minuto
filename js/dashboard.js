@@ -1,4 +1,4 @@
-// Selecionando os elementos do DOM
+// Seleção dos elementos DOM
 const container = document.getElementById("containerPedidos");
 const filtroStatus = document.getElementById("filtroStatus");
 const pesquisaOS = document.getElementById("pesquisaOS");
@@ -12,14 +12,15 @@ let chartStatus = null;
 let chartServico = null;
 
 // ===============================
-// Verificar login
+// Verificar login do usuário
 // ===============================
 async function verificarLogin() {
   try {
+    // Recupera a sessão do usuário logado
     const { data: { user }, error } = await supabase.auth.getUser();
     if (error || !user) {
       alert("Usuário não logado!");
-      window.location.href = "login.html";
+      window.location.href = "login.html"; // Redireciona para a página de login
       return null;
     }
     return user;
@@ -31,20 +32,20 @@ async function verificarLogin() {
 }
 
 // ===============================
-// Criar botão Criar Pedido se for loja
+// Criar botão para loja, caso o usuário seja uma loja
 // ===============================
 function criarBotaoPedido() {
   if (usuarioTipo === "loja" && btnCriarPedidoContainer) {
     const btn = document.createElement("button");
     btn.textContent = "Criar Pedido";
     btn.style.marginBottom = "20px";
-    btn.onclick = () => window.location.href = "pedidos.html";
+    btn.onclick = () => window.location.href = "pedidos.html"; // Redireciona para a página de pedidos
     btnCriarPedidoContainer.appendChild(btn);
   }
 }
 
 // ===============================
-// Carregar pedidos com filtros
+// Carregar pedidos do Supabase com filtros
 // ===============================
 async function carregarPedidos() {
   if (!usuarioLogado) return;
@@ -52,8 +53,10 @@ async function carregarPedidos() {
   try {
     let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false });
 
-    // Se for loja, filtra pelos pedidos da loja
-    if (usuarioTipo === "loja") query = query.eq("loja_origem", usuarioLogado.email);
+    // Filtra pelos pedidos da loja, caso o usuário seja uma loja
+    if (usuarioTipo === "loja") {
+      query = query.eq("loja_origem", usuarioLogado.email);
+    }
 
     // Filtro de status
     const status = filtroStatus.value;
@@ -64,22 +67,19 @@ async function carregarPedidos() {
     // Filtro de pesquisa por OS ou Loja
     const pesquisa = pesquisaOS.value.trim();
     if (pesquisa) {
-      // Aplicando 'ilike' para realizar busca nos campos texto
+      // Realiza a busca com `ilike` nos campos texto
       query = query.or(
         `id.ilike.%${pesquisa}%,loja_origem.ilike.%${pesquisa}%,tipo_servico.ilike.%${pesquisa}%,status.ilike.%${pesquisa}%`
       );
     }
 
-    // Verificando a URL da consulta antes de enviar ao Supabase (para debug)
-    console.log("Consulta para Supabase:", query);
-
-    // Executando a consulta no Supabase
+    // Executando a consulta ao Supabase
     const { data, error } = await query;
     if (error) throw error;
 
-    pedidosGlobais = data || [];
-    renderizarPedidos(pedidosGlobais);
-    atualizarGraficos();
+    pedidosGlobais = data || []; // Armazena os pedidos retornados
+    renderizarPedidos(pedidosGlobais); // Renderiza os pedidos na página
+    atualizarGraficos(); // Atualiza os gráficos
   } catch (err) {
     console.error("Erro ao carregar pedidos:", err);
     alert("Erro ao carregar pedidos");
@@ -87,16 +87,17 @@ async function carregarPedidos() {
 }
 
 // ===============================
-// Renderizar pedidos
+// Renderizar os pedidos na página
 // ===============================
 function renderizarPedidos(pedidos) {
-  container.innerHTML = "";
+  container.innerHTML = ""; // Limpa a lista de pedidos antes de renderizar
 
   if (!pedidos || pedidos.length === 0) {
-    container.innerHTML = "<p>Nenhum pedido encontrado.</p>";
+    container.innerHTML = "<p>Nenhum pedido encontrado.</p>"; // Exibe mensagem se não houver pedidos
     return;
   }
 
+  // Para cada pedido, cria um cartão com as informações
   pedidos.forEach(p => {
     const card = document.createElement("div");
     card.className = "card";
@@ -109,12 +110,12 @@ function renderizarPedidos(pedidos) {
       <strong>Loja Destino:</strong> ${p.loja_destino || "Não especificada"}<br>
       <strong>Observação da Loja:</strong> ${p.obs_loja_origem || "Nenhuma"}<br><br>
     `;
-    container.appendChild(card);
+    container.appendChild(card); // Adiciona o card de pedido ao container
   });
 }
 
 // ===============================
-// Atualizar gráficos
+// Atualizar gráficos com base nos pedidos carregados
 // ===============================
 function atualizarGraficos() {
   const statusCount = {};
@@ -127,7 +128,7 @@ function atualizarGraficos() {
 
   // Gráfico de status
   const ctxStatus = document.getElementById("graficoStatus").getContext("2d");
-  if (chartStatus) chartStatus.destroy();
+  if (chartStatus) chartStatus.destroy(); // Se o gráfico já existir, destrói o anterior
   chartStatus = new Chart(ctxStatus, {
     type: "doughnut",
     data: {
@@ -139,9 +140,9 @@ function atualizarGraficos() {
     }
   });
 
-  // Gráfico de serviços
+  // Gráfico de tipos de serviço
   const ctxServico = document.getElementById("graficoServico").getContext("2d");
-  if (chartServico) chartServico.destroy();
+  if (chartServico) chartServico.destroy(); // Se o gráfico já existir, destrói o anterior
   chartServico = new Chart(ctxServico, {
     type: "bar",
     data: {
@@ -157,24 +158,25 @@ function atualizarGraficos() {
 }
 
 // ===============================
-// Inicialização
+// Inicialização do Dashboard
 // ===============================
 (async () => {
+  // Verifica o login e obtém os dados do usuário
   usuarioLogado = await verificarLogin();
-  if (!usuarioLogado) return;
+  if (!usuarioLogado) return; // Se não estiver logado, encerra a execução
 
   // Definir tipo de usuário (admin ou loja)
   usuarioTipo = usuarioLogado.email.includes("loja") ? "loja" : "admin";
 
-  // Criar botão para loja se for necessário
+  // Criar botão para loja, caso seja necessário
   criarBotaoPedido();
 
-  // Evento de filtro
+  // Adiciona o evento de filtro
   btnFiltrar?.addEventListener("click", carregarPedidos);
 
   // Carregar pedidos inicialmente
   carregarPedidos();
 
-  // Atualizar automaticamente a cada 5s
+  // Atualiza os pedidos a cada 5 segundos
   setInterval(carregarPedidos, 5000);
 })();

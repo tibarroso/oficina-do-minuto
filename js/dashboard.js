@@ -17,7 +17,6 @@ let chartServico = null;
 // Função para realizar o login
 // ===============================
 async function realizarLogin() {
-  // Verificando se o usuário já está logado
   const { data, error } = await supabase.auth.getUser();
 
   if (error || !data.user) {
@@ -155,22 +154,12 @@ function atualizarGraficos() {
 // Inicialização do Dashboard
 // ===============================
 (async () => {
-  // Verifica o login e obtém os dados do usuário
   usuarioLogado = await realizarLogin();
-  if (!usuarioLogado) return; // Se não estiver logado, encerra a execução
+  if (!usuarioLogado) return;
 
-  // Definir tipo de usuário (admin ou loja)
   usuarioTipo = usuarioLogado.email.includes("loja") ? "loja" : "admin";
-
-  // Criar botão para loja, caso seja necessário
   criarBotaoPedido();
-
-  // Adiciona o evento de filtro
   btnFiltrar?.addEventListener("click", carregarPedidos);
-
-  // Carregar pedidos inicialmente
   carregarPedidos();
-
-  // Atualiza os pedidos a cada 5 segundos
   setInterval(carregarPedidos, 5000);
 })();

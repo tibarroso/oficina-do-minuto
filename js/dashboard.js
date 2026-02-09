@@ -1,5 +1,6 @@
 import { supabase } from "./supabase.js";  // Importando corretamente o Supabase
 
+// Selecionando os elementos do DOM
 const container = document.getElementById("containerPedidos");
 const filtroStatus = document.getElementById("filtroStatus");
 const pesquisaOS = document.getElementById("pesquisaOS");
@@ -8,7 +9,7 @@ const btnCriarPedidoContainer = document.getElementById("btnCriarPedidoContainer
 
 let pedidosGlobais = [];
 let usuarioLogado = null;
-let usuarioTipo = "admin"; // admin ou loja
+let usuarioTipo = "admin"; // Pode ser "admin" ou "loja"
 let chartStatus = null;
 let chartServico = null;
 
@@ -17,7 +18,7 @@ let chartServico = null;
 // ===============================
 async function verificarLogin() {
   try {
-    const { data: { user }, error } = await supabase.auth.getUser();  // Aqui o supabase está disponível globalmente
+    const { data: { user }, error } = await supabase.auth.getUser();
     if (error || !user) {
       alert("Usuário não logado!");
       window.location.href = "login.html";
@@ -53,15 +54,19 @@ async function carregarPedidos() {
   try {
     let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false });
 
+    // Se for loja, filtra pelos pedidos da loja
     if (usuarioTipo === "loja") query = query.eq("loja_origem", usuarioLogado.email);
 
+    // Filtro de status
     const status = filtroStatus.value;
     if (status && status !== "Todos") {
       query = query.eq("status", status);
     }
 
+    // Filtro de pesquisa por OS ou Loja
     const pesquisa = pesquisaOS.value.trim();
     if (pesquisa) {
+      // Aplicando `ilike` para realizar busca nos campos texto
       query = query.or(
         `id.ilike.%${pesquisa}%,loja_origem.ilike.%${pesquisa}%,tipo_servico.ilike.%${pesquisa}%,status.ilike.%${pesquisa}%`
       );
@@ -157,13 +162,18 @@ function atualizarGraficos() {
   usuarioLogado = await verificarLogin();
   if (!usuarioLogado) return;
 
+  // Definir tipo de usuário (admin ou loja)
   usuarioTipo = usuarioLogado.email.includes("loja") ? "loja" : "admin";
 
+  // Criar botão para loja se for necessário
   criarBotaoPedido();
 
+  // Evento de filtro
   btnFiltrar?.addEventListener("click", carregarPedidos);
 
+  // Carregar pedidos inicialmente
   carregarPedidos();
 
+  // Atualizar automaticamente a cada 5s
   setInterval(carregarPedidos, 5000);
 })();

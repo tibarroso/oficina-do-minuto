@@ -1,5 +1,3 @@
-import { supabase } from "./supabase.js";  // Importando corretamente o Supabase
-
 // Selecionando os elementos do DOM
 const container = document.getElementById("containerPedidos");
 const filtroStatus = document.getElementById("filtroStatus");
@@ -66,11 +64,14 @@ async function carregarPedidos() {
     // Filtro de pesquisa por OS ou Loja
     const pesquisa = pesquisaOS.value.trim();
     if (pesquisa) {
-      // Aplicando `ilike` para realizar busca nos campos texto
+      // Aplicando 'ilike' para realizar busca nos campos texto
       query = query.or(
         `id.ilike.%${pesquisa}%,loja_origem.ilike.%${pesquisa}%,tipo_servico.ilike.%${pesquisa}%,status.ilike.%${pesquisa}%`
       );
     }
+
+    // Verificando a URL da consulta antes de enviar ao Supabase (para debug)
+    console.log("Consulta para Supabase:", query);
 
     // Executando a consulta no Supabase
     const { data, error } = await query;

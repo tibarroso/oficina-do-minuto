@@ -11,8 +11,8 @@
   <!-- Biblioteca Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- CDN do Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script> <!-- Garantir que o Supabase seja carregado primeiro -->
+  <!-- CDN do Supabase (Certifique-se de carregar o Supabase primeiro) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
 </head>
 <body>
@@ -48,7 +48,7 @@
   </div>
 
   <!-- Script -->
-  <script type="module" src="./js/dashboard.js"></script> <!-- Carregar depois -->
+  <script type="module" src="./js/dashboard.js"></script> <!-- Certifique-se de carregar este script depois do Supabase -->
 
 </body>
 </html>

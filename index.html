@@ -159,7 +159,8 @@
         if (error) throw error;
 
         alert("Login bem-sucedido!");
-        window.location.href = "/dashboard.html"; // Redireciona para o dashboard após o login
+       // window.location.href = "/dashboard.html"; // Redireciona para o dashboard após o login
+       window.location.href = "/pedidos.html"; // Redireciona para o pedidos após o login
       } catch (err) {
         alert("Erro no login: " + err.message);
       } finally {

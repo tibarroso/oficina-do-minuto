@@ -9,7 +9,7 @@ const BASE_PATH = "/oficina-do-minuto/";
 const rolesMap = [
   { pattern: /^admin@minuto\.com$/i, page: "admin.html" },
   { pattern: /^loja\d+@minuto\.com$/i, page: "pedidos.html" },  // Para qualquer "lojaX@minuto.com"
-  { pattern: /^loja2\d+@minuto\.com$/i, page: "pedidos.html" },  // Para qualquer "lojaX@minuto.com"
+  { pattern: /^loja2\@minuto\.com$/i, page: "pedidos.html" },  // Para qualquer "lojaX@minuto.com"
   { pattern: /^transporte\d*@minuto\.com$/i, page: "transporte.html" },
   { pattern: /^financeiro@minuto\.com$/i, page: "financeiro.html" },
   { pattern: /^gerente\d*@minuto\.com$/i, page: "gerente.html" }

@@ -38,7 +38,8 @@ window.login = async function () {
     localStorage.setItem("email", loginData.user.email);
 
     // Redireciona para dashboard
-    window.location.href = "dashboard.html";
+   // window.location.href = "dashboard.html";
+    window.location.href = "pedidos.html";
   } catch (err) {
     console.error("Erro ao efetuar login:", err);
     alert("Erro inesperado ao tentar logar");

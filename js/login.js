@@ -71,7 +71,10 @@ form.addEventListener("submit", async (e) => {
       window.location.href = BASE_PATH + role.page;
     } else {
       // Caso não encontre um perfil correspondente, redireciona para a página padrão (dashboard)
-      window.location.href = BASE_PATH + "dashboard.html";
+    //  window.location.href = BASE_PATH + "dashboard.html";
+      // Caso não encontre um perfil correspondente, redireciona para a página padrão (pedidos)
+      window.location.href = BASE_PATH + "pedidos.html";
+      
     }
   } catch (err) {
     console.error("Erro no login:", err);

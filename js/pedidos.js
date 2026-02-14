@@ -10,6 +10,20 @@ const orcamentoInput = document.getElementById("orcamento");
 const observacaoInput = document.getElementById("observacao");
 const btnCriarPedido = document.getElementById("btnCriarPedido");
 
+// 🔹 NOVOS ELEMENTOS
+const acoesPedido = document.getElementById("acoesPedido");
+const btnFinalizar = document.getElementById("btnFinalizar");
+const btnRetrabalho = document.getElementById("btnRetrabalho");
+
+// ===============================
+// Status Padronizado
+// ===============================
+const STATUS = {
+  AGUARDANDO_COLETA: "Aguardando coleta",
+  RECEBIDO_ORIGEM: "Recebido na loja de origem",
+  FINALIZADO: "Finalizado"
+};
+
 let usuarioLogado = null;
 let pedidoAtualId = null;
 
@@ -42,17 +56,10 @@ btnCriarPedido?.addEventListener("click", async () => {
   const orcamento = orcamentoInput.checked;
   const observacao = observacaoInput.value.trim();
 
-  // Validação dos campos obrigatórios
   if (!tipo || !lojaOrigem || !lojaDestino) {
     alert("Por favor, preencha todos os campos obrigatórios.");
     return;
   }
-
-  /**
-   * STATUS PADRONIZADO
-   * ⚠️ NÃO usar status que não existam no fluxo
-   */
-  const statusInicial = "Aguardando coleta";
 
   try {
     const { data, error } = await supabase
@@ -62,7 +69,7 @@ btnCriarPedido?.addEventListener("click", async () => {
         loja_destino: lojaDestino,
         tipo_servico: tipo,
         eh_orcamento: orcamento,
-        status: statusInicial,
+        status: STATUS.AGUARDANDO_COLETA,
         obs_loja_origem: observacao || null,
         criado_em: new Date().toISOString()
       }])
@@ -73,7 +80,6 @@ btnCriarPedido?.addEventListener("click", async () => {
 
     pedidoAtualId = data.id;
 
-    // Registrar evento inicial
     await registrarEvento(
       pedidoAtualId,
       "Pedido criado",
@@ -82,7 +88,6 @@ btnCriarPedido?.addEventListener("click", async () => {
 
     alert(`Pedido criado com sucesso!\nOS: ${pedidoAtualId}`);
 
-    // Limpar o formulário
     tipoInput.value = "";
     lojaOrigemInput.value = "";
     lojaDestinoInput.value = "";
@@ -92,6 +97,82 @@ btnCriarPedido?.addEventListener("click", async () => {
   } catch (err) {
     console.error("Erro ao criar pedido:", err);
     alert(`Erro ao criar pedido: ${err.message || "Erro desconhecido"}`);
+  }
+});
+
+// ===============================
+// Mostrar ações se status permitir
+// ===============================
+function verificarAcoes(status) {
+  if (!acoesPedido) return;
+
+  if (status === STATUS.RECEBIDO_ORIGEM) {
+    acoesPedido.style.display = "block";
+  } else {
+    acoesPedido.style.display = "none";
+  }
+}
+
+// ===============================
+// Botão FINALIZAR
+// ===============================
+btnFinalizar?.addEventListener("click", async () => {
+  if (!pedidoAtualId) return;
+
+  try {
+    const { error } = await supabase
+      .from("pedidos")
+      .update({
+        status: STATUS.FINALIZADO
+      })
+      .eq("id", pedidoAtualId);
+
+    if (error) throw error;
+
+    await registrarEvento(
+      pedidoAtualId,
+      "Pedido finalizado",
+      "Serviço finalizado na loja de origem"
+    );
+
+    alert("Pedido finalizado com sucesso!");
+    acoesPedido.style.display = "none";
+
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao finalizar pedido.");
+  }
+});
+
+// ===============================
+// Botão RETRABALHO
+// ===============================
+btnRetrabalho?.addEventListener("click", async () => {
+  if (!pedidoAtualId) return;
+
+  try {
+    const { error } = await supabase
+      .from("pedidos")
+      .update({
+        status: STATUS.AGUARDANDO_COLETA,
+        obs_loja_origem: "serviço para ser refeito"
+      })
+      .eq("id", pedidoAtualId);
+
+    if (error) throw error;
+
+    await registrarEvento(
+      pedidoAtualId,
+      "Retrabalho solicitado",
+      "Serviço para ser refeito"
+    );
+
+    alert("Pedido enviado para retrabalho!");
+    acoesPedido.style.display = "none";
+
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao enviar para retrabalho.");
   }
 });
 

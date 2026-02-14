@@ -183,6 +183,39 @@ h2 {
   color: white;
 }
 
+/* ==================== Botões de Ação (Finalizado / Retrabalho) ==================== */
+.acoes-pedido {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.acoes-pedido button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.acoes-pedido .btn-finalizar {
+  background-color: #1abc9c;
+  color: white;
+}
+
+.acoes-pedido .btn-finalizar:hover {
+  background-color: #16a085;
+}
+
+.acoes-pedido .btn-retrabalho {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.acoes-pedido .btn-retrabalho:hover {
+  background-color: #c0392b;
+}
+
 /* ==================== Efeitos de Loading ==================== */
 .loading {
   font-size: 18px;

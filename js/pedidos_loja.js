@@ -50,7 +50,7 @@ function criarCardPedido(pedido) {
 
   const statusClass = getStatusClass(pedido.status);
 
-  // Verifica se o status é "Recebido na loja de origem" (sem considerar maiúsculas/minúsculas)
+  // Verifica se o status é "Recebido na loja de origem" de forma insensível a maiúsculas/minúsculas
   const statusComparacao = pedido.status && pedido.status.trim().toLowerCase();
   const acoesHTML = (statusComparacao === "recebido na loja de origem") ? `
     <div class="acoes-pedido">

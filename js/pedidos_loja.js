@@ -50,8 +50,9 @@ function criarCardPedido(pedido) {
 
   const statusClass = getStatusClass(pedido.status);
 
-  // Verifica se o status é "Recebido na loja de origem" e exibe os botões de ações
-  const acoesHTML = (pedido.status && pedido.status.trim() === "Recebido na loja de origem") ? `
+  // Verifica se o status é "Recebido na loja de origem" (sem considerar maiúsculas/minúsculas)
+  const statusComparacao = pedido.status && pedido.status.trim().toLowerCase();
+  const acoesHTML = (statusComparacao === "recebido na loja de origem") ? `
     <div class="acoes-pedido">
       <button class="btn-finalizar" onclick="atualizarStatus('Finalizado', ${pedido.id})">Finalizado</button>
       <button class="btn-retrabalho" onclick="atualizarStatus('Aguardando coleta', ${pedido.id})">Retrabalho</button>

@@ -50,6 +50,13 @@ function criarCardPedido(pedido) {
 
   const statusClass = getStatusClass(pedido.status);
 
+  // Verifica se o status é "Recebido na loja de origem" e exibe os botões de ações
+  const acoesHTML = pedido.status === "Recebido na loja de origem" ? `
+    <div class="acoes-pedido">
+      <button class="btn-finalizar" onclick="atualizarStatus('Finalizado', ${pedido.id})">Finalizado</button>
+      <button class="btn-retrabalho" onclick="atualizarStatus('Aguardando coleta', ${pedido.id})">Retrabalho</button>
+    </div>` : "";
+
   card.innerHTML = `
     <strong>Loja de Origem:</strong> ${pedido.loja_origem || "Não especificada"}<br>
     <strong>Loja de Destino:</strong> ${pedido.loja_destino || "Não especificada"}<br>
@@ -59,8 +66,38 @@ function criarCardPedido(pedido) {
     <strong>Orçamento:</strong> ${pedido.orcamento ? "Sim" : "Não"}<br>
     <strong>Observação:</strong><br><em>${pedido.obs_loja_origem || "—"}</em>
     <div class="timeline" id="timeline-${pedido.id}"><strong>Eventos:</strong></div>
+    ${acoesHTML} <!-- Botões de ação -->
   `;
   return card;
+}
+
+// =========================
+// ATUALIZAR STATUS (Finalizado/Retrabalho)
+// =========================
+async function atualizarStatus(novoStatus, pedidoId) {
+  try {
+    let observacao = "";
+
+    if (novoStatus === "Aguardando coleta") {
+      observacao = "Serviço para ser refeito"; // Observação para Retrabalho
+    }
+
+    const { data, error } = await supabase
+      .from("pedidos")
+      .update({ status: novoStatus, obs_loja_origem: observacao })
+      .eq("id", pedidoId);
+
+    if (error) throw error;
+
+    alert(`Status atualizado para "${novoStatus}" com sucesso!`);
+
+    // Recarregar os pedidos para refletir a atualização
+    carregarPedidos();
+
+  } catch (err) {
+    console.error(`Erro ao atualizar status do pedido ${pedidoId}:`, err);
+    alert("Erro ao atualizar status do pedido. Veja o console.");
+  }
 }
 
 // =========================
@@ -131,6 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
         status: "Aguardando coleta",
         criado_em: new Date().toISOString()
       }]);
+
 
       if (error) throw error;
 

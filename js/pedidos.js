@@ -35,7 +35,7 @@ async function verificarLogin() {
 
   if (error || !data.user) {
     alert("Usuário não logado!");
-    window.location.href = "login.html";
+    window.location.href = "login.html"; // Redireciona para a página de login se não estiver logado
     return null;
   }
   return data.user;
@@ -94,6 +94,9 @@ btnCriarPedido?.addEventListener("click", async () => {
     orcamentoInput.checked = false;
     observacaoInput.value = "";
 
+    // Exibir as ações apenas após o pedido ser criado
+    verificarAcoes(STATUS.AGUARDANDO_COLETA);
+
   } catch (err) {
     console.error("Erro ao criar pedido:", err);
     alert(`Erro ao criar pedido: ${err.message || "Erro desconhecido"}`);
@@ -107,9 +110,9 @@ function verificarAcoes(status) {
   if (!acoesPedido) return;
 
   if (status === STATUS.RECEBIDO_ORIGEM) {
-    acoesPedido.style.display = "block";
+    acoesPedido.style.display = "block"; // Exibe os botões de ações
   } else {
-    acoesPedido.style.display = "none";
+    acoesPedido.style.display = "none"; // Esconde os botões de ações
   }
 }
 
@@ -136,7 +139,7 @@ btnFinalizar?.addEventListener("click", async () => {
     );
 
     alert("Pedido finalizado com sucesso!");
-    acoesPedido.style.display = "none";
+    acoesPedido.style.display = "none"; // Oculta as ações após finalizar
 
   } catch (err) {
     console.error(err);
@@ -168,7 +171,7 @@ btnRetrabalho?.addEventListener("click", async () => {
     );
 
     alert("Pedido enviado para retrabalho!");
-    acoesPedido.style.display = "none";
+    acoesPedido.style.display = "none"; // Oculta as ações após retrabalho
 
   } catch (err) {
     console.error(err);

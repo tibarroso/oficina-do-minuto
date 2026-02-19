@@ -28,12 +28,33 @@
       color: #1a73e8;
       text-align: center;
       margin-top: 40px;
+      display: inline-block;
     }
 
     p {
       text-align: center;
       color: #666;
       margin-bottom: 30px;
+    }
+
+    /* Botão de Sair */
+    .btn-sair {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 25px;
+      padding: 12px 30px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      position: absolute;
+      top: 20px;
+      right: 20px;
+    }
+
+    .btn-sair:hover {
+      background-color: #b02a37;
+      transform: scale(1.05);
     }
 
     /* Cartões (sections) */
@@ -195,6 +216,7 @@
 <body>
 
   <h1>Pedidos - Oficina do Minuto</h1>
+  <button class="btn-sair" id="btnSair">Sair</button>
   <p>Crie, filtre e acompanhe todos os pedidos da loja</p>
 
   <!-- ========================= -->
@@ -202,7 +224,6 @@
   <!-- ========================= -->
   <section class="card">
     <h2>Criar Pedido</h2>
-
     <label for="tipo">Tipo de serviço:</label>
     <select id="tipo">
       <option value="">Selecione</option>
@@ -286,7 +307,18 @@
   </section>
 
   <!-- JS do pedidos -->
-  <script type="module" src="./js/pedidos_loja.js"></script>
+  <script type="module">
+    import { supabase } from "./supabase.js";
+    
+    document.getElementById('btnSair').addEventListener('click', async () => {
+      try {
+        await supabase.auth.signOut(); // Faz o logout
+        window.location.href = "/oficina-do-minuto/index.html"; // Redireciona para a página de login
+      } catch (error) {
+        alert("Erro ao tentar sair. Tente novamente.");
+      }
+    });
+  </script>
 
 </body>
 </html>

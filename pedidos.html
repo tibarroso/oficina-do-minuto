@@ -310,6 +310,7 @@
   <script type="module">
     import { supabase } from "./supabase.js";
     
+    // Lógica do botão de "Sair"
     document.getElementById('btnSair').addEventListener('click', async () => {
       try {
         await supabase.auth.signOut(); // Faz o logout
@@ -318,6 +319,8 @@
         alert("Erro ao tentar sair. Tente novamente.");
       }
     });
+    
+    // Outras funcionalidades (como criação de pedidos) já devem funcionar corretamente.
   </script>
 
 </body>

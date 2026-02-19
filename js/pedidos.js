@@ -14,6 +14,7 @@ const btnCriarPedido = document.getElementById("btnCriarPedido");
 const acoesPedido = document.getElementById("acoesPedido");
 const btnFinalizar = document.getElementById("btnFinalizar");
 const btnRetrabalho = document.getElementById("btnRetrabalho");
+const btnSair = document.getElementById("btnSair");  // Botão "Sair"
 
 // ===============================
 // Status Padronizado
@@ -39,6 +40,19 @@ async function verificarLogin() {
     return null;
   }
   return data.user;
+}
+
+// ===============================
+// Função de Logout
+// ===============================
+async function logout() {
+  try {
+    await supabase.auth.signOut();  // Desloga o usuário
+    window.location.href = "login.html";  // Redireciona para a página de login
+  } catch (err) {
+    alert("Erro ao tentar sair. Tente novamente.");
+    console.error("Erro ao fazer logout:", err);
+  }
 }
 
 // ===============================
@@ -202,4 +216,7 @@ async function registrarEvento(pedidoId, evento, observacao = "") {
 // ===============================
 document.addEventListener("DOMContentLoaded", async () => {
   usuarioLogado = await verificarLogin();
+
+  // Adiciona o evento ao botão "Sair"
+  btnSair?.addEventListener("click", logout);
 });

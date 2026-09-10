@@ -453,11 +453,13 @@
       <div class="filtros-topo-compacto">
         <select id="filtroStatus">
           <option value="">Status: Todos</option>
-          <option value="AGUARDANDO_COLETA">Aguardando coleta</option>
-          <option value="EM_TRANSPORTE_IDA">Em transporte (ida)</option>
-          <option value="ENTREGUE_DESTINO">Recebido no destino</option>
-          <option value="EM_TRANSPORTE_VOLTA">Em transporte (volta)</option>
-          <option value="FINALIZADO">Finalizado</option>
+          <option value="Aguardando coleta">Aguardando coleta</option>
+          <option value="Em transporte para loja de destino">Em transporte para loja de destino</option>
+          <option value="Recebido na loja de destino">Recebido na loja de destino</option>
+          <option value="Em transporte para loja de origem">Em transporte para loja de origem</option>
+          <option value="Entregue na loja de origem">Entregue na loja de origem</option>
+          <option value="Retrabalho">Retrabalho</option>
+          <option value="Finalizado">Finalizado</option>
         </select>
 
         <select id="filtroLoja">
@@ -702,8 +704,8 @@
     window.buscarDadosTicket = buscarDadosTicket;
   </script>
 
-  <!-- Corrigido para buscar na raiz sem barra inicial: "pedidos_loja.js" ou "js/pedidos_loja.js" se estiver na pasta js -->
-  <script type="module" src="pedidos_loja.js"></script>
+  <!-- Caminho corrigido para buscar o script na pasta js/ -->
+  <script type="module" src="js/pedidos_loja.js"></script>
 
 </body>
 </html>

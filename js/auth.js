@@ -33,13 +33,13 @@ window.login = async function () {
       return;
     }
 
-    // Armazena perfil localmente (pode ser usado em outros módulos)
+    // Armazena perfil localmente
     localStorage.setItem("perfil", userData.perfil);
     localStorage.setItem("email", loginData.user.email);
 
-    // Redireciona para dashboard
-   // window.location.href = "dashboard.html";
-    window.location.href = "pedidos.html";
+    // AJUSTADO: Redireciona para a rota limpa do Express (Node.js)
+    window.location.href = "/pedidos"; 
+    
   } catch (err) {
     console.error("Erro ao efetuar login:", err);
     alert("Erro inesperado ao tentar logar");

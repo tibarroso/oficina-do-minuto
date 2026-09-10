@@ -80,7 +80,7 @@
       color: #38bdf8;
     }
 
-    /* CONTAINER PRINCIPAL (OCUPA A TELA TODA) */
+    /* CONTAINER PRINCIPAL */
     main {
       margin-top: 85px;
       padding: 0 20px 40px 20px;
@@ -143,10 +143,6 @@
       min-width: 180px;
     }
 
-    .filtros-topo-compacto select:focus {
-      border-color: #0284c7;
-    }
-
     /* BOTÕES */
     .btn-verde-dash, .btn-azul-dash, .btn-filtrar-azul {
       border: none;
@@ -162,22 +158,13 @@
       transition: all 0.2s;
     }
 
-    .btn-verde-dash {
-      background-color: #10b981;
-      color: white;
-    }
+    .btn-verde-dash { background-color: #10b981; color: white; }
     .btn-verde-dash:hover { background-color: #059669; }
 
-    .btn-azul-dash {
-      background-color: #0f172a;
-      color: white;
-    }
+    .btn-azul-dash { background-color: #0f172a; color: white; }
     .btn-azul-dash:hover { background-color: #1e293b; }
 
-    .btn-filtrar-azul {
-      background-color: #0284c7;
-      color: white;
-    }
+    .btn-filtrar-azul { background-color: #0284c7; color: white; }
     .btn-filtrar-azul:hover { background-color: #0369a1; }
 
     /* SEÇÃO DE LISTAGEM DE CARDS */
@@ -188,26 +175,32 @@
       margin-bottom: 16px;
     }
 
-    /* GRID FLEXÍVEL QUE EXPANDE LADO A LADO */
+    /* GRID DINÂMICO COM TAMANHO PROPORCIONAL AO CONTEÚDO */
     .cards-container {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 20px;
       width: 100%;
+      /* align-items: start impede que um card alto force os vizinhos a esticarem */
+      align-items: start;
     }
 
-    /* ESTILO DO CARD DE PEDIDO */
+    /* CARD COM ALTURA AUTOMÁTICA CONFORME O TEXTO/INFORMAÇÕES */
     .cards-container .card {
       background-color: #ffffff;
-      padding: 20px;
+      padding: 18px 20px;
       border-radius: 12px;
       border: 1px solid #e2e8f0;
       border-left: 6px solid #0284c7;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      
+      /* Permite ajustar a altura exatamente ao tamanho do conteúdo */
+      height: auto;
+      min-height: 100px;
+      
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      gap: 12px;
+      gap: 10px;
       word-break: break-word;
     }
 

@@ -11,7 +11,7 @@ export async function carregarPedidos(filtroLoja = "Todas") {
 
   await carregarAguardando(filtroLoja);     // Ida
   await carregarEmTransporte(filtroLoja);   // Ida e Volta
-  await carregarRetorno(filtroLoja);        // Volta e Retrabalho
+  await carregarRetorno(filtroLoja);        // Volta, Retrabalho e Coleta Origem
 }
 
 // =====================
@@ -89,17 +89,23 @@ async function carregarEmTransporte(filtroLoja) {
 }
 
 // =====================
-// AGUARDANDO RETORNO / RETRABALHO
+// AGUARDANDO RETORNO / RETRABALHO / COLETA ORIGEM
 // =====================
 async function carregarRetorno(filtroLoja) {
   const div = document.getElementById("retorno");
   if (!div) return;
   div.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Carregando pedidos...</p>";
 
+  // Incluídas variações com "Origem" (O maiúsculo) e "origem" (o minúsculo)
   let query = supabase
     .from("pedidos")
     .select("*")
-    .in("status", ["Aguardando retorno do transporte","Aguardando coleta para loja de Origem", "Retrabalho"])
+    .in("status", [
+      "Aguardando retorno do transporte",
+      "Aguardando coleta para loja de Origem",
+      "Aguardando coleta para loja de origem",
+      "Retrabalho"
+    ])
     .order("criado_em", { ascending: false });
 
   if (filtroLoja !== "Todas") {

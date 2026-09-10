@@ -6,7 +6,8 @@
   <title>Pedidos - Oficina do Minuto</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css">
+  <!-- Caminho relativo ajustado para CSS -->
+  <link rel="stylesheet" href="css/style.css">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
@@ -432,9 +433,9 @@
         <span class="marca-texto">Oficina do Minuto</span>
       </div>
       <nav>
-        <a href="/pedidos">Pedidos</a>
-        <a href="/sobre">Sobre</a>
-        <a href="/">Sair</a> 
+        <a href="pedidos.html">Pedidos</a>
+        <a href="sobre.html">Sobre</a>
+        <a href="index.html">Sair</a> 
       </nav>
     </div>
   </header>
@@ -673,7 +674,6 @@
 
         // 2. Mapeia Tipo se necessário
         if (dados.tipo === 'P') {
-          // Exemplo: se P for padrão para Sapataria/Prestação
           document.getElementById('tipoTicket').value = 'Sapataria';
         }
 
@@ -702,7 +702,8 @@
     window.buscarDadosTicket = buscarDadosTicket;
   </script>
 
-  <script type="module" src="/js/pedidos_loja.js"></script>
+  <!-- Corrigido para buscar na raiz sem barra inicial: "pedidos_loja.js" ou "js/pedidos_loja.js" se estiver na pasta js -->
+  <script type="module" src="pedidos_loja.js"></script>
 
 </body>
 </html>

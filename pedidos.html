@@ -175,33 +175,38 @@
       margin-bottom: 16px;
     }
 
-    /* GRID DINÂMICO COM TAMANHO PROPORCIONAL AO CONTEÚDO */
+    /* GRID DINÂMICO QUE CORRIGE O ESPAÇAMENTO VERTICAL */
     .cards-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 20px;
-      width: 100%;
-      /* align-items: start impede que um card alto force os vizinhos a esticarem */
-      align-items: start;
+      display: grid !important;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+      gap: 20px !important;
+      width: 100% !important;
+      align-items: start !important; /* Impede que um card estique os outros */
     }
 
-    /* CARD COM ALTURA AUTOMÁTICA CONFORME O TEXTO/INFORMAÇÕES */
+    /* CARD COM ALTURA COMPACTA E PROPORCIONAL */
     .cards-container .card {
-      background-color: #ffffff;
-      padding: 18px 20px;
-      border-radius: 12px;
-      border: 1px solid #e2e8f0;
-      border-left: 6px solid #0284c7;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      background-color: #ffffff !important;
+      padding: 18px 20px !important;
+      border-radius: 12px !important;
+      border: 1px solid #e2e8f0 !important;
+      border-left: 6px solid #0284c7 !important;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
       
-      /* Permite ajustar a altura exatamente ao tamanho do conteúdo */
-      height: auto;
-      min-height: 100px;
-      
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      word-break: break-word;
+      height: auto !important; /* Ajusta a altura estritamente ao conteúdo */
+      display: block !important; /* Remove o comportamento do flex esticado */
+      word-break: break-word !important;
+    }
+
+    /* ESPAÇAMENTO COMPACTO DOS PARÁGRAFOS DENTRO DO CARD */
+    .cards-container .card p, 
+    .cards-container .card div {
+      margin-bottom: 8px !important;
+    }
+
+    .cards-container .card p:last-child, 
+    .cards-container .card div:last-child {
+      margin-bottom: 0 !important;
     }
 
     .status-badge {
@@ -378,7 +383,7 @@
       }
 
       .cards-container {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr !important;
       }
 
       .info-grid {

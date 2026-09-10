@@ -358,7 +358,7 @@
       background-color: #e2e8f0;
     }
 
-    /* SEÇÃO DE LISTAGEM MASONRY */
+    /* SEÇÃO DE LISTAGEM - CORRIGIDA COM CSS GRID */
     .lista-secao {
       width: 95%;
       max-width: 1400px; 
@@ -372,32 +372,36 @@
       margin-bottom: 20px;
     }
 
+    /* GRID CONTROLADO DOS CARDS */
     .cards-container {
-      column-count: 4;
-      column-gap: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 20px;
       width: 100%;
+      align-items: start;
     }
 
     .cards-container .card {
       background-color: #fff;
       padding: 20px;
-      margin-bottom: 20px;
       border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
       border-left: 5px solid #1a73e8; 
       text-align: left;
       line-height: 1.6;
-      display: inline-block;
-      width: 100%;
       box-sizing: border-box;
-      break-inside: avoid;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      word-break: break-word; /* Evita que textos longos estourem o card */
     }
 
     .status-badge {
       display: inline-block;
       padding: 4px 12px;
       border-radius: 15px;
-      font-size: 13px;
+      font-size: 12px;
+      font-weight: 500;
       color: white;
       margin-left: 5px;
     }
@@ -407,20 +411,12 @@
     .status-Finalizado { background-color: #18BC9C; }
     .status-Retrabalho { background-color: #e74c3c; }
 
-    /* Responsividade */
-    @media (max-width: 1200px) {
-      .cards-container { column-count: 3; }
-    }
-
+    /* Responsividade para telas menores */
     @media (max-width: 768px) {
       .barra-acoes-painel { flex-direction: column; gap: 16px; align-items: stretch; }
       .grupo-botoes-criar { flex-direction: column; }
       .filtros-topo-compacto { flex-direction: column; align-items: stretch; }
-      .cards-container { column-count: 2; }
-    }
-
-    @media (max-width: 480px) {
-      .cards-container { column-count: 1; }
+      .cards-container { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -616,14 +612,10 @@
     <section class="lista-secao">
       <h2>Meus Pedidos</h2>
       <div id="containerPedidos" class="cards-container">
-        <p style="text-align: center; width: 100%; display: inline-block;">Carregando pedidos...</p>
+        <p style="grid-column: 1 / -1; text-align: center;">Carregando pedidos...</p>
       </div>
     </section>
   </main>
-
-  <footer>
-    &copy; 2026 Oficina do Minuto. Todos os direitos reservados.
-  </footer>
 
   <script>
     const API_URL = 'http://localhost:3000';

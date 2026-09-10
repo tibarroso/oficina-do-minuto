@@ -7,14 +7,20 @@ async function carregarPedidos(filtroStatus = "", filtroLoja = "") {
   try {
     let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false });
 
-    // Aplicando filtro de status
+    // NOVA REGRA DE OURO DO FILTRO AQUI:
     if (filtroStatus && filtroStatus !== "Todos") {
-      query = query.eq("status", filtroStatus);
+      // Se o usuário selecionou um status específico (ex: "Finalizado"), filtra exatamente por ele
+      query = query.eq("status", filtroStatus.trim());
+    } else {
+      // Se o filtro for "Todos" ou se a página acabou de carregar (vazio):
+      // Traz todos os pedidos em andamento, MAS ESCONDE os "Finalizado"
+      query = query.neq("status", "Finalizado");
     }
 
     // Aplicando filtro de loja (verifica tanto loja_origem quanto loja_destino)
     if (filtroLoja && filtroLoja !== "Todas") {
-      query = query.or(`loja_origem.eq.${filtroLoja},loja_destino.eq.${filtroLoja}`);
+      const lojaLimpa = filtroLoja.trim();
+      query = query.or(`loja_origem.eq.${lojaLimpa},loja_destino.eq.${lojaLimpa}`);
     }
 
     const { data, error } = await query;
@@ -22,89 +28,217 @@ async function carregarPedidos(filtroStatus = "", filtroLoja = "") {
 
     const pedidos = data || [];
     const container = document.getElementById("containerPedidos");
+    if (!container) return;
+    
     container.innerHTML = "";
 
     if (!pedidos.length) {
-      container.innerHTML = "<p>Nenhum pedido encontrado.</p>";
+      container.innerHTML = "<p style='text-align: center; width: 100%; display: inline-block;'>Nenhum pedido encontrado.</p>";
       return;
     }
 
     pedidos.forEach(pedido => {
       const card = criarCardPedido(pedido);
       container.appendChild(card);
-      carregarTimeline(pedido.id);
+      // PASSO CRUCIAL: Passa o ID e a loja_origem para que a timeline monte a frase customizada da gerência
+      carregarTimeline(pedido.id, pedido.loja_origem);
     });
   } catch (err) {
     console.error("Erro ao carregar pedidos:", err);
     const container = document.getElementById("containerPedidos");
-    container.innerHTML = `<p style="color:red;">Erro ao carregar pedidos.</p>`;
+    if (container) {
+      container.innerHTML = `<p style="color:red; text-align: center; width: 100%;">Erro ao carregar pedidos.</p>`;
+    }
   }
 }
 
 // =========================
-// CRIAR CARD
+// CRIAR CARD DE PEDIDO
 // =========================
 function criarCardPedido(pedido) {
   const card = document.createElement("div");
   card.className = "card";
+  card.id = `card-pedido-${pedido.id}`;
 
-  const statusClass = getStatusClass(pedido.status);
+  const statusComparacao = pedido.status ? pedido.status.trim() : "";
+  
+  // ACEITA OS STATUS CORRETOS NA TRIAGEM DA LOJA:
+  const podeInteragir = (
+    statusComparacao === "Entregue na loja de origem" || 
+    statusComparacao === "Recebido na loja de origem" || 
+    statusComparacao === "Retrabalho" 
+  );
+  const classeStatus = getStatusClass(statusComparacao);
 
-  // Verifica se o status é "Recebido na loja de origem" (comparação exata)
-  const statusComparacao = pedido.status && pedido.status.trim();
-  const acoesHTML = (statusComparacao === "Recebido na loja de origem") ? `
-    <div class="acoes-pedido">
-      <button class="btn-finalizar" onclick="atualizarStatus('Finalizado', ${pedido.id})">Finalizado</button>
-      <button class="btn-retrabalho" onclick="atualizarStatus('Aguardando coleta', ${pedido.id})">Retrabalho</button>
-    </div>` : "";
-
+  // CORREÇÃO: Ajustado os botões internos para usar chamadas via escopo global de forma segura
   card.innerHTML = `
     <strong>Loja de Origem:</strong> ${pedido.loja_origem || "Não especificada"}<br>
     <strong>Loja de Destino:</strong> ${pedido.loja_destino || "Não especificada"}<br>
     <strong>OS:</strong> ${pedido.id}<br>
     <strong>Serviço:</strong> ${pedido.tipo_servico}<br>
-    <span class="status-tag ${statusClass}">${pedido.status}</span><br>
+    <strong>Status:</strong> <span class="status-badge ${classeStatus}" style="font-weight:600;">${pedido.status}</span><br>
     <strong>Orçamento:</strong> ${pedido.orcamento ? "Sim" : "Não"}<br>
-    <strong>Observação:</strong><br><em>${pedido.obs_loja_origem || "—"}</em>
-    <div class="timeline" id="timeline-${pedido.id}"><strong>Eventos:</strong></div>
-    ${acoesHTML} <!-- Botões de ação -->
+    <strong>Observação:</strong><br>${pedido.obs_loja_origem || "Nenhuma"}<br>
+    
+    <div class="timeline" id="timeline-${pedido.id}" style="margin-top: 10px;">
+      <strong>Eventos:</strong>
+      <div id="timeline-content-${pedido.id}" style="margin-top: 5px;"></div>
+    </div>
+    
+    ${podeInteragir ? `
+    <div class="acoes-pedido" style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+      <button class="btn-finalizar" onclick="window.gerenciarCliqueFinalizar('${statusComparacao}', '${pedido.id}')" style="background-color: #18BC9C; color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: 500;">Finalizado</button>
+      <button class="btn-retrabalho" onclick="window.gerenciarCliqueRetrabalho('${statusComparacao}', '${pedido.id}')" style="background-color: #e74c3c; color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: 500;">Retrabalho</button>
+      
+      ${statusComparacao === "Retrabalho" ? `
+        <button class="btn-cancelar-retrabalho" onclick="window.cancelarRetrabalho('${pedido.id}')" style="background-color: #34495e; color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: 500;">Cancelar Retrabalho</button>
+      ` : ""}
+    </div>` : ""}
   `;
+
   return card;
 }
 
+// Funções auxiliares de controle de clique expostas globalmente para os cards
+window.gerenciarCliqueFinalizar = function(statusAtual, id) {
+  if (statusAtual === "Retrabalho") {
+    alert("O pedido está em espera de transporte para retrabalho, não podendo ser finalizado!");
+    return;
+  }
+  atualizarStatus("Finalizado", id);
+};
+
+window.gerenciarCliqueRetrabalho = function(statusAtual, id) {
+  if (statusAtual === "Retrabalho") {
+    alert("Este pedido já está registrado em estado de Retrabalho e aguarda o transporte!");
+    return;
+  }
+  atualizarStatus("Retrabalho", id);
+};
+
 // =========================
-// ATUALIZAR STATUS (Finalizado/Retrabalho)
+// FUNÇÃO PARA CANCELAR RETRABALHO E VOLTAR STATUS ANTERIOR
+// =========================
+async function cancelarRetrabalho(pedidoId) {
+  try {
+    if (!confirm("Deseja realmente cancelar o retrabalho deste pedido e voltar ao status anterior?")) {
+      return;
+    }
+
+    const cardElement = document.getElementById(`card-pedido-${pedidoId}`);
+    if (cardElement) cardElement.style.opacity = "0.5";
+
+    // 1. Busca os últimos eventos do pedido ordenados pelo mais recente
+    const { data: eventos, error: errorEventos } = await supabase
+      .from("pedido_eventos")
+      .select("evento")
+      .eq("pedido_id", pedidoId)
+      .order("criado_em", { ascending: false });
+
+    if (errorEventos) throw errorEventos;
+
+    // 2. Descobre qual era o status antes do "Retrabalho"
+    let statusAnterior = "Entregue na loja de origem"; 
+    
+    if (eventos && eventos.length > 0) {
+      const eventoValido = eventos.find(ev => ev.evento !== "Retrabalho");
+      if (eventoValido) {
+        statusAnterior = eventoValido.evento;
+      }
+    }
+
+    const obsCancelamento = "Retrabalho cancelado. Retornado ao status anterior.";
+
+    // 3. Atualiza a tabela 'pedidos' voltando para o status antigo
+    const { error: errorPedido } = await supabase
+      .from("pedidos")
+      .update({ status: statusAnterior, obs_loja_origem: obsCancelamento })
+      .eq("id", pedidoId);
+
+    if (errorPedido) throw errorPedido;
+
+    // 4. Captura o email do operador logado para auditoria
+    const { data: userData } = await supabase.auth.getUser();
+    const operador = userData?.user?.email || "Sistema / Loja";
+
+    // 5. Grava o evento de cancelamento na timeline histórica
+    const { error: errorLog } = await supabase.from("pedido_eventos").insert([{
+      pedido_id: pedidoId,
+      evento: statusAnterior, 
+      observacao: "Cancelamento de Retrabalho pelo operador.",
+      criado_por: operador
+    }]);
+
+    if (errorLog) throw errorLog;
+
+    alert(`Retrabalho cancelado! Pedido retornou para: "${statusAnterior}"`);
+
+    const filtroStatus = document.getElementById("filtroStatus")?.value || "";
+    const filtroLoja = document.getElementById("filtroLoja")?.value || "";
+    
+    setTimeout(() => {
+      carregarPedidos(filtroStatus, filtroLoja);
+    }, 300);
+
+  } catch (err) {
+    console.error("Erro ao cancelar retrabalho:", err);
+    alert("Erro ao tentar cancelar o retrabalho. Verifique o console.");
+    
+    const cardElement = document.getElementById(`card-pedido-${pedidoId}`);
+    if (cardElement) cardElement.style.opacity = "1";
+  }
+}
+window.cancelarRetrabalho = cancelarRetrabalho;
+
+// =========================
+// ATUALIZAR STATUS + GRAVAÇÃO RESTRITA CONFORME REGRA DE NEGÓCIO
 // =========================
 async function atualizarStatus(novoStatus, pedidoId) {
   try {
-    let observacao = "";
+    const statusLimpo = novoStatus.trim();
+    let novaObservacao = statusLimpo === "Retrabalho" 
+      ? "Serviço para ser refeito (Retrabalho)" 
+      : "OS concluída e finalizada.";
 
-    if (novoStatus === "Aguardando coleta") {
-      observacao = "Serviço para ser refeito"; // Observação para Retrabalho
-    }
-
-    const { data, error } = await supabase
+    // 1. Atualiza a tabela de pedidos com o novo status e a nova observação correspondente
+    const { error: errorPedido } = await supabase
       .from("pedidos")
-      .update({ status: novoStatus, obs_loja_origem: observacao })
+      .update({ status: statusLimpo, obs_loja_origem: novaObservacao })
       .eq("id", pedidoId);
 
-    if (error) throw error;
+    if (errorPedido) throw errorPedido;
 
-    alert(`Status atualizado para "${novoStatus}" com sucesso!`);
+    // 2. Captura o email do operador logado
+    const { data: userData } = await supabase.auth.getUser();
+    const operador = userData?.user?.email || "Sistema / Loja";
 
-    // Recarregar os pedidos para refletir a atualização
-    carregarPedidos();
+    // 3. REGRA APLICADA: Grava exatamente o Status no campo 'evento' e a Obs_loja_origem no campo 'observacao'
+    const { error: errorEvento } = await supabase.from("pedido_eventos").insert([{
+      pedido_id: pedidoId,
+      evento: statusLimpo,              
+      observacao: novaObservacao,       
+      criado_por: operador              
+    }]);
+
+    if (errorEvento) throw errorEvento;
+
+    alert(`Status atualizado para "${statusLimpo}" com sucesso!`);
+
+    const filtroStatus = document.getElementById("filtroStatus")?.value || "";
+    const filtroLoja = document.getElementById("filtroLoja")?.value || "";
+    carregarPedidos(filtroStatus, filtroLoja);
 
   } catch (err) {
     console.error(`Erro ao atualizar status do pedido ${pedidoId}:`, err);
     alert("Erro ao atualizar status do pedido. Veja o console.");
   }
 }
+window.atualizarStatus = atualizarStatus;
 
 // =========================
 // CARREGAR TIMELINE
 // =========================
-async function carregarTimeline(pedidoId) {
+async function carregarTimeline(pedidoId, lojaOrigem) {
   try {
     const { data: eventos, error } = await supabase
       .from("pedido_eventos")
@@ -114,14 +248,50 @@ async function carregarTimeline(pedidoId) {
 
     if (error) throw error;
 
-    const timelineDiv = document.getElementById(`timeline-${pedidoId}`);
-    if (!timelineDiv) return;
+    const contentDiv = document.getElementById(`timeline-content-${pedidoId}`);
+    if (!contentDiv) return;
+
+    contentDiv.innerHTML = ""; 
+
+    if (!eventos || eventos.length === 0) {
+      contentDiv.innerHTML = `<span style="color: #7f8c8d; font-style: italic; font-size: 13px;">Nenhum evento registrado.</span>`;
+      return;
+    }
+
+    const nomeLoja = lojaOrigem ? lojaOrigem.trim() : "loja de origem";
 
     eventos.forEach(evento => {
       const item = document.createElement("div");
       item.className = "timeline-item";
-      item.innerHTML = `${evento.evento} <small>${new Date(evento.criado_em).toLocaleString()}</small>`;
-      timelineDiv.appendChild(item);
+      item.style.fontSize = "13px";
+      item.style.color = "#000";
+      item.style.marginTop = "4px";
+      
+      const timestamp = evento.criado_em || evento.created_at;
+      let dataFormatada = "Data pendente";
+
+      if (timestamp) {
+        const dataUtc = timestamp.endsWith("Z") ? timestamp : `${timestamp}Z`;
+        dataFormatada = new Date(dataUtc).toLocaleString("pt-BR", {
+          timeZone: "America/Sao_Paulo"
+        });
+      }
+      
+      let textoExibicao = evento.evento ? evento.evento.trim() : "";
+      if (!textoExibicao.startsWith("Status alterado para")) {
+        textoExibicao = `Status alterado para ${textoExibicao}`;
+      }
+
+      // DUPLA VALIDAÇÃO NA TIMELINE
+      let detalhesObs = "";
+      if (textoExibicao.includes("Entregue na loja de origem") || textoExibicao.includes("Recebido na loja de origem")) {
+        detalhesObs = `<br><span style="color:#000; font-weight: 500; padding-left: 5px;">↳ Serviço já pode ser avaliado pela gerência da ${nomeLoja}. Caso esteja tudo certo, entre em contato com o cliente.</span>`;
+      } else {
+        detalhesObs = evento.observacao ? `<br><span style="color:#000;">↳ ${evento.observacao}</span>` : "";
+      }
+
+      item.innerHTML = `• ${textoExibicao} (${dataFormatada})${detalhesObs}`;
+      contentDiv.appendChild(item);
     });
   } catch (err) {
     console.error(`Erro carregando timeline do pedido ${pedidoId}:`, err);
@@ -129,29 +299,36 @@ async function carregarTimeline(pedidoId) {
 }
 
 // =========================
-// STATUS
+// MAPEAMENTO DE CLASSES STATUS (PROTEGIDO COM TRIM)
 // =========================
 function getStatusClass(status) {
   if (!status) return "status-Aguardando";
-  if (status.includes("Loja 5")) return "status-Loja5";
-  if (status.includes("Em serviço")) return "status-Transporte";
-  if (status === "Finalizado") return "status-Finalizado";
-  if (status === "Retrabalho") return "status-Retrabalho";
-  if (status === "Aguardando coleta") return "status-Aguardando";
+  const st = status.trim();
+  if (st.includes("Loja 5") || st.includes("Central")) return "status-Loja5";
+  if (st.includes("transporte") || st.includes("Transporte") || st.includes("serviço")) return "status-Transporte";
+  if (st === "Finalizado") return "status-Finalizado";
+  if (st === "Retrabalho") return "status-Retrabalho";
+  if (st.includes("Aguardando") || st.includes("coleta")) return "status-Aguardando";
   return "status-Aguardando";
 }
 
 // =========================
-// CRIAR PEDIDO
+// INICIALIZAÇÃO DA PÁGINA + SUBMIT DOS FORMULÁRIOS MODAL
 // =========================
 document.addEventListener("DOMContentLoaded", () => {
-  const btnCriarPedido = document.getElementById("btnCriarPedido");
+  carregarPedidos();
 
-  btnCriarPedido?.addEventListener("click", async () => {
+  // 1. FORMULÁRIO 1: CRIAR PEDIDO NORMAL
+  const formCriarPedidoModal = document.getElementById("formCriarPedidoModal");
+  formCriarPedidoModal?.addEventListener("submit", async (event) => {
+    event.preventDefault(); // Impede o navegador de dar refresh instantâneo
+
     const tipoServico = document.getElementById("tipo").value;
     const lojaOrigem = document.getElementById("lojaOrigem").value;
     const lojaDestino = document.getElementById("lojaDestino").value;
     const orcamento = document.getElementById("orcamento").checked;
+    const { data: userData } = await supabase.auth.getUser();
+    const operador = userData?.user?.email || "Sistema / Loja";
     const observacao = document.getElementById("observacao").value.trim();
 
     if (!tipoServico || !lojaOrigem || !lojaDestino) {
@@ -160,25 +337,37 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
+      const statusInicial = "Aguardando coleta";
+      const obsInicial = observacao || "OS inicial aberta no sistema da loja.";
+
+      // Cria o pedido inicial no banco
       const { data, error } = await supabase.from("pedidos").insert([{
         tipo_servico: tipoServico,
         loja_origem: lojaOrigem,
         loja_destino: lojaDestino,
         orcamento,
-        obs_loja_origem: observacao,
-        status: "Aguardando coleta",
-        criado_em: new Date().toISOString()
-      }]);
-
+        obs_loja_origem: obsInicial,
+        status: statusInicial
+      }]).select();
 
       if (error) throw error;
 
+      if (data && data.length > 0) {
+        await supabase.from("pedido_eventos").insert([{
+          pedido_id: data[0].id,
+          evento: statusInicial,            
+          observacao: obsInicial,            
+          criado_por: operador              
+        }]);
+      }
+
       alert("Pedido criado com sucesso!");
-      document.getElementById("tipo").value = "";
-      document.getElementById("lojaOrigem").value = "";
-      document.getElementById("lojaDestino").value = "";
-      document.getElementById("orcamento").checked = false;
-      document.getElementById("observacao").value = "";
+      formCriarPedidoModal.reset();
+      
+      if (typeof window.fecharModal === "function") {
+        window.fecharModal();
+      }
+      
       carregarPedidos();
     } catch (err) {
       console.error("Erro ao criar pedido:", err);
@@ -186,21 +375,82 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // =========================
+  // 2. FORMULÁRIO 2: CRIAR PEDIDO POR TICKET (NOVO - SALVANDO NO SUPABASE)
+  const formCriarPedidoTicketModal = document.getElementById("formCriarPedidoTicketModal");
+  formCriarPedidoTicketModal?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const tipoServico = document.getElementById("tipoTicket").value;
+    const lojaOrigem = document.getElementById("lojaOrigemTicket").value;
+    const lojaDestino = document.getElementById("lojaDestinoTicket").value;
+    const orcamento = document.getElementById("orcamentoTicket").checked;
+    const observacaoTicket = document.getElementById("observacaoTicket").value.trim();
+
+    const { data: userData } = await supabase.auth.getUser();
+    const operador = userData?.user?.email || "Sistema / Loja";
+
+    if (!tipoServico || !lojaOrigem || !lojaDestino) {
+      alert("Preencha todos os campos obrigatórios!");
+      return;
+    }
+
+    try {
+      const statusInicial = "Aguardando coleta";
+      const obsInicial = observacaoTicket || "Pedido criado através do Ticket.";
+
+      // Insere o pedido no Supabase gravando todos os dados do ticket na observação
+      const { data, error } = await supabase.from("pedidos").insert([{
+        tipo_servico: tipoServico,
+        loja_origem: lojaOrigem,
+        loja_destino: lojaDestino,
+        orcamento: orcamento,
+        obs_loja_origem: obsInicial,
+        status: statusInicial
+      }]).select();
+
+      if (error) throw error;
+
+      // Grava o evento na linha do tempo
+      if (data && data.length > 0) {
+        await supabase.from("pedido_eventos").insert([{
+          pedido_id: data[0].id,
+          evento: statusInicial,
+          observacao: obsInicial,
+          criado_por: operador
+        }]);
+      }
+
+      alert("Pedido por Ticket criado e salvo com sucesso!");
+      
+      // Reseta e fecha o modal
+      formCriarPedidoTicketModal.reset();
+      
+      if (typeof window.fecharModalTicket === "function") {
+        window.fecharModalTicket();
+      }
+
+      carregarPedidos();
+    } catch (err) {
+      console.error("Erro ao criar pedido por ticket:", err);
+      alert("Erro ao criar pedido por ticket. Veja o console.");
+    }
+  });
+
   // FILTRO DE PEDIDOS
-  // =========================
-  document.getElementById("btnFiltrar").addEventListener("click", () => {
+  document.getElementById("btnFiltrar")?.addEventListener("click", () => {
     const filtroStatus = document.getElementById("filtroStatus").value;
     const filtroLoja = document.getElementById("filtroLoja").value;
     carregarPedidos(filtroStatus, filtroLoja);
   });
 
-  // =========================
-  // AUTO-ATUALIZAÇÃO
-  // =========================
+  // AUTO-ATUALIZAÇÃO INTELIGENTE (A cada 30 segundos)
   setInterval(() => {
-    const filtroStatus = document.getElementById("filtroStatus").value;
-    const filtroLoja = document.getElementById("filtroLoja").value;
+    const elStatus = document.getElementById("filtroStatus");
+    const elLoja = document.getElementById("filtroLoja");
+    
+    const filtroStatus = elStatus ? elStatus.value : "";
+    const filtroLoja = elLoja ? elLoja.value : "";
+    
     carregarPedidos(filtroStatus, filtroLoja);
-  }, 30000); // Atualiza a cada 30 segundos
+  }, 30000); 
 });

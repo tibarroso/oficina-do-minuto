@@ -7,12 +7,12 @@ async function carregarPedidos(filtroStatus = "", filtroLoja = "") {
   try {
     let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false });
 
-    // NOVA REGRA DE OURO DO FILTRO AQUI:
+    // REGRA DE OURO DO FILTRO:
     if (filtroStatus && filtroStatus !== "Todos") {
       // Se o usuário selecionou um status específico (ex: "Finalizado"), filtra exatamente por ele
       query = query.eq("status", filtroStatus.trim());
     } else {
-      // Se o filtro for "Todos" ou se a página acabou de carregar (vazio):
+      // Se o filtro for "Todos" ou vazio (carga inicial):
       // Traz todos os pedidos em andamento, MAS ESCONDE os "Finalizado"
       query = query.neq("status", "Finalizado");
     }
@@ -40,7 +40,7 @@ async function carregarPedidos(filtroStatus = "", filtroLoja = "") {
     pedidos.forEach(pedido => {
       const card = criarCardPedido(pedido);
       container.appendChild(card);
-      // PASSO CRUCIAL: Passa o ID e a loja_origem para que a timeline monte a frase customizada da gerência
+      // Passa o ID e a loja_origem para que a timeline monte a frase customizada da gerência
       carregarTimeline(pedido.id, pedido.loja_origem);
     });
   } catch (err) {
@@ -70,7 +70,6 @@ function criarCardPedido(pedido) {
   );
   const classeStatus = getStatusClass(statusComparacao);
 
-  // CORREÇÃO: Ajustado os botões internos para usar chamadas via escopo global de forma segura
   card.innerHTML = `
     <strong>Loja de Origem:</strong> ${pedido.loja_origem || "Não especificada"}<br>
     <strong>Loja de Destino:</strong> ${pedido.loja_destino || "Não especificada"}<br>
@@ -157,7 +156,7 @@ async function cancelarRetrabalho(pedidoId) {
 
     if (errorPedido) throw errorPedido;
 
-    // 4. Captura o email do operador logado para auditoria
+    // 4. Captura o email do operador logado
     const { data: userData } = await supabase.auth.getUser();
     const operador = userData?.user?.email || "Sistema / Loja";
 
@@ -191,7 +190,7 @@ async function cancelarRetrabalho(pedidoId) {
 window.cancelarRetrabalho = cancelarRetrabalho;
 
 // =========================
-// ATUALIZAR STATUS + GRAVAÇÃO RESTRITA CONFORME REGRA DE NEGÓCIO
+// ATUALIZAR STATUS
 // =========================
 async function atualizarStatus(novoStatus, pedidoId) {
   try {
@@ -200,7 +199,7 @@ async function atualizarStatus(novoStatus, pedidoId) {
       ? "Serviço para ser refeito (Retrabalho)" 
       : "OS concluída e finalizada.";
 
-    // 1. Atualiza a tabela de pedidos com o novo status e a nova observação correspondente
+    // 1. Atualiza a tabela de pedidos
     const { error: errorPedido } = await supabase
       .from("pedidos")
       .update({ status: statusLimpo, obs_loja_origem: novaObservacao })
@@ -212,11 +211,11 @@ async function atualizarStatus(novoStatus, pedidoId) {
     const { data: userData } = await supabase.auth.getUser();
     const operador = userData?.user?.email || "Sistema / Loja";
 
-    // 3. REGRA APLICADA: Grava exatamente o Status no campo 'evento' e a Obs_loja_origem no campo 'observacao'
+    // 3. Grava o evento na timeline
     const { error: errorEvento } = await supabase.from("pedido_eventos").insert([{
       pedido_id: pedidoId,
       evento: statusLimpo,              
-      observacao: novaObservacao,       
+      observacao: novaObservacao,        
       criado_por: operador              
     }]);
 
@@ -282,7 +281,6 @@ async function carregarTimeline(pedidoId, lojaOrigem) {
         textoExibicao = `Status alterado para ${textoExibicao}`;
       }
 
-      // DUPLA VALIDAÇÃO NA TIMELINE
       let detalhesObs = "";
       if (textoExibicao.includes("Entregue na loja de origem") || textoExibicao.includes("Recebido na loja de origem")) {
         detalhesObs = `<br><span style="color:#000; font-weight: 500; padding-left: 5px;">↳ Serviço já pode ser avaliado pela gerência da ${nomeLoja}. Caso esteja tudo certo, entre em contato com o cliente.</span>`;
@@ -299,7 +297,7 @@ async function carregarTimeline(pedidoId, lojaOrigem) {
 }
 
 // =========================
-// MAPEAMENTO DE CLASSES STATUS (PROTEGIDO COM TRIM)
+// MAPEAMENTO DE CLASSES STATUS
 // =========================
 function getStatusClass(status) {
   if (!status) return "status-Aguardando";
@@ -321,7 +319,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // 1. FORMULÁRIO 1: CRIAR PEDIDO NORMAL
   const formCriarPedidoModal = document.getElementById("formCriarPedidoModal");
   formCriarPedidoModal?.addEventListener("submit", async (event) => {
-    event.preventDefault(); // Impede o navegador de dar refresh instantâneo
+    event.preventDefault();
 
     const tipoServico = document.getElementById("tipo").value;
     const lojaOrigem = document.getElementById("lojaOrigem").value;
@@ -340,7 +338,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const statusInicial = "Aguardando coleta";
       const obsInicial = observacao || "OS inicial aberta no sistema da loja.";
 
-      // Cria o pedido inicial no banco
       const { data, error } = await supabase.from("pedidos").insert([{
         tipo_servico: tipoServico,
         loja_origem: lojaOrigem,
@@ -375,7 +372,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // 2. FORMULÁRIO 2: CRIAR PEDIDO POR TICKET (NOVO - SALVANDO NO SUPABASE)
+  // 2. FORMULÁRIO 2: CRIAR PEDIDO POR TICKET
   const formCriarPedidoTicketModal = document.getElementById("formCriarPedidoTicketModal");
   formCriarPedidoTicketModal?.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -398,7 +395,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const statusInicial = "Aguardando coleta";
       const obsInicial = observacaoTicket || "Pedido criado através do Ticket.";
 
-      // Insere o pedido no Supabase gravando todos os dados do ticket na observação
       const { data, error } = await supabase.from("pedidos").insert([{
         tipo_servico: tipoServico,
         loja_origem: lojaOrigem,
@@ -410,7 +406,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (error) throw error;
 
-      // Grava o evento na linha do tempo
       if (data && data.length > 0) {
         await supabase.from("pedido_eventos").insert([{
           pedido_id: data[0].id,
@@ -422,7 +417,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       alert("Pedido por Ticket criado e salvo com sucesso!");
       
-      // Reseta e fecha o modal
       formCriarPedidoTicketModal.reset();
       
       if (typeof window.fecharModalTicket === "function") {
@@ -438,12 +432,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // FILTRO DE PEDIDOS
   document.getElementById("btnFiltrar")?.addEventListener("click", () => {
-    const filtroStatus = document.getElementById("filtroStatus").value;
-    const filtroLoja = document.getElementById("filtroLoja").value;
+    const filtroStatus = document.getElementById("filtroStatus")?.value || "";
+    const filtroLoja = document.getElementById("filtroLoja")?.value || "";
     carregarPedidos(filtroStatus, filtroLoja);
   });
 
-  // AUTO-ATUALIZAÇÃO INTELIGENTE (A cada 30 segundos)
+  // AUTO-ATUALIZAÇÃO INTELIGENTE (30 segundos)
   setInterval(() => {
     const elStatus = document.getElementById("filtroStatus");
     const elLoja = document.getElementById("filtroLoja");

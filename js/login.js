@@ -15,6 +15,7 @@ const rolesMap = [
   { pattern: /^admin@minuto\.com$/i, route: "/admin" },
   { pattern: /^loja\d+@minuto\.com$/i, route: "/pedidos" },
   { pattern: /^transporte\d*@minuto\.com$/i, route: "/transporte" },
+    { pattern: /^fernanda.fgn17\d*@gmail\.com$/i, route: "/transporte" },
   { pattern: /^financeiro@minuto\.com$/i, route: "/financeiro" },
   { pattern: /^gerente\d*@minuto\.com$/i, route: "/gerente" }
 ];

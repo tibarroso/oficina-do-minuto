@@ -42,7 +42,7 @@
           <option value="Oficina do Minuto III">Oficina do Minuto III</option>
           <option value="Oficina do Minuto IV">Oficina do Minuto IV</option>
         </select>
-        <button id="btnFiltrar" class="filter-btn">Filtrar</button>
+        <button id="btnFiltrar" class="filter-btn" type="button">Filtrar</button>
       </div>
     </section>
 
@@ -75,8 +75,8 @@
     &copy; 2026 Oficina do Minuto. Todos os direitos reservados.
   </footer>
 
-  <!-- Script do Transporte -->
-  <script type="module" defer>
+  <!-- Script de Inicialização -->
+  <script type="module">
     import { supabase } from "./js/supabase.js";
     import { carregarPedidos } from "./js/transporte.js";
 
@@ -88,11 +88,11 @@
       carregarPedidos(filtroLoja);
     }
 
-    // Eventos para filtrar ao clicar no botão ou alterar a seleção
+    // Eventos de clique e alteração
     btnFiltrar.addEventListener("click", aplicarFiltro);
     selectLoja.addEventListener("change", aplicarFiltro);
 
-    // Verificação de Autenticação e Inicialização
+    // Validação de Autenticação e Inicialização
     (async () => {
       const { data: { user }, error } = await supabase.auth.getUser();
 
@@ -102,10 +102,10 @@
         return;
       }
 
-      // Carregamento inicial com filtro padrão
+      // Executa o carregamento inicial dos cards
       aplicarFiltro();
 
-      // Recarregamento automático a cada 5 minutos (300.000 ms)
+      // Atualização automática contínua a cada 5 minutos
       setInterval(() => {
         aplicarFiltro();
       }, 300000);

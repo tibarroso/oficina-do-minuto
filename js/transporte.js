@@ -7,7 +7,6 @@ let filtroAtivo = "Todas"; // Padrão: "Todas"
 // Inicialização
 // =====================
 export async function carregarPedidos(filtroLoja = "Todas") {
-  // Atualiza a variável global com o filtro de loja
   filtroAtivo = filtroLoja;
 
   await carregarAguardando(filtroLoja);     // Ida
@@ -20,7 +19,8 @@ export async function carregarPedidos(filtroLoja = "Todas") {
 // =====================
 async function carregarAguardando(filtroLoja) {
   const div = document.getElementById("aguardando");
-  div.innerHTML = "<p>Carregando pedidos...</p>";
+  if (!div) return;
+  div.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Carregando pedidos...</p>";
 
   let query = supabase
     .from("pedidos")
@@ -28,25 +28,27 @@ async function carregarAguardando(filtroLoja) {
     .eq("status", "Aguardando coleta")
     .order("criado_em", { ascending: false });
 
-  // Filtrando por loja (loja_origem)
   if (filtroLoja !== "Todas") {
     query = query.eq("loja_origem", filtroLoja);
   }
 
   const { data, error } = await query;
   if (error) {
-    div.innerHTML = "<p>Erro ao carregar pedidos.</p>";
+    div.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Erro ao carregar pedidos.</p>";
     console.error(error);
     return;
   }
 
   if (!data || data.length === 0) {
-    div.innerHTML = "<p>Nenhum pedido aguardando coleta.</p>";
+    div.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Nenhum pedido aguardando coleta.</p>";
     return;
   }
 
   div.innerHTML = "";
-  data.forEach(p => div.appendChild(criarCard(p, "ida")));
+  for (const p of data) {
+    const cardNode = await criarCard(p, "ida");
+    div.appendChild(cardNode);
+  }
 }
 
 // =====================
@@ -54,33 +56,36 @@ async function carregarAguardando(filtroLoja) {
 // =====================
 async function carregarEmTransporte(filtroLoja) {
   const div = document.getElementById("transporte");
-  div.innerHTML = "<p>Carregando pedidos...</p>";
+  if (!div) return;
+  div.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Carregando pedidos...</p>";
 
   let query = supabase
     .from("pedidos")
     .select("*")
-    .in("status", ["Em transporte para Loja 5", "Em transporte para loja de origem"]) // Incluindo os pedidos "Em transporte para loja de origem"
+    .in("status", ["Em transporte para Loja 5", "Em transporte para loja de origem"])
     .order("criado_em", { ascending: false });
 
-  // Filtrando por loja (loja_origem)
   if (filtroLoja !== "Todas") {
     query = query.eq("loja_origem", filtroLoja);
   }
 
   const { data, error } = await query;
   if (error) {
-    div.innerHTML = "<p>Erro ao carregar pedidos.</p>";
+    div.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Erro ao carregar pedidos.</p>";
     console.error(error);
     return;
   }
 
   if (!data || data.length === 0) {
-    div.innerHTML = "<p>Nenhum pedido em transporte.</p>";
+    div.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Nenhum pedido em transporte.</p>";
     return;
   }
 
   div.innerHTML = "";
-  data.forEach(p => div.appendChild(criarCard(p, "emTransporte")));
+  for (const p of data) {
+    const cardNode = await criarCard(p, "emTransporte");
+    div.appendChild(cardNode);
+  }
 }
 
 // =====================
@@ -88,7 +93,8 @@ async function carregarEmTransporte(filtroLoja) {
 // =====================
 async function carregarRetorno(filtroLoja) {
   const div = document.getElementById("retorno");
-  div.innerHTML = "<p>Carregando pedidos...</p>";
+  if (!div) return;
+  div.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Carregando pedidos...</p>";
 
   let query = supabase
     .from("pedidos")
@@ -96,71 +102,116 @@ async function carregarRetorno(filtroLoja) {
     .in("status", ["Aguardando retorno do transporte", "Retrabalho"])
     .order("criado_em", { ascending: false });
 
-  // Filtrando por loja (loja_origem)
   if (filtroLoja !== "Todas") {
     query = query.eq("loja_origem", filtroLoja);
   }
 
   const { data, error } = await query;
   if (error) {
-    div.innerHTML = "<p>Erro ao carregar pedidos.</p>";
+    div.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Erro ao carregar pedidos.</p>";
     console.error(error);
     return;
   }
 
   if (!data || data.length === 0) {
-    div.innerHTML = "<p>Nenhum pedido aguardando retorno.</p>";
+    div.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Nenhum pedido aguardando retorno.</p>";
     return;
   }
 
   div.innerHTML = "";
-  data.forEach(p => div.appendChild(criarCard(p, "volta")));
+  for (const p of data) {
+    const cardNode = await criarCard(p, "volta");
+    div.appendChild(cardNode);
+  }
 }
 
 // =====================
-// Criar Card de Pedido
+// Criar Card de Pedido Proporcional
 // =====================
-function criarCard(pedido, tipo) {
+async function criarCard(pedido, tipo) {
   const card = document.createElement("div");
   card.classList.add("card");
 
-  let obs = pedido.obs_loja_origem ? `<strong>Observação Loja de Origem:</strong><br><em>${pedido.obs_loja_origem}</em><br>` : "";
-  let obsLoja5 = pedido.obs_loja5 ? `<strong>Observação Loja 5:</strong><br><em>${pedido.obs_loja5}</em><br>` : "";
+  // Carrega o histórico de eventos para exibir no card
+  const { data: eventos } = await supabase
+    .from("pedido_eventos")
+    .select("*")
+    .eq("pedido_id", pedido.id)
+    .order("criado_em", { ascending: true });
 
-  // Loja de Destino
-  let lojaDestino = pedido.loja_destino ? `<strong>Loja de Destino:</strong> ${pedido.loja_destino}<br>` : "";
+  let HTMLeventos = "";
+  if (eventos && eventos.length > 0) {
+    HTMLeventos = eventos.map(ev => {
+      const dataFormatada = new Date(ev.criado_em).toLocaleString('pt-BR');
+      return `<li style="margin-bottom: 3px;">• ${ev.evento} <span style="color: #64748b; font-size: 11px;">(${dataFormatada})</span></li>`;
+    }).join('');
+  } else {
+    HTMLeventos = `<li><em style="color: #94a3b8; font-size: 12px;">Nenhum evento registrado.</em></li>`;
+  }
 
-  // Construindo o card HTML
+  let obs = pedido.obs_loja_origem ? `<div><strong>Observação Origem:</strong><br><span style="font-size: 13px;">${pedido.obs_loja_origem}</span></div>` : "";
+  let obsLoja5 = pedido.obs_loja5 ? `<div><strong>Observação Central:</strong><br><span style="font-size: 13px;">${pedido.obs_loja5}</span></div>` : "";
+
   card.innerHTML = `
-    <strong>OS:</strong> ${pedido.id}<br>
-    <strong>Loja:</strong> ${pedido.loja_origem}<br>
-    <strong>Serviço:</strong> ${pedido.tipo_servico}<br>
-    ${lojaDestino}  <!-- Exibindo Loja de Destino -->
-    ${obs}
-    ${obsLoja5}
-    <span class="status-tag status-${statusClasse(pedido.status)}">${pedido.status}</span>
+    <div style="font-size: 13px; line-height: 1.4; color: #334155;">
+      <p style="margin-bottom: 6px;"><strong>Loja de Origem:</strong><br>${pedido.loja_origem || 'Não informada'}</p>
+      <p style="margin-bottom: 6px;"><strong>Loja de Destino:</strong><br>${pedido.loja_destino || 'Não informada'}</p>
+      <p style="margin-bottom: 6px;"><strong>OS:</strong><br><span style="font-size: 11px; word-break: break-all;">${pedido.id}</span></p>
+      <p style="margin-bottom: 6px;"><strong>Serviço:</strong><br>${pedido.tipo_servico || 'Geral'}</p>
+
+      <div style="margin: 8px 0;">
+        <strong style="display: block; margin-bottom: 4px;">Status:</strong>
+        <span class="status-badge status-${statusClasse(pedido.status)}">${pedido.status}</span>
+      </div>
+
+      <p style="margin-bottom: 6px;"><strong>Orçamento:</strong><br>${pedido.orcamento ? 'Sim' : 'Não'}</p>
+
+      ${obs}
+      ${obsLoja5}
+
+      <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid #e2e8f0;">
+        <strong style="font-size: 12px; color: #0f172a;">Eventos:</strong>
+        <ul style="list-style: none; padding-left: 0; margin-top: 4px; font-size: 12px;">
+          ${HTMLeventos}
+        </ul>
+      </div>
+    </div>
   `;
 
-  const btn = document.createElement("button");
+  // Botões de Ação
+  const acaoContainer = document.createElement("div");
+  acaoContainer.style.marginTop = "12px";
 
-  // Botões de ação
+  const btn = document.createElement("button");
+  btn.className = "btn-verde-dash";
+  btn.style.height = "36px";
+  btn.style.fontSize = "12px";
+  btn.style.width = "100%";
+
   if (tipo === "ida") {
     btn.textContent = "Iniciar Transporte (Ida)";
     btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para Loja 5", "Transporte iniciado (ida)");
+    acaoContainer.appendChild(btn);
   } else if (tipo === "emTransporte") {
     if (pedido.status === "Em transporte para Loja 5") {
-      btn.textContent = "Entregar na Loja 5";
+      btn.textContent = "Entregar na Loja Central";
       btn.onclick = () => atualizarStatus(pedido.id, "Entregue na Loja 5", "Entregue na Loja 5");
+      acaoContainer.appendChild(btn);
     } else if (pedido.status === "Em transporte para loja de origem") {
       btn.textContent = "Entregar na Loja de Origem";
       btn.onclick = () => atualizarStatus(pedido.id, "Recebido na loja de origem", "Entregue na loja de origem");
+      acaoContainer.appendChild(btn);
     }
   } else if (tipo === "volta") {
     btn.textContent = "Iniciar Transporte de Retorno";
     btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para loja de origem", "Transporte iniciado (volta)");
+    acaoContainer.appendChild(btn);
   }
 
-  card.appendChild(btn);
+  if (acaoContainer.hasChildNodes()) {
+    card.appendChild(acaoContainer);
+  }
+
   return card;
 }
 
@@ -176,7 +227,7 @@ async function atualizarStatus(id, status, evento) {
   }
 
   await registrarEvento(id, evento);
-  carregarPedidos(filtroAtivo); // Atualiza a tela considerando o filtro ativo
+  carregarPedidos(filtroAtivo);
 }
 
 // =====================
@@ -198,9 +249,10 @@ async function registrarEvento(pedidoId, evento) {
 // Mapear status para classe CSS
 // =====================
 function statusClasse(status) {
+  if (!status) return "Aguardando";
   if (status.includes("Aguardando")) return "Aguardando";
   if (status.includes("transporte")) return "Transporte";
-  if (status.includes("Loja 5") || status.includes("Entregue")) return "Loja5";
+  if (status.includes("Loja 5") || status.includes("Entregue") || status.includes("Recebido")) return "Loja5";
   if (status.includes("Finalizado")) return "Finalizado";
   if (status.includes("Retrabalho")) return "Retrabalho";
   return "Aguardando";
@@ -210,16 +262,10 @@ function statusClasse(status) {
 // Inicialização global
 // =====================
 (async () => {
-  const { data } = await supabase.auth.getUser();
-  const usuarioLogado = data?.user || null;
-
-  // Torna funções acessíveis globalmente
   window.carregarPedidos = carregarPedidos;
   window.atualizarStatus = atualizarStatus;
 
-  // Carrega pedidos inicialmente com o filtro ativo
   carregarPedidos(filtroAtivo);
 
-  // Atualiza a cada 5 segundos, considerando o filtro ativo
-  setInterval(() => carregarPedidos(filtroAtivo), 300000); // 300,000 milissegundos = 5 minutos
+  setInterval(() => carregarPedidos(filtroAtivo), 300000);
 })();

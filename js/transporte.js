@@ -1,7 +1,7 @@
 import { supabase } from "./supabase.js";
 
 // Variável para armazenar o filtro de loja
-let filtroAtivo = "Todas"; // Padrão: "Todas"
+let filtroAtivo = "Todas";
 
 // =====================
 // Inicialização
@@ -132,7 +132,7 @@ async function criarCard(pedido, tipo) {
   const card = document.createElement("div");
   card.classList.add("card");
 
-  // Carrega o histórico de eventos para exibir no card
+  // Carrega o histórico de eventos
   const { data: eventos } = await supabase
     .from("pedido_eventos")
     .select("*")
@@ -143,35 +143,35 @@ async function criarCard(pedido, tipo) {
   if (eventos && eventos.length > 0) {
     HTMLeventos = eventos.map(ev => {
       const dataFormatada = new Date(ev.criado_em).toLocaleString('pt-BR');
-      return `<li style="margin-bottom: 3px;">• ${ev.evento} <span style="color: #64748b; font-size: 11px;">(${dataFormatada})</span></li>`;
+      return `<li style="margin-bottom: 4px; padding-bottom: 2px; border-bottom: 1px dashed #f1f5f9;">• ${ev.evento} <span style="color: #64748b; font-size: 10px;">(${dataFormatada})</span></li>`;
     }).join('');
   } else {
-    HTMLeventos = `<li><em style="color: #94a3b8; font-size: 12px;">Nenhum evento registrado.</em></li>`;
+    HTMLeventos = `<li><em style="color: #94a3b8; font-size: 11px;">Nenhum evento registrado.</em></li>`;
   }
 
-  let obs = pedido.obs_loja_origem ? `<div><strong>Observação Origem:</strong><br><span style="font-size: 13px;">${pedido.obs_loja_origem}</span></div>` : "";
-  let obsLoja5 = pedido.obs_loja5 ? `<div><strong>Observação Central:</strong><br><span style="font-size: 13px;">${pedido.obs_loja5}</span></div>` : "";
+  let obs = pedido.obs_loja_origem ? `<p style="margin: 3px 0;"><strong>Obs Origem:</strong> ${pedido.obs_loja_origem}</p>` : "";
+  let obsLoja5 = pedido.obs_loja5 ? `<p style="margin: 3px 0;"><strong>Obs Central:</strong> ${pedido.obs_loja5}</p>` : "";
 
   card.innerHTML = `
     <div style="font-size: 13px; line-height: 1.4; color: #334155;">
-      <p style="margin-bottom: 6px;"><strong>Loja de Origem:</strong><br>${pedido.loja_origem || 'Não informada'}</p>
-      <p style="margin-bottom: 6px;"><strong>Loja de Destino:</strong><br>${pedido.loja_destino || 'Não informada'}</p>
-      <p style="margin-bottom: 6px;"><strong>OS:</strong><br><span style="font-size: 11px; word-break: break-all;">${pedido.id}</span></p>
-      <p style="margin-bottom: 6px;"><strong>Serviço:</strong><br>${pedido.tipo_servico || 'Geral'}</p>
+      <p style="margin: 0 0 4px 0;"><strong>Loja de Origem:</strong> ${pedido.loja_origem || 'Não informada'}</p>
+      <p style="margin: 0 0 4px 0;"><strong>Loja de Destino:</strong> ${pedido.loja_destino || 'Não informada'}</p>
+      <p style="margin: 0 0 4px 0;"><strong>OS:</strong> <span style="font-size: 11px;">${pedido.id}</span></p>
+      <p style="margin: 0 0 4px 0;"><strong>Serviço:</strong> ${pedido.tipo_servico || 'Geral'}</p>
 
-      <div style="margin: 8px 0;">
-        <strong style="display: block; margin-bottom: 4px;">Status:</strong>
+      <div style="margin: 6px 0;">
         <span class="status-badge status-${statusClasse(pedido.status)}">${pedido.status}</span>
       </div>
 
-      <p style="margin-bottom: 6px;"><strong>Orçamento:</strong><br>${pedido.orcamento ? 'Sim' : 'Não'}</p>
+      <p style="margin: 0 0 4px 0;"><strong>Orçamento:</strong> ${pedido.orcamento ? 'Sim' : 'Não'}</p>
 
       ${obs}
       ${obsLoja5}
 
-      <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid #e2e8f0;">
-        <strong style="font-size: 12px; color: #0f172a;">Eventos:</strong>
-        <ul style="list-style: none; padding-left: 0; margin-top: 4px; font-size: 12px;">
+      <!-- Caixa de eventos com rolagem para limitar a altura -->
+      <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid #e2e8f0;">
+        <strong style="font-size: 11px; color: #0f172a;">Eventos:</strong>
+        <ul style="list-style: none; padding-left: 0; margin-top: 4px; font-size: 11px; max-height: 110px; overflow-y: auto;">
           ${HTMLeventos}
         </ul>
       </div>
@@ -180,7 +180,7 @@ async function criarCard(pedido, tipo) {
 
   // Botões de Ação
   const acaoContainer = document.createElement("div");
-  acaoContainer.style.marginTop = "12px";
+  acaoContainer.style.marginTop = "10px";
 
   const btn = document.createElement("button");
   btn.className = "btn-verde-dash";

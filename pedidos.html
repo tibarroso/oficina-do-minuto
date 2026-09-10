@@ -23,7 +23,8 @@
     }
 
     main {
-      margin-top: 100px;
+      margin-top: 90px;
+      padding: 0 20px;
     }
 
     h1 {
@@ -58,7 +59,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      width: 95%;
+      width: 90%;
       max-width: 1400px;
       margin: 0 auto;
     }
@@ -110,7 +111,7 @@
       border-radius: 8px;
       border: 1px solid #e2e8f0;
       margin: 20px auto;
-      width: 95%;
+      width: 90%;
       max-width: 1400px;
       box-sizing: border-box;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
@@ -358,11 +359,12 @@
       background-color: #e2e8f0;
     }
 
-    /* SEÇÃO DE LISTAGEM - CORRIGIDA COM CSS GRID */
+    /* SEÇÃO DE LISTAGEM - CENTRALIZAÇÃO E EXPANSÃO NA TELA */
     .lista-secao {
-      width: 95%;
-      max-width: 1400px; 
+      width: 90%;
+      max-width: 1400px;
       margin: 20px auto;
+      box-sizing: border-box;
     }
 
     .lista-secao h2 {
@@ -372,28 +374,31 @@
       margin-bottom: 20px;
     }
 
-    /* GRID CONTROLADO DOS CARDS */
+    /* GRID CONTROLADO DOS CARDS DE PEDIDO */
     .cards-container {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 20px;
       width: 100%;
-      align-items: start;
+      align-items: stretch;
+      box-sizing: border-box;
     }
 
     .cards-container .card {
-      background-color: #fff;
+      background-color: #ffffff;
       padding: 20px;
       border-radius: 10px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      border: 1px solid #e2e8f0;
       border-left: 5px solid #1a73e8; 
       text-align: left;
       line-height: 1.6;
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
+      justify-content: space-between;
       gap: 8px;
-      word-break: break-word; /* Evita que textos longos estourem o card */
+      word-break: break-word;
     }
 
     .status-badge {
@@ -413,9 +418,10 @@
 
     /* Responsividade para telas menores */
     @media (max-width: 768px) {
-      .barra-acoes-painel { flex-direction: column; gap: 16px; align-items: stretch; }
+      .barra-acoes-painel { flex-direction: column; gap: 16px; align-items: stretch; width: 100%; }
       .grupo-botoes-criar { flex-direction: column; }
       .filtros-topo-compacto { flex-direction: column; align-items: stretch; }
+      .lista-secao { width: 100%; }
       .cards-container { grid-template-columns: 1fr; }
     }
   </style>

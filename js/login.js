@@ -1,6 +1,4 @@
-import { supabase } from "./supabase.js";
-
-const BASE_PATH = "/oficina-do-minuto/";
+import { supabase } from "./supabase.js";  // Importando o cliente Supabase
 
 // ===============================
 // Elementos do DOM
@@ -11,14 +9,14 @@ const senhaInput = document.getElementById("senha");
 const loader = document.getElementById("loader");
 
 // ===============================
-// Mapeamento de Perfis
+// Mapeamento de Perfis (AJUSTADO PARA ROTAS DO NODE.JS)
 // ===============================
 const rolesMap = [
-  { pattern: /^admin@minuto\.com$/i, page: "admin.html" },
-  { pattern: /^loja\d+@minuto\.com$/i, page: "pedidos.html" },
-  { pattern: /^transporte\d*@minuto\.com$/i, page: "transporte.html" },
-  { pattern: /^financeiro@minuto\.com$/i, page: "financeiro.html" },
-  { pattern: /^gerente\d*@minuto\.com$/i, page: "gerente.html" }
+  { pattern: /^admin@minuto\.com$/i, route: "/admin" },
+  { pattern: /^loja\d+@minuto\.com$/i, route: "/pedidos" },
+  { pattern: /^transporte\d*@minuto\.com$/i, route: "/transporte" },
+  { pattern: /^financeiro@minuto\.com$/i, route: "/financeiro" },
+  { pattern: /^gerente\d*@minuto\.com$/i, route: "/gerente" }
 ];
 
 // ===============================
@@ -30,7 +28,7 @@ const toggleLoader = (show) => {
 };
 
 const showError = (message) => {
-  alert(message); // Pode substituir futuramente por toast mais bonito
+  alert(message); 
 };
 
 const validateEmail = (email) => {
@@ -38,9 +36,9 @@ const validateEmail = (email) => {
   return emailRegex.test(email);
 };
 
-const getRedirectPage = (email) => {
+const getRedirectRoute = (email) => {
   const role = rolesMap.find(r => r.pattern.test(email));
-  return role ? role.page : "pedidos.html"; // Página padrão
+  return role ? role.route : "/pedidos"; // Rota padrão caso não case com nenhuma regex
 };
 
 // ===============================
@@ -73,9 +71,11 @@ form.addEventListener("submit", async (e) => {
 
     console.log("Login realizado com sucesso:", data.user.email);
 
-    const redirectPage = getRedirectPage(data.user.email);
+    // Obtém a rota amigável do Express baseada no email do usuário
+    const redirectRoute = getRedirectRoute(data.user.email);
 
-    window.location.href = BASE_PATH + redirectPage;
+    // AJUSTADO: Redirecionamento limpo enviado para o servidor Node.js
+    window.location.href = redirectRoute;
 
   } catch (err) {
     console.error("Erro no login:", err);

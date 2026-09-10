@@ -99,7 +99,7 @@ async function carregarRetorno(filtroLoja) {
   let query = supabase
     .from("pedidos")
     .select("*")
-    .in("status", ["Aguardando retorno do transporte", "Retrabalho"])
+    .in("status", ["Aguardando retorno do transporte","Aguardando coleta para loja de Origem", "Retrabalho"])
     .order("criado_em", { ascending: false });
 
   if (filtroLoja !== "Todas") {

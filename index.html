@@ -156,7 +156,8 @@
   </footer>
 
   <script type="module">
-    import { supabase } from '/js/supabase.js'; 
+    // Ajustado de '/js/supabase.js' para './supabase.js' (carrega da raiz)
+    import { supabase } from './supabase.js'; 
 
     document.getElementById("loginButton").addEventListener("click", login);
 
@@ -187,13 +188,13 @@
           const usuarioEmail = data.user.email.toLowerCase();
 
           if (usuarioEmail === "ti@ebarroso.com.br") {
-            window.location.href = "/admin";
+            window.location.href = "admin.html";
           } else if (usuarioEmail.includes("transporte")) {
-            window.location.href = "/transporte";
+            window.location.href = "transporte.html";
           } else if (usuarioEmail.includes("loja5")) {
-            window.location.href = "/loja5";
+            window.location.href = "loja5.html";
           } else {
-            window.location.href = "/pedidos";
+            window.location.href = "pedidos.html";
           }
         }
 

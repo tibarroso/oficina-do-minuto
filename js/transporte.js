@@ -4,14 +4,14 @@ import { supabase } from "./supabase.js";
 let filtroAtivo = "Todas";
 
 // =====================
-// Inicialização
+// Inicialização Principal
 // =====================
 export async function carregarPedidos(filtroLoja = "Todas") {
   filtroAtivo = filtroLoja;
 
   await carregarAguardando(filtroLoja);     // Ida
   await carregarEmTransporte(filtroLoja);   // Ida e Volta
-  await carregarRetorno(filtroLoja);        // Volta, Retrabalho e Coleta Origem
+  await carregarRetorno(filtroLoja);        // Volta e Retrabalho
 }
 
 // =====================
@@ -96,7 +96,6 @@ async function carregarRetorno(filtroLoja) {
   if (!div) return;
   div.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Carregando pedidos...</p>";
 
-  // Incluídas variações com "Origem" (O maiúsculo) e "origem" (o minúsculo)
   let query = supabase
     .from("pedidos")
     .select("*")
@@ -138,7 +137,7 @@ async function criarCard(pedido, tipo) {
   const card = document.createElement("div");
   card.classList.add("card");
 
-  // Carrega o histórico de eventos
+  // Carrega o histórico de eventos do pedido
   const { data: eventos } = await supabase
     .from("pedido_eventos")
     .select("*")
@@ -174,7 +173,6 @@ async function criarCard(pedido, tipo) {
       ${obs}
       ${obsLoja5}
 
-      <!-- Caixa de eventos com rolagem para limitar a altura -->
       <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid #e2e8f0;">
         <strong style="font-size: 11px; color: #0f172a;">Eventos:</strong>
         <ul style="list-style: none; padding-left: 0; margin-top: 4px; font-size: 11px; max-height: 110px; overflow-y: auto;">
@@ -264,14 +262,6 @@ function statusClasse(status) {
   return "Aguardando";
 }
 
-// =====================
-// Inicialização global
-// =====================
-(async () => {
-  window.carregarPedidos = carregarPedidos;
-  window.atualizarStatus = atualizarStatus;
-
-  carregarPedidos(filtroAtivo);
-
-  setInterval(() => carregarPedidos(filtroAtivo), 300000);
-})();
+// Exposição global das funções para uso nos escopos do window
+window.carregarPedidos = carregarPedidos;
+window.atualizarStatus = atualizarStatus;

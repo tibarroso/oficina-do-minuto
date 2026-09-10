@@ -88,11 +88,11 @@
       carregarPedidos(filtroLoja);
     }
 
-    // Eventos de clique e alteração
+    // Listener para o botão e para a seleção do filtro
     btnFiltrar.addEventListener("click", aplicarFiltro);
     selectLoja.addEventListener("change", aplicarFiltro);
 
-    // Validação de Autenticação e Inicialização
+    // Validação de Autenticação e Carregamento dos Dados
     (async () => {
       const { data: { user }, error } = await supabase.auth.getUser();
 
@@ -102,10 +102,10 @@
         return;
       }
 
-      // Executa o carregamento inicial dos cards
+      // Executa o primeiro carregamento dos pedidos com o filtro selecionado
       aplicarFiltro();
 
-      // Atualização automática contínua a cada 5 minutos
+      // Recarregamento automático contínuo a cada 5 minutos
       setInterval(() => {
         aplicarFiltro();
       }, 300000);

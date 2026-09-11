@@ -7,72 +7,71 @@ const containerPedidos = document.getElementById("containerPedidos");
 const successMessage = document.getElementById("successMessage");
 
 // Referência para o indicador de carregamento
-const loadingMessage = document.createElement("div");
-loadingMessage.classList.add("loading-indicator");
-loadingMessage.innerHTML = "Carregando pedidos...";
+const loadingMessage = document.createElement('div');
+loadingMessage.classList.add('loading-indicator');
+loadingMessage.innerHTML = 'Carregando pedidos...';
+
+// Variável para armazenar os pedidos carregados anteriormente
+let pedidosAnteriores = [];
 
 // =========================
 // CARREGAR PEDIDOS AUTOMATICAMENTE
 // =========================
 async function carregarPedidos() {
-  if (!containerPedidos) return;
-
   try {
-    containerPedidos.innerHTML = "";
+    containerPedidos.innerHTML = ''; 
     containerPedidos.appendChild(loadingMessage);
 
     // Buscar pedidos com status "Entregue na Loja 5" OU "Entregue na Loja de Destino para retrabalho"
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
-      .in("status", [
-        "Entregue na Loja 5",
-        "Entregue na Loja de Destino para retrabalho"
-      ])
-      .order("id", { ascending: false });
+      .in("status", ["Entregue na Loja 5", "Entregue na Loja de Destino para retrabalho"]) 
+      .order("criado_em", { ascending: false }); 
 
     if (error) throw error;
 
-    containerPedidos.innerHTML = "";
+    containerPedidos.innerHTML = "";  
 
-    if (!data || data.length === 0) {
-      containerPedidos.innerHTML =
-        "<p class='loading' style='text-align: center; width: 100%;'>Nenhum pedido encontrado na central.</p>";
+    if (!data.length) {
+      containerPedidos.innerHTML = "<p class='loading'>Nenhum pedido encontrado na central.</p>";
       return;
     }
 
-    // Renderiza diretamente todos os pedidos retornados
-    data.forEach((pedido) => {
-      const card = criarCardPedido(pedido);
-      containerPedidos.appendChild(card);
+    data.forEach(pedido => {
+      const pedidoAnterior = pedidosAnteriores.find(p => p.id === pedido.id);
+
+      if (!pedidoAnterior || pedido.status !== pedidoAnterior.status || pedido.obs_loja5 !== pedidoAnterior.obs_loja5) {
+        const card = criarCardPedido(pedido);
+        containerPedidos.appendChild(card);
+      }
     });
+
+    pedidosAnteriores = data;
 
   } catch (err) {
     console.error("Erro ao carregar pedidos:", err);
-    if (containerPedidos) {
-      containerPedidos.innerHTML = `<p class="error" style="color: red; text-align: center;">Erro ao carregar pedidos: ${err.message}</p>`;
-    }
+    containerPedidos.innerHTML = `<p class="error">Erro ao carregar pedidos. Tente novamente.</p>`;
   }
 }
 
 // =========================
-// CRIAR CARD DE PEDIDO
+// CRIAR CARD DE PEDIDO (AÇÃO ÚNICA RAPIDINHA)
 // =========================
 function criarCardPedido(pedido) {
   const card = document.createElement("div");
   card.className = "card";
-  card.id = `pedido-${pedido.id}`;
+  card.id = `pedido-${pedido.id}`; 
 
   const statusClass = getStatusClass(pedido.status);
-  const lojaOrigemLimpa = pedido.loja_origem
-    ? pedido.loja_origem.trim()
-    : "Não especificada";
+  const lojaOrigemLimpa = pedido.loja_origem ? pedido.loja_origem.trim() : "Não especificada";
 
-  const podeFinalizar =
-    pedido.status === "Entregue na Loja 5" ||
-    pedido.status === "Em transporte para loja de origem" ||
+  const podeFinalizar = 
+    pedido.status === "Entregue na Loja 5" || 
+    pedido.status === "Em transporte para loja de origem" || 
     pedido.status === "Entregue na Loja de Destino para retrabalho";
 
+  // Vinculado estritamente às classes .btn-salvar e .btn-principal do novo arquivo HTML
   card.innerHTML = `
     <strong>OS:</strong> ${pedido.id}<br>
     <strong>Loja de Origem:</strong> ${lojaOrigemLimpa}<br>
@@ -85,9 +84,9 @@ function criarCardPedido(pedido) {
     <label style="margin-top: 8px; display: inline-block;" for="obs_loja5_${pedido.id}"><strong>Observação Loja 5:</strong></label><br>
     <textarea id="obs_loja5_${pedido.id}" placeholder="Digite uma observação técnica antes de finalizar..." ${pedido.status === "Finalizado" ? "disabled" : ""}>${pedido.obs_loja5 || ""}</textarea><br>
 
-    ${pedido.status === "Em serviço" ? `<button class="btn-salvar" onclick="mudarStatusParaTransporte('${pedido.id}')">Mover para Transporte</button>` : ""}
+    ${pedido.status === "Em serviço" ? `<button class="btn-salvar" onclick="mudarStatusParaTransporte('${pedido.id}')">Mover para Transporte</button>` : ''}
 
-    ${podeFinalizar && pedido.status !== "Finalizado" ? `<button class="btn-principal" onclick="mudarStatusParaFinalizado('${pedido.id}', '${pedido.status}', '${lojaOrigemLimpa}')">Finalizar Pedido</button>` : ""}
+    ${podeFinalizar && pedido.status !== "Finalizado" ? `<button class="btn-principal" onclick="mudarStatusParaFinalizado('${pedido.id}', '${pedido.status}', '${lojaOrigemLimpa}')">Finalizar Pedido</button>` : ''}
   `;
 
   return card;
@@ -101,14 +100,12 @@ async function registrarEvento(pedidoId, evento, observacao = "") {
     const { data } = await supabase.auth.getUser();
     const operador = data?.user?.email || "loja5@minuto.com";
 
-    await supabase.from("pedido_eventos").insert([
-      {
-        pedido_id: pedidoId,
-        evento: evento,
-        observacao: observacao,
-        criado_por: operador
-      }
-    ]);
+    await supabase.from("pedido_eventos").insert([{
+      pedido_id: pedidoId,
+      evento: evento,
+      observacao: observacao, 
+      criado_por: operador
+    }]);
   } catch (err) {
     console.error("Erro ao registrar evento no banco:", err);
   }
@@ -117,17 +114,17 @@ async function registrarEvento(pedidoId, evento, observacao = "") {
 // =========================
 // MUDAR STATUS PARA 'AGUARDANDO COLETA PARA LOJA DE ORIGEM'
 // =========================
-window.mudarStatusParaFinalizado = async function (pedidoId, statusActual, lojaOrigem) {
+window.mudarStatusParaFinalizado = async function(pedidoId, statusActual, lojaOrigem) {
   try {
     const proximoStatus = "Aguardando coleta para loja de Origem";
-    const elObs = document.getElementById(`obs_loja5_${pedidoId}`);
-    const obsLoja5 = elObs ? elObs.value : "";
+    const obsLoja5 = document.getElementById(`obs_loja5_${pedidoId}`).value;
 
+    // Duas ações unificadas em uma única transação no Supabase: muda status e grava observações
     const { error } = await supabase
       .from("pedidos")
-      .update({
+      .update({ 
         status: proximoStatus,
-        obs_loja_origem: "Serviço Pronto na Central. Aguardando retirada.",
+        obs_loja_origem: "Serviço Pronto na Central. Aguardando retirada.", 
         obs_loja5: obsLoja5
       })
       .eq("id", pedidoId);
@@ -138,36 +135,40 @@ window.mudarStatusParaFinalizado = async function (pedidoId, statusActual, lojaO
       return;
     }
 
+    // REGRA MANDATÓRIA EXIGIDA: Formato exato do histórico do Log
     const textoEvento = `Serviço feito aguando coleta para : ${lojaOrigem}`;
 
-    let detalheEvento =
-      statusActual === "Entregue na Loja de Destino para retrabalho"
-        ? `Serviço de retrabalho concluído pela Central.`
-        : `Serviço original concluído pela Central.`;
+    let detalheEvento = statusActual === "Entregue na Loja de Destino para retrabalho"
+      ? `Serviço de retrabalho concluído pela Central.`
+      : `Serviço original concluído pela Central.`;
 
     if (obsLoja5.trim()) {
       detalheEvento += ` Nota técnica: ${obsLoja5}`;
     }
 
+    // Grava na timeline para manter o monitoramento de auditoria
     await registrarEvento(pedidoId, textoEvento, detalheEvento);
 
     if (successMessage) {
       successMessage.style.display = "block";
     }
 
+    // Atualiza a tela localmente limpando o cache anterior para sumir com o card despachado
     setTimeout(() => {
       if (successMessage) successMessage.style.display = "none";
-      carregarPedidos();
-    }, 1500);
+      pedidosAnteriores = []; 
+      carregarPedidos(); 
+    }, 1500); 
+
   } catch (err) {
     console.error("Erro inesperado ao finalizar fluxo:", err);
   }
-};
+}
 
 // =========================
-// MUDAR STATUS PARA 'EM TRANSPORTE PARA LOJA DE ORIGEM'
+// MUDAR STATUS PARA 'EM TRANSPORTE PARA LOJA DE ORIGEM' (FALLBACK EM CASO DE ERROS)
 // =========================
-window.mudarStatusParaTransporte = async function (pedidoId) {
+window.mudarStatusParaTransporte = async function(pedidoId) {
   try {
     const { error } = await supabase
       .from("pedidos")
@@ -179,17 +180,15 @@ window.mudarStatusParaTransporte = async function (pedidoId) {
       return;
     }
 
-    await registrarEvento(
-      pedidoId,
-      "Movido para transporte manual na Central",
-      "Pedido forçado manualmente para a fila de trânsito de retorno."
-    );
+    await registrarEvento(pedidoId, "Movido para transporte manual na Central", "Pedido forçado manualmente para a fila de trânsito de retorno.");
 
+    pedidosAnteriores = [];
     carregarPedidos();
+
   } catch (err) {
     console.error("Erro inesperado:", err);
   }
-};
+}
 
 // =========================
 // MAPEAMENTO DE STATUS PARA CLASSE CSS
@@ -197,11 +196,7 @@ window.mudarStatusParaTransporte = async function (pedidoId) {
 function getStatusClass(status) {
   if (!status) return "status-Aguardando";
   const st = status.trim();
-  if (
-    st === "Entregue na Loja 5" ||
-    st === "Entregue na Loja de Destino para retrabalho"
-  )
-    return "status-Loja5";
+  if (st === "Entregue na Loja 5" || st === "Entregue na Loja de Destino para retrabalho") return "status-Loja5";
   if (st === "Em serviço") return "status-Transporte";
   if (st === "Em transporte para loja de origem") return "status-Transporte-Volta";
   if (st === "Finalizado") return "status-Finalizado";
@@ -212,8 +207,6 @@ function getStatusClass(status) {
 // =========================
 // INICIALIZAÇÃO AUTOMÁTICA
 // =========================
-document.addEventListener("DOMContentLoaded", () => {
-  carregarPedidos();
-});
+carregarPedidos();
 
 window.carregarPedidos = carregarPedidos;

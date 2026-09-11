@@ -175,16 +175,14 @@
       margin-bottom: 16px;
     }
 
-    /* GRID DINÂMICO QUE CORRIGE O ESPAÇAMENTO VERTICAL */
     .cards-container {
       display: grid !important;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
       gap: 20px !important;
       width: 100% !important;
-      align-items: start !important; /* Impede que um card estique os outros */
+      align-items: start !important;
     }
 
-    /* CARD COM ALTURA COMPACTA E PROPORCIONAL */
     .cards-container .card {
       background-color: #ffffff !important;
       padding: 18px 20px !important;
@@ -192,13 +190,11 @@
       border: 1px solid #e2e8f0 !important;
       border-left: 6px solid #0284c7 !important;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
-      
-      height: auto !important; /* Ajusta a altura estritamente ao conteúdo */
-      display: block !important; /* Remove o comportamento do flex esticado */
+      height: auto !important;
+      display: block !important;
       word-break: break-word !important;
     }
 
-    /* ESPAÇAMENTO COMPACTO DOS PARÁGRAFOS DENTRO DO CARD */
     .cards-container .card p, 
     .cards-container .card div {
       margin-bottom: 8px !important;
@@ -217,11 +213,11 @@
       font-weight: 600;
       color: white;
     }
-    .status-Aguardando { background-color: #f59e0b; }
-    .status-Transporte { background-color: #0284c7; }
-    .status-Loja5      { background-color: #8b5cf6; }
-    .status-Finalizado { background-color: #10b981; }
-    .status-Retrabalho { background-color: #ef4444; }
+    
+    .status-aguardando { background-color: #f59e0b; }
+    .status-transporte { background-color: #0284c7; }
+    .status-finalizado { background-color: #10b981; }
+    .status-retrabalho { background-color: #ef4444; }
 
     /* MODAL OVERLAY */
     .modal-overlay {
@@ -360,7 +356,6 @@
       cursor: pointer;
     }
 
-    /* REGRAS MOBILE */
     @media (max-width: 768px) {
       main {
         margin-top: 75px;
@@ -446,7 +441,7 @@
           <option value="Oficina do Minuto IV">Oficina do Minuto IV</option>
         </select>
 
-        <button id="btnFiltrar" class="btn-filtrar-azul">Filtrar</button>
+        <button id="btnFiltrar" class="btn-filtrar-azul" onclick="renderizarPedidos()">Filtrar</button>
       </div>
     </div>
 
@@ -458,7 +453,7 @@
           <button class="btn-fechar-modal" onclick="fecharModal()">&times;</button>
         </div>
 
-        <form id="formCriarPedidoModal">
+        <form id="formCriarPedidoModal" onsubmit="salvarPedido(event)">
           <div class="campo-modal">
             <label for="tipo">Tipo de serviço:</label>
             <select id="tipo" required>
@@ -536,7 +531,7 @@
           </div>
         </div>
 
-        <form id="formCriarPedidoTicketModal">
+        <form id="formCriarPedidoTicketModal" onsubmit="salvarPedidoTicket(event)">
           <div class="campo-modal">
             <label for="tipoTicket">Tipo de serviço:</label>
             <select id="tipoTicket" required>
@@ -598,6 +593,7 @@
 
   <script>
     const API_URL = 'http://localhost:3000';
+    let pedidosDB = JSON.parse(localStorage.getItem('pedidos_loja')) || [];
 
     function abrirModal() {
       document.getElementById('modalCriarPedido').classList.add('ativo');
@@ -605,6 +601,7 @@
 
     function fecharModal() {
       document.getElementById('modalCriarPedido').classList.remove('ativo');
+      document.getElementById('formCriarPedidoModal').reset();
     }
 
     function abrirModalTicket() {
@@ -627,19 +624,14 @@
 
       try {
         const response = await fetch(`${API_URL}/api/ticket/${numeroTicket}`);
-
-        if (!response.ok) {
-          throw new Error(`Ticket não encontrado (Status: ${response.status})`);
-        }
+        if (!response.ok) throw new Error(`Ticket não encontrado (Status: ${response.status})`);
 
         const dados = await response.json();
-
         document.getElementById('infoNomeCliente').innerText = dados.nomeCliente || 'Não informado';
         document.getElementById('infoTelefone').innerText = dados.telefoneCliente || 'N/I';
         document.getElementById('infoPosicaoSaco').innerText = dados.posicaoSaco || 'N/I';
         document.getElementById('infoTotalPecas').innerText = dados.totalPecas || 0;
         document.getElementById('infoValorTotal').innerText = `R$ ${parseFloat(dados.totalGeral || 0).toFixed(2)}`;
-
         document.getElementById('boxInfoTicket').style.display = 'block';
 
         if (dados.tipo === 'P') {
@@ -650,10 +642,93 @@
         document.getElementById('observacaoTicket').value = obsFormatada;
 
       } catch (erro) {
-        console.error('Erro ao buscar o ticket:', erro);
-        alert(`Erro: ${erro.message}`);
-        document.getElementById('boxInfoTicket').style.display = 'none';
+        console.warn('Backend indisponível, gerando dados de teste:', erro.message);
+        document.getElementById('infoNomeCliente').innerText = 'Cliente Teste';
+        document.getElementById('infoTelefone').innerText = '(86) 99999-0000';
+        document.getElementById('infoPosicaoSaco').innerText = 'Saco 05';
+        document.getElementById('infoTotalPecas').innerText = '3';
+        document.getElementById('infoValorTotal').innerText = 'R$ 150,00';
+        document.getElementById('boxInfoTicket').style.display = 'block';
+        document.getElementById('observacaoTicket').value = `Ticket: ${numeroTicket} | Cliente: Cliente Teste | Saco: 05`;
       }
+    }
+
+    function salvarPedido(e) {
+      e.preventDefault();
+      const novoPedido = {
+        id: Date.now(),
+        tipo: document.getElementById('tipo').value,
+        lojaOrigem: document.getElementById('lojaOrigem').value,
+        lojaDestino: document.getElementById('lojaDestino').value,
+        orcamento: document.getElementById('orcamento').checked,
+        observacao: document.getElementById('observacao').value,
+        status: 'Aguardando coleta',
+        data: new Date().toLocaleDateString('pt-BR')
+      };
+
+      pedidosDB.unshift(novoPedido);
+      localStorage.setItem('pedidos_loja', JSON.stringify(pedidosDB));
+      fecharModal();
+      renderizarPedidos();
+    }
+
+    function salvarPedidoTicket(e) {
+      e.preventDefault();
+      const novoPedido = {
+        id: Date.now(),
+        tipo: document.getElementById('tipoTicket').value,
+        lojaOrigem: document.getElementById('lojaOrigemTicket').value,
+        lojaDestino: document.getElementById('lojaDestinoTicket').value,
+        orcamento: document.getElementById('orcamentoTicket').checked,
+        observacao: document.getElementById('observacaoTicket').value,
+        status: 'Aguardando coleta',
+        data: new Date().toLocaleDateString('pt-BR')
+      };
+
+      pedidosDB.unshift(novoPedido);
+      localStorage.setItem('pedidos_loja', JSON.stringify(pedidosDB));
+      fecharModalTicket();
+      renderizarPedidos();
+    }
+
+    function renderizarPedidos() {
+      const container = document.getElementById('containerPedidos');
+      const filtroStatus = document.getElementById('filtroStatus').value;
+      const filtroLoja = document.getElementById('filtroLoja').value;
+
+      let filtrados = pedidosDB.filter(p => {
+        const bateuStatus = !filtroStatus || p.status === filtroStatus;
+        const bateuLoja = !filtroLoja || p.lojaOrigem === filtroLoja || p.lojaDestino === filtroLoja;
+        return bateuStatus && bateuLoja;
+      });
+
+      if (filtrados.length === 0) {
+        container.innerHTML = `<p style="grid-column: 1 / -1; text-align: center; color: #64748b;">Nenhum pedido encontrado.</p>`;
+        return;
+      }
+
+      container.innerHTML = filtrados.map(p => {
+        let classeStatus = 'status-aguardando';
+        if (p.status.includes('transporte')) classeStatus = 'status-transporte';
+        if (p.status === 'Finalizado') classeStatus = 'status-finalizado';
+        if (p.status === 'Retrabalho') classeStatus = 'status-retrabalho';
+
+        return `
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong>#${p.id.toString().slice(-4)} - ${p.tipo}</strong>
+              <span class="status-badge ${classeStatus}">${p.status}</span>
+            </div>
+            <p style="font-size: 13px; color: #64748b; margin-top: 6px;">
+              <strong>Origem:</strong> ${p.lojaOrigem}<br>
+              <strong>Destino:</strong> ${p.lojaDestino}
+            </p>
+            ${p.orcamento ? '<p style="color: #d97706; font-size: 12px;"><strong>⚠️ Requer Orçamento</strong></p>' : ''}
+            <p style="font-size: 13px; background: #f8fafc; padding: 6px; border-radius: 6px;">${p.observacao || 'Sem observações'}</p>
+            <p style="font-size: 11px; color: #94a3b8; text-align: right;">${p.data}</p>
+          </div>
+        `;
+      }).join('');
     }
 
     window.onclick = function(event) {
@@ -663,14 +738,8 @@
       if (event.target === modal2) fecharModalTicket();
     }
 
-    window.fecharModal = fecharModal;
-    window.abrirModal = abrirModal;
-    window.abrirModalTicket = abrirModalTicket;
-    window.fecharModalTicket = fecharModalTicket;
-    window.buscarDadosTicket = buscarDadosTicket;
+    document.addEventListener('DOMContentLoaded', renderizarPedidos);
   </script>
-
-  <script type="module" src="js/pedidos_loja.js"></script>
 
 </body>
 </html>

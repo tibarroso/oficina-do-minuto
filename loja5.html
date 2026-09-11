@@ -3,229 +3,358 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Loja 5 – Lavanderia & Sapataria</title>
+  <title>Loja 5 – Central | Oficina do Minuto</title>
 
-  <!-- Google Font: Poppins -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
-
-  <!-- CSS global do sistema -->
-  <link rel="stylesheet" href="./css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600;700&family=Poppins:wght=500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    /* Estilos Globais */
-    body {
-      font-family: 'Poppins', sans-serif;
-      background-color: #f9f9f9; /* Cor de fundo neutra para contrastar bem com a logo */
+    :root {
+      --primary-blue: #102a45;     /* Azul escuro corporativo */
+      --primary-yellow: #f1c40f;   /* Dourado/Amarelo oficial */
+      --primary-mint: #2bb696;     /* Verde Menta para ação única e rápida */
+      --background: #f7f9fc;       /* Fundo Branco Gelo */
+      --surface: #ffffff;
+      --text-main: #333333;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
-      color: #333;
     }
 
-    h1, h2 {
-      color: #333;
-      font-weight: 600; /* Deixar os títulos mais destacados */
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--background);
+      color: var(--text-main);
+      min-height: 100vh;
     }
 
-    /* Barra de navegação fixa */
+    /* ==========================================================================
+       HEADER PREMIUM INTEGRADO (MESMO ESTILO DO PAINEL DE PEDIDOS)
+       ========================================================================== */
     header {
-     // background-color: #E64A19; /* Cor baseada na logo, um tom de laranja */
-      background-color: #18BC9C; 
+      background-color: var(--primary-blue);
       color: white;
-      padding: 18px 40px;
+      padding: 0 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
-      z-index: 100;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      transition: background-color 0.3s;
+      height: 70px;
+      z-index: 1000;
     }
 
-    header:hover {
-      background-color: #D32F2F; /* Efeito de hover para um tom mais intenso */
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      user-select: none;
     }
 
-    header h1 {
-      margin: 0;
-      font-size: 26px;
+    .icone-relogio {
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+    }
+
+    .marca-texto {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--primary-yellow);
+      letter-spacing: 0.5px;
+    }
+
+    header h1 span.tag-loja5 {
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 8px;
+      border-radius: 4px;
+      font-family: 'Inter', sans-serif;
+      text-transform: uppercase;
+      vertical-align: middle;
     }
 
     header nav {
-      float: right;
       display: flex;
-      gap: 20px;
+      gap: 12px;
     }
 
     header nav a {
-      color: white;
+      color: #ffffff;
       text-decoration: none;
-      padding: 10px 18px;
-      border-radius: 25px;
-      background-color: rgba(255, 255, 255, 0.1); /* Fundo sutil */
-      transition: background-color 0.3s ease, transform 0.2s ease;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 6px;
+      transition: all 0.2s;
     }
 
     header nav a:hover {
-      background-color: rgba(255, 255, 255, 0.3);
-      transform: scale(1.1); /* Pequena animação de zoom */
+      color: var(--primary-mint);
+      background-color: rgba(255, 255, 255, 0.05);
     }
 
-    /* Estilo para a mensagem de sucesso */
-    .success-message {
-      background-color: #28a745;
-      color: white;
-      padding: 12px 30px;
-      text-align: center;
-      font-size: 18px;
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      border-radius: 25px;
-      z-index: 1000;
-      display: none;
-      transition: opacity 0.5s ease;
-    }
-
-    /* Container de pedidos */
-    section {
-      padding-top: 120px; /* Para compensar o header fixo */
-      padding-bottom: 60px;
-      padding-left: 40px;
-      padding-right: 40px;
-      background-color: #ffffff;
-      border-radius: 10px;
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
-    }
-
-    /* Ajuste no título "Pedidos Recebidos" */
-    section h2 {
-      color: #333;
-      font-size: 28px;
+    header nav a.active {
+      color: #ffffff;
+      background-color: rgba(255, 255, 255, 0.15);
       font-weight: 600;
-      margin-top: 30px;
+    }
+
+    header nav a.btn-sair { color: #ff8a8a; }
+    header nav a.btn-sair:hover { background-color: rgba(255, 138, 138, 0.1); color: #ff8a8a; }
+
+    /* Espaçamento superior */
+    main {
+      max-width: 1400px;
+      margin: 110px auto 40px auto;
+      padding: 0 48px;
+    }
+
+    .section-intro {
+      margin-bottom: 28px;
+    }
+
+    .section-intro h2 {
+      font-size: 26px;
+      font-weight: 600;
+      color: #16365c;
+    }
+
+    .section-intro p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* MENSAGEM DE SUCESSO FLUTUANTE */
+    .success-toast {
+      display: none;
+      position: fixed;
+      top: 85px;
+      right: 48px;
+      background-color: #2bb696;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      font-weight: 600;
+      font-size: 14px;
+      z-index: 1001;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .cards-container {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 30px;
-      margin-top: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 24px;
     }
 
+    /* CARD INTEGRADO PRESTÍGIO */
     .card {
-      background-color: white;
+      background: var(--surface);
+      border: 1px solid var(--border);
       border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      padding: 30px;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      overflow: hidden;
-      font-size: 16px;
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      border-left: 5px solid #1a73e8;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
     .card:hover {
-      transform: translateY(-12px);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
     }
 
-    .card h3 {
-      margin-top: 0;
-      color: #E64A19; /* Título dos cards, cor semelhante ao cabeçalho */
-      font-size: 22px;
+    .card p, .card div, .info-group {
+      font-size: 14px;
+      color: #333;
+      line-height: 1.6;
     }
 
-    .card p {
-      font-size: 16px;
-      color: #555;
-      line-height: 1.5;
+    .card strong {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-block;
     }
 
-    /* Estilo para a mensagem de carregamento */
-    .loading {
-      font-size: 18px;
-      color: #E64A19; /* Cor da mensagem de carregamento (laranja suave) */
+    .card em, .card .obs-italic, .card p i {
+      font-style: italic;
+      color: #475569;
+      font-size: 13.5px;
+      display: block;
+      margin-top: 4px;
+      background: #f8fafc;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border-left: 3px solid #cbd5e1;
+    }
+
+    /* Textareas */
+    .card textarea {
+      width: 100%;
+      min-height: 80px;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-family: 'Poppins', sans-serif;
+      font-size: 13px;
+      color: var(--text-main);
+      background-color: #f8fafc;
+      resize: vertical;
+      transition: all 0.2s ease;
+      margin-top: 4px;
+    }
+
+    .card textarea:focus {
+      outline: none;
+      border-color: var(--primary-mint);
+      background-color: #fff;
+      box-shadow: 0 0 0 3px rgba(43, 182, 150, 0.15);
+    }
+
+    /* STATUS TAGS ARREDONDADAS COM TEXTO BRANCO */
+    .status-tag {
+      display: inline-block;
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 15px;
+      text-transform: uppercase;
+      width: fit-content;
+      margin-top: 4px;
+      letter-spacing: 0.5px;
+      color: white !important;
+    }
+
+    .status-Aguardando { background-color: #f39c12; }
+    .status-Transporte { background-color: #3498db; }
+    .status-Loja5      { background-color: #9b59b6; }
+    .status-Finalizado { background-color: #18BC9C; }
+    .status-Retrabalho { background-color: #e74c3c; }
+    
+    .status-tag[class*="retrabalho"], 
+    .status-tag[class*="Retrabalho"] {
+      background-color: #e74c3c !important;
+    }
+
+    /* ==========================================================================
+       BOTÃO DE AÇÃO ÚNICA ULTRA-PRODUTIVO (VERDE MENTA CORPORATIVO)
+       ========================================================================== */
+    .card button.btn-principal { 
+      width: 100%;
+      padding: 12px 14px;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      background-color: var(--primary-mint);
+      color: white;
+      transition: background-color 0.2s ease, transform 0.1s ease;
+      margin-top: 8px;
+      box-shadow: 0 2px 6px rgba(43, 182, 150, 0.2);
+    }
+
+    .card button.btn-principal:hover {
+      background-color: #22947a;
+    }
+
+    .card button.btn-principal:active {
+      transform: scale(0.98);
+    }
+
+    /* Estilo auxiliar para o botão secundário caso apareça no fluxo */
+    .card button.btn-salvar {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background-color: #f1f5f9;
+      color: #475569;
+      font-family: 'Poppins', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: all 0.2s;
+    }
+    
+    .card button.btn-salvar:hover {
+      background-color: #e2e8f0;
+    }
+
+    .loading, .loading-indicator {
+      grid-column: 1 / -1;
       text-align: center;
-      margin-top: 50px;
+      padding: 40px;
+      color: var(--text-muted);
+      font-size: 14px;
     }
 
-    /* Responsividade para telas pequenas */
-    @media (max-width: 600px) {
-      body {
-        padding: 10px;
-      }
-
-      header {
-        padding: 10px 15px;
-      }
-
-      header h1 {
-        font-size: 22px;
-      }
-
-      header nav {
-        float: none;
-        text-align: center;
-        margin-top: 10px;
-      }
-
-      header nav a {
-        font-size: 14px;
-        padding: 8px 12px;
-      }
-
-      .cards-container {
-        grid-template-columns: 1fr;
-      }
-
-      .card {
-        padding: 20px;
-      }
-
-      .loading {
-        font-size: 16px;
-      }
-    }
-
-    /* Responsividade para telas médias */
-    @media (max-width: 1024px) {
-      .cards-container {
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      }
-
-      header nav {
-        text-align: center;
-      }
+    @media (max-width: 768px) {
+      header { padding: 0 24px; }
+      main { padding: 0 24px; margin-top: 110px; }
+      .success-toast { right: 24px; top: 85px; left: 24px; text-align: center; }
     }
   </style>
 </head>
 <body>
+
+  <div id="successMessage" class="success-toast">
+    ✓ Operação realizada com sucesso!
+  </div>
+
   <header>
-    <h1>Loja 5</h1>
+    <div class="logo-area">
+      <span class="icone-relogio">🕒</span> 
+      <span class="marca-texto">Oficina do Minuto</span>
+      <span class="tag-loja5">Loja 5</span>
+    </div>
     <nav>
-      <a href="#">Início</a>
-      <a href="#">Pedidos</a>
-      <a href="#">Contato</a>
+      <a href="/admin">Dashboard</a>
+      <a href="/pedidos" class="active">Pedidos</a>
+      <a href="/" class="btn-sair">Sair</a>
     </nav>
   </header>
 
-  <section>
-    <h2>Pedidos Recebidos</h2>
-    <p>Acompanhe os pedidos entregues.</p>
+  <main>
+    <section>
+      <div class="section-intro">
+        <h2>Pedidos Recebidos na Central</h2>
+        <p>Acompanhe, faça a triagem e despache as ordens de serviço em processamento na Loja 5.</p>
+      </div>
 
-    <!-- Mensagem de sucesso (inicialmente oculta) -->
-    <div id="successMessage" class="success-message">
-      Pedido finalizado com sucesso!
-    </div>
+      <div id="containerPedidos" class="cards-container">
+        <p class="loading">Buscando ordens de serviço ativas na central...</p>
+      </div>
+    </section>
+  </main>
 
-    <!-- Pedidos -->
-    <div id="containerPedidos" class="cards-container">
-      <!-- Inicialmente exibe "Carregando pedidos..." -->
-      <p class="loading">Carregando pedidos...</p>
-    </div>
-  </section>
-
-  <!-- Script do JavaScript -->
-  <script type="module" src="./js/loja5.js"></script>
+  <script type="module" src="/js/loja5.js"></script>
 </body>
 </html>

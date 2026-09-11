@@ -5,19 +5,16 @@ import { supabase } from "./supabase.js";
 // =========================
 async function carregarPedidos(filtroStatus = "", filtroLoja = "") {
   try {
-    let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false });
+    let query = supabase.from("pedidos").select("*").order("id", { ascending: false });
 
     // REGRA DE OURO DO FILTRO:
     if (filtroStatus && filtroStatus !== "Todos") {
-      // Se o usuário selecionou um status específico (ex: "Finalizado"), filtra exatamente por ele
       query = query.eq("status", filtroStatus.trim());
     } else {
-      // Se o filtro for "Todos" ou vazio (carga inicial):
-      // Traz todos os pedidos em andamento, MAS ESCONDE os "Finalizado"
       query = query.neq("status", "Finalizado");
     }
 
-    // Aplicando filtro de loja (verifica tanto loja_origem quanto loja_destino)
+    // Aplicando filtro de loja
     if (filtroLoja && filtroLoja !== "Todas") {
       const lojaLimpa = filtroLoja.trim();
       query = query.or(`loja_origem.eq.${lojaLimpa},loja_destino.eq.${lojaLimpa}`);
@@ -40,14 +37,13 @@ async function carregarPedidos(filtroStatus = "", filtroLoja = "") {
     pedidos.forEach(pedido => {
       const card = criarCardPedido(pedido);
       container.appendChild(card);
-      // Passa o ID e a loja_origem para que a timeline monte a frase customizada da gerência
       carregarTimeline(pedido.id, pedido.loja_origem);
     });
   } catch (err) {
     console.error("Erro ao carregar pedidos:", err);
     const container = document.getElementById("containerPedidos");
     if (container) {
-      container.innerHTML = `<p style="color:red; text-align: center; width: 100%;">Erro ao carregar pedidos.</p>`;
+      container.innerHTML = `<p style="color:red; text-align: center; width: 100%;">Erro ao carregar pedidos: ${err.message}</p>`;
     }
   }
 }
@@ -62,7 +58,6 @@ function criarCardPedido(pedido) {
 
   const statusComparacao = pedido.status ? pedido.status.trim() : "";
   
-  // ACEITA OS STATUS CORRETOS NA TRIAGEM DA LOJA:
   const podeInteragir = (
     statusComparacao === "Entregue na loja de origem" || 
     statusComparacao === "Recebido na loja de origem" || 
@@ -98,7 +93,7 @@ function criarCardPedido(pedido) {
   return card;
 }
 
-// Funções auxiliares de controle de clique expostas globalmente para os cards
+// Funções globais de interação nos cards
 window.gerenciarCliqueFinalizar = function(statusAtual, id) {
   if (statusAtual === "Retrabalho") {
     alert("O pedido está em espera de transporte para retrabalho, não podendo ser finalizado!");
@@ -116,7 +111,7 @@ window.gerenciarCliqueRetrabalho = function(statusAtual, id) {
 };
 
 // =========================
-// FUNÇÃO PARA CANCELAR RETRABALHO E VOLTAR STATUS ANTERIOR
+// CANCELAR RETRABALHO
 // =========================
 async function cancelarRetrabalho(pedidoId) {
   try {
@@ -127,16 +122,14 @@ async function cancelarRetrabalho(pedidoId) {
     const cardElement = document.getElementById(`card-pedido-${pedidoId}`);
     if (cardElement) cardElement.style.opacity = "0.5";
 
-    // 1. Busca os últimos eventos do pedido ordenados pelo mais recente
     const { data: eventos, error: errorEventos } = await supabase
       .from("pedido_eventos")
       .select("evento")
       .eq("pedido_id", pedidoId)
-      .order("criado_em", { ascending: false });
+      .order("id", { ascending: false });
 
     if (errorEventos) throw errorEventos;
 
-    // 2. Descobre qual era o status antes do "Retrabalho"
     let statusAnterior = "Entregue na loja de origem"; 
     
     if (eventos && eventos.length > 0) {
@@ -148,7 +141,6 @@ async function cancelarRetrabalho(pedidoId) {
 
     const obsCancelamento = "Retrabalho cancelado. Retornado ao status anterior.";
 
-    // 3. Atualiza a tabela 'pedidos' voltando para o status antigo
     const { error: errorPedido } = await supabase
       .from("pedidos")
       .update({ status: statusAnterior, obs_loja_origem: obsCancelamento })
@@ -156,11 +148,9 @@ async function cancelarRetrabalho(pedidoId) {
 
     if (errorPedido) throw errorPedido;
 
-    // 4. Captura o email do operador logado
     const { data: userData } = await supabase.auth.getUser();
     const operador = userData?.user?.email || "Sistema / Loja";
 
-    // 5. Grava o evento de cancelamento na timeline histórica
     const { error: errorLog } = await supabase.from("pedido_eventos").insert([{
       pedido_id: pedidoId,
       evento: statusAnterior, 
@@ -175,9 +165,7 @@ async function cancelarRetrabalho(pedidoId) {
     const filtroStatus = document.getElementById("filtroStatus")?.value || "";
     const filtroLoja = document.getElementById("filtroLoja")?.value || "";
     
-    setTimeout(() => {
-      carregarPedidos(filtroStatus, filtroLoja);
-    }, 300);
+    carregarPedidos(filtroStatus, filtroLoja);
 
   } catch (err) {
     console.error("Erro ao cancelar retrabalho:", err);
@@ -199,7 +187,6 @@ async function atualizarStatus(novoStatus, pedidoId) {
       ? "Serviço para ser refeito (Retrabalho)" 
       : "OS concluída e finalizada.";
 
-    // 1. Atualiza a tabela de pedidos
     const { error: errorPedido } = await supabase
       .from("pedidos")
       .update({ status: statusLimpo, obs_loja_origem: novaObservacao })
@@ -207,11 +194,9 @@ async function atualizarStatus(novoStatus, pedidoId) {
 
     if (errorPedido) throw errorPedido;
 
-    // 2. Captura o email do operador logado
     const { data: userData } = await supabase.auth.getUser();
     const operador = userData?.user?.email || "Sistema / Loja";
 
-    // 3. Grava o evento na timeline
     const { error: errorEvento } = await supabase.from("pedido_eventos").insert([{
       pedido_id: pedidoId,
       evento: statusLimpo,              
@@ -243,7 +228,7 @@ async function carregarTimeline(pedidoId, lojaOrigem) {
       .from("pedido_eventos")
       .select("*")
       .eq("pedido_id", pedidoId)
-      .order("criado_em", { ascending: true });
+      .order("id", { ascending: true });
 
     if (error) throw error;
 
@@ -311,20 +296,21 @@ function getStatusClass(status) {
 }
 
 // =========================
-// INICIALIZAÇÃO DA PÁGINA + SUBMIT DOS FORMULÁRIOS MODAL
+// INICIALIZAÇÃO E EVENTOS
 // =========================
 document.addEventListener("DOMContentLoaded", () => {
   carregarPedidos();
 
-  // Lógica reutilizável para submissão do formulário 1
+  // Execução Modal Criar Pedido
   const executarCriacaoPedidoModal = async () => {
-    const tipoServico = document.getElementById("tipo").value;
-    const lojaOrigem = document.getElementById("lojaOrigem").value;
-    const lojaDestino = document.getElementById("lojaDestino").value;
-    const orcamento = document.getElementById("orcamento").checked;
+    const tipoServico = document.getElementById("tipo")?.value;
+    const lojaOrigem = document.getElementById("lojaOrigem")?.value;
+    const lojaDestino = document.getElementById("lojaDestino")?.value;
+    const orcamento = document.getElementById("orcamento")?.checked || false;
+    const observacao = document.getElementById("observacao")?.value.trim() || "";
+
     const { data: userData } = await supabase.auth.getUser();
     const operador = userData?.user?.email || "Sistema / Loja";
-    const observacao = document.getElementById("observacao").value.trim();
 
     if (!tipoServico || !lojaOrigem || !lojaDestino) {
       alert("Preencha todos os campos obrigatórios!");
@@ -369,84 +355,82 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // 1. FORMULÁRIO 1: CRIAR PEDIDO NORMAL
+  // Form 1 - Criar Pedido Normal
   const formCriarPedidoModal = document.getElementById("formCriarPedidoModal");
-  formCriarPedidoModal?.addEventListener("submit", (event) => {
-    event.preventDefault();
-    executarCriacaoPedidoModal();
-  });
+  if (formCriarPedidoModal) {
+    formCriarPedidoModal.addEventListener("submit", (event) => {
+      event.preventDefault();
+      executarCriacaoPedidoModal();
+    });
+  }
 
-  // Gatilho para o botão com type="button" no modal 1
-  document.getElementById("btnCriarPedido")?.addEventListener("click", () => {
-    executarCriacaoPedidoModal();
-  });
-
-  // 2. FORMULÁRIO 2: CRIAR PEDIDO POR TICKET
+  // Form 2 - Criar Pedido por Ticket
   const formCriarPedidoTicketModal = document.getElementById("formCriarPedidoTicketModal");
-  formCriarPedidoTicketModal?.addEventListener("submit", async (event) => {
-    event.preventDefault();
+  if (formCriarPedidoTicketModal) {
+    formCriarPedidoTicketModal.addEventListener("submit", async (event) => {
+      event.preventDefault();
 
-    const tipoServico = document.getElementById("tipoTicket").value;
-    const lojaOrigem = document.getElementById("lojaOrigemTicket").value;
-    const lojaDestino = document.getElementById("lojaDestinoTicket").value;
-    const orcamento = document.getElementById("orcamentoTicket").checked;
-    const observacaoTicket = document.getElementById("observacaoTicket").value.trim();
+      const tipoServico = document.getElementById("tipoTicket")?.value;
+      const lojaOrigem = document.getElementById("lojaOrigemTicket")?.value;
+      const lojaDestino = document.getElementById("lojaDestinoTicket")?.value;
+      const orcamento = document.getElementById("orcamentoTicket")?.checked || false;
+      const observacaoTicket = document.getElementById("observacaoTicket")?.value.trim() || "";
 
-    const { data: userData } = await supabase.auth.getUser();
-    const operador = userData?.user?.email || "Sistema / Loja";
+      const { data: userData } = await supabase.auth.getUser();
+      const operador = userData?.user?.email || "Sistema / Loja";
 
-    if (!tipoServico || !lojaOrigem || !lojaDestino) {
-      alert("Preencha todos os campos obrigatórios!");
-      return;
-    }
-
-    try {
-      const statusInicial = "Aguardando coleta";
-      const obsInicial = observacaoTicket || "Pedido criado através do Ticket.";
-
-      const { data, error } = await supabase.from("pedidos").insert([{
-        tipo_servico: tipoServico,
-        loja_origem: lojaOrigem,
-        loja_destino: lojaDestino,
-        orcamento: orcamento,
-        obs_loja_origem: obsInicial,
-        status: statusInicial
-      }]).select();
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        await supabase.from("pedido_eventos").insert([{
-          pedido_id: data[0].id,
-          evento: statusInicial,
-          observacao: obsInicial,
-          criado_por: operador
-        }]);
+      if (!tipoServico || !lojaOrigem || !lojaDestino) {
+        alert("Preencha todos os campos obrigatórios!");
+        return;
       }
 
-      alert("Pedido por Ticket criado e salvo com sucesso!");
-      
-      formCriarPedidoTicketModal.reset();
-      
-      if (typeof window.fecharModalTicket === "function") {
-        window.fecharModalTicket();
+      try {
+        const statusInicial = "Aguardando coleta";
+        const obsInicial = observacaoTicket || "Pedido criado através do Ticket.";
+
+        const { data, error } = await supabase.from("pedidos").insert([{
+          tipo_servico: tipoServico,
+          loja_origem: lojaOrigem,
+          loja_destino: lojaDestino,
+          orcamento: orcamento,
+          obs_loja_origem: obsInicial,
+          status: statusInicial
+        }]).select();
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          await supabase.from("pedido_eventos").insert([{
+            pedido_id: data[0].id,
+            evento: statusInicial,
+            observacao: obsInicial,
+            criado_por: operador
+          }]);
+        }
+
+        alert("Pedido por Ticket criado e salvo com sucesso!");
+        formCriarPedidoTicketModal.reset();
+        
+        if (typeof window.fecharModalTicket === "function") {
+          window.fecharModalTicket();
+        }
+
+        carregarPedidos();
+      } catch (err) {
+        console.error("Erro ao criar pedido por ticket:", err);
+        alert("Erro ao criar pedido por ticket. Veja o console.");
       }
+    });
+  }
 
-      carregarPedidos();
-    } catch (err) {
-      console.error("Erro ao criar pedido por ticket:", err);
-      alert("Erro ao criar pedido por ticket. Veja o console.");
-    }
-  });
-
-  // FILTRO DE PEDIDOS
+  // Filtro de Pedidos
   document.getElementById("btnFiltrar")?.addEventListener("click", () => {
     const filtroStatus = document.getElementById("filtroStatus")?.value || "";
     const filtroLoja = document.getElementById("filtroLoja")?.value || "";
     carregarPedidos(filtroStatus, filtroLoja);
   });
 
-  // AUTO-ATUALIZAÇÃO INTELIGENTE (30 segundos)
+  // Atualização em 30 segundos
   setInterval(() => {
     const elStatus = document.getElementById("filtroStatus");
     const elLoja = document.getElementById("filtroLoja");

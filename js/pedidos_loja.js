@@ -1,5 +1,8 @@
 import { supabase } from "./supabase.js";
 
+// Configuração da URL da API (usando localhost para ambiente de desenvolvimento local)
+const API_URL = 'http://localhost:3000';
+
 // =========================
 // CARREGAR PEDIDOS
 // =========================
@@ -14,10 +17,10 @@ async function carregarPedidos(filtroStatus = "", filtroLoja = "") {
       query = query.neq("status", "Finalizado");
     }
 
-    // Aplicando filtro de loja
+    // Aplicando filtro de loja (uso de aspas duplas para tratar nomes com espaços)
     if (filtroLoja && filtroLoja !== "Todas") {
       const lojaLimpa = filtroLoja.trim();
-      query = query.or(`loja_origem.eq.${lojaLimpa},loja_destino.eq.${lojaLimpa}`);
+      query = query.or(`loja_origem.eq."${lojaLimpa}",loja_destino.eq."${lojaLimpa}"`);
     }
 
     const { data, error } = await query;
@@ -430,7 +433,7 @@ document.addEventListener("DOMContentLoaded", () => {
     carregarPedidos(filtroStatus, filtroLoja);
   });
 
-  // Atualização em 30 segundos
+  // Atualização automática em 30 segundos
   setInterval(() => {
     const elStatus = document.getElementById("filtroStatus");
     const elLoja = document.getElementById("filtroLoja");

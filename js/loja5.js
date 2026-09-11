@@ -4,15 +4,15 @@ import { supabase } from "./supabase.js";
 const containerPedidos = document.getElementById("containerPedidos");
 const successMessage = document.getElementById("successMessage");
 
-// Elemento do indicador de carregamento
+// Indicator de carregamento
 const loadingMessage = document.createElement("div");
-loadingMessage.classList.add("loading-indicator");
-loadingMessage.innerHTML = "Carregando pedidos...";
+loadingMessage.classList.add("loading");
+loadingMessage.innerHTML = "Buscando ordens de serviço ativas na central...";
 
 // =========================
 // CARREGAR PEDIDOS AUTOMATICAMENTE
 // =========================
-async function carregarPedidos() {
+export async function carregarPedidos() {
   if (!containerPedidos) return;
 
   try {
@@ -28,7 +28,7 @@ async function carregarPedidos() {
         "Entregue na Loja de Destino para retrabalho",
         "Em serviço"
       ])
-      .order("id", { ascending: false }); // Ordena por ID decrescente
+      .order("id", { ascending: false });
 
     if (error) throw error;
 
@@ -37,7 +37,7 @@ async function carregarPedidos() {
     // Se nenhum registro for retornado
     if (!data || data.length === 0) {
       containerPedidos.innerHTML =
-        "<p class='loading' style='grid-column: 1/-1; text-align: center;'>Nenhum pedido encontrado na central.</p>";
+        '<p class="loading">Nenhum pedido em processamento encontrado na central.</p>';
       return;
     }
 
@@ -50,13 +50,13 @@ async function carregarPedidos() {
   } catch (err) {
     console.error("Erro ao carregar pedidos:", err);
     if (containerPedidos) {
-      containerPedidos.innerHTML = `<p class="error" style="color: red; text-align: center; grid-column: 1/-1;">Erro ao carregar pedidos: ${err.message}</p>`;
+      containerPedidos.innerHTML = `<p class="loading" style="color: #ef4444;">Erro ao carregar pedidos: ${err.message}</p>`;
     }
   }
 }
 
 // =========================
-// CRIAR CARD DE PEDIDO
+// CRIAR CARD DE PEDIDO (DESIGN COMPATÍVEL COM CSS NOVO)
 // =========================
 function criarCardPedido(pedido) {
   const card = document.createElement("div");
@@ -75,16 +75,35 @@ function criarCardPedido(pedido) {
     pedido.status === "Em serviço";
 
   card.innerHTML = `
-    <strong>OS:</strong> ${pedido.id}<br>
-    <strong>Loja de Origem:</strong> ${lojaOrigemLimpa}<br>
-    <strong>Loja de Destino:</strong> ${pedido.loja_destino || "Não especificada"}<br>
-    <strong>Serviço:</strong> ${pedido.tipo_servico || "Não especificado"}<br>
-    <span class="status-tag ${statusClass}">${pedido.status}</span><br>
-    <strong>Observação:</strong><br>
-    <em>${pedido.obs_loja_origem || "Nenhuma observação"}</em><br>
+    <div>
+      <strong>Ordem de Serviço</strong>
+      <p style="font-size: 18px; font-weight: 800; color: var(--primary-blue);">#OS-${pedido.id}</p>
+    </div>
 
-    <label style="margin-top: 8px; display: inline-block;" for="obs_loja5_${pedido.id}"><strong>Observação Loja 5:</strong></label><br>
-    <textarea id="obs_loja5_${pedido.id}" placeholder="Digite uma observação técnica antes de finalizar..." ${pedido.status === "Finalizado" ? "disabled" : ""}>${pedido.obs_loja5 || ""}</textarea><br>
+    <div>
+      <strong>Loja Origem / Destino</strong>
+      <p style="font-size: 14px; font-weight: 600;">${lojaOrigemLimpa} → ${pedido.loja_destino || "Não especificada"}</p>
+    </div>
+
+    <div>
+      <strong>Serviço</strong>
+      <p style="font-size: 14px; color: var(--text-main);">${pedido.tipo_servico || "Não especificado"}</p>
+    </div>
+
+    <div>
+      <strong>Status Atual</strong><br>
+      <span class="status-tag ${statusClass}" style="margin-top: 4px;">${pedido.status}</span>
+    </div>
+
+    <div>
+      <strong>Observação da Origem</strong>
+      <em>${pedido.obs_loja_origem || "Nenhuma observação registrada."}</em>
+    </div>
+
+    <div>
+      <strong>Observação Loja 5</strong>
+      <textarea id="obs_loja5_${pedido.id}" placeholder="Digite uma nota técnica antes de finalizar..." ${pedido.status === "Finalizado" ? "disabled" : ""}>${pedido.obs_loja5 || ""}</textarea>
+    </div>
 
     ${pedido.status === "Em serviço" ? `<button class="btn-salvar" onclick="mudarStatusParaTransporte('${pedido.id}')">Mover para Transporte</button>` : ""}
 
@@ -139,12 +158,12 @@ window.mudarStatusParaFinalizado = async function (pedidoId, statusActual, lojaO
       return;
     }
 
-    const textoEvento = `Serviço feito aguando coleta para : ${lojaOrigem}`;
+    const textoEvento = `Serviço feito aguardando coleta para: ${lojaOrigem}`;
 
     let detalheEvento =
       statusActual === "Entregue na Loja de Destino para retrabalho"
-        ? `Serviço de retrabalho concluído pela Central.`
-        : `Serviço original concluído pela Central.`;
+        ? "Serviço de retrabalho concluído pela Central."
+        : "Serviço original concluído pela Central.";
 
     if (obsLoja5.trim()) {
       detalheEvento += ` Nota técnica: ${obsLoja5}`;
@@ -204,17 +223,19 @@ function getStatusClass(status) {
   )
     return "status-Loja5";
   if (st === "Em serviço") return "status-Transporte";
-  if (st === "Em transporte para loja de origem") return "status-Transporte-Volta";
+  if (st === "Em transporte para loja de origem") return "status-Transporte";
   if (st === "Finalizado") return "status-Finalizado";
   if (st === "Retrabalho") return "status-Retrabalho";
   return "status-Aguardando";
 }
 
 // =========================
-// INICIALIZAÇÃO AUTOMÁTICA
+// INICIALIZAÇÃO IMEDIATA E ROBUSTA
 // =========================
-document.addEventListener("DOMContentLoaded", () => {
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", carregarPedidos);
+} else {
   carregarPedidos();
-});
+}
 
 window.carregarPedidos = carregarPedidos;

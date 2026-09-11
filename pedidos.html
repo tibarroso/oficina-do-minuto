@@ -284,77 +284,80 @@
     </section>
   </main>
 
-  <script>
-    const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-      ? 'http://localhost:3000' 
-      : 'https://seu-backend-em-producao.com';
+<script>
+  // Aponta diretamente para o seu backend local
+  const API_URL = 'http://localhost:3000';
 
-    function abrirModal() { document.getElementById('modalCriarPedido').classList.add('ativo'); }
-    function fecharModal() {
-      document.getElementById('modalCriarPedido').classList.remove('ativo');
-      document.getElementById('formCriarPedidoModal').reset();
+  function abrirModal() { document.getElementById('modalCriarPedido').classList.add('ativo'); }
+  function fecharModal() {
+    document.getElementById('modalCriarPedido').classList.remove('ativo');
+    document.getElementById('formCriarPedidoModal').reset();
+  }
+
+  function abrirModalTicket() { document.getElementById('modalCriarPedidoTicket').classList.add('ativo'); }
+  function fecharModalTicket() {
+    document.getElementById('modalCriarPedidoTicket').classList.remove('ativo');
+    document.getElementById('boxInfoTicket').style.display = 'none';
+    document.getElementById('formCriarPedidoTicketModal').reset();
+  }
+
+  window.abrirModal = abrirModal;
+  window.fecharModal = fecharModal;
+  window.abrirModalTicket = abrirModalTicket;
+  window.fecharModalTicket = fecharModalTicket;
+
+  async function buscarDadosTicket() {
+    const numeroTicket = document.getElementById('numeroTicketInput').value.trim();
+    const lojaOrigem = document.getElementById('lojaOrigemTicket').value;
+
+    if (!lojaOrigem) {
+      alert('Por favor, selecione a Loja de Origem primeiro.');
+      return;
     }
 
-    function abrirModalTicket() { document.getElementById('modalCriarPedidoTicket').classList.add('ativo'); }
-    function fecharModalTicket() {
-      document.getElementById('modalCriarPedidoTicket').classList.remove('ativo');
-      document.getElementById('boxInfoTicket').style.display = 'none';
-      document.getElementById('formCriarPedidoTicketModal').reset();
+    if (!numeroTicket) {
+      alert('Por favor, informe o número do ticket.');
+      return;
     }
 
-    window.abrirModal = abrirModal;
-    window.fecharModal = fecharModal;
-    window.abrirModalTicket = abrirModalTicket;
-    window.fecharModalTicket = fecharModalTicket;
-
-    async function buscarDadosTicket() {
-      const numeroTicket = document.getElementById('numeroTicketInput').value.trim();
-      const lojaOrigem = document.getElementById('lojaOrigemTicket').value;
-
-      if (!lojaOrigem) {
-        alert('Por favor, selecione a Loja de Origem primeiro.');
-        return;
+    try {
+      const response = await fetch(`${API_URL}/api/ticket/${numeroTicket}?loja=${encodeURIComponent(lojaOrigem)}`);
+      
+      if (!response.ok) {
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(errJson.mensagem || `Ticket não encontrado na ${lojaOrigem} (Status: ${response.status})`);
       }
 
-      if (!numeroTicket) {
-        alert('Por favor, informe o número do ticket.');
-        return;
+      const dados = await response.json();
+      document.getElementById('infoNomeCliente').innerText = dados.nomeCliente || 'Não informado';
+      document.getElementById('infoTelefone').innerText = dados.telefoneCliente || 'N/I';
+      document.getElementById('infoPosicaoSaco').innerText = dados.posicaoSaco || 'N/I';
+      document.getElementById('infoTotalPecas').innerText = dados.totalPecas || 0;
+      document.getElementById('infoValorTotal').innerText = `R$ ${parseFloat(dados.totalGeral || 0).toFixed(2)}`;
+      document.getElementById('boxInfoTicket').style.display = 'block';
+
+      if (dados.tipo === 'P') {
+        document.getElementById('tipoTicket').value = 'Sapataria';
       }
 
-      try {
-        const response = await fetch(`${API_URL}/api/ticket/${numeroTicket}?loja=${encodeURIComponent(lojaOrigem)}`);
-        if (!response.ok) throw new Error(`Ticket não encontrado na ${lojaOrigem} (Status: ${response.status})`);
+      const obsFormatada = `Ticket: ${dados.numeroTicket} | Cliente: ${dados.nomeCliente} | Saco: ${dados.posicaoSaco} | Peças: ${dados.totalPecas} | Valor: R$ ${dados.totalGeral}`;
+      document.getElementById('observacaoTicket').value = obsFormatada;
 
-        const dados = await response.json();
-        document.getElementById('infoNomeCliente').innerText = dados.nomeCliente || 'Não informado';
-        document.getElementById('infoTelefone').innerText = dados.telefoneCliente || 'N/I';
-        document.getElementById('infoPosicaoSaco').innerText = dados.posicaoSaco || 'N/I';
-        document.getElementById('infoTotalPecas').innerText = dados.totalPecas || 0;
-        document.getElementById('infoValorTotal').innerText = `R$ ${parseFloat(dados.totalGeral || 0).toFixed(2)}`;
-        document.getElementById('boxInfoTicket').style.display = 'block';
-
-        if (dados.tipo === 'P') {
-          document.getElementById('tipoTicket').value = 'Sapataria';
-        }
-
-        const obsFormatada = `Ticket: ${dados.numeroTicket} | Cliente: ${dados.nomeCliente} | Saco: ${dados.posicaoSaco} | Peças: ${dados.totalPecas} | Valor: R$ ${dados.totalGeral}`;
-        document.getElementById('observacaoTicket').value = obsFormatada;
-
-      } catch (erro) {
-        console.warn('Erro ao buscar ticket:', erro.message);
-        alert(erro.message);
-      }
+    } catch (erro) {
+      console.warn('Erro ao buscar ticket:', erro.message);
+      alert(erro.message);
     }
+  }
 
-    window.buscarDadosTicket = buscarDadosTicket;
+  window.buscarDadosTicket = buscarDadosTicket;
 
-    window.onclick = function(event) {
-      const modal1 = document.getElementById('modalCriarPedido');
-      const modal2 = document.getElementById('modalCriarPedidoTicket');
-      if (event.target === modal1) fecharModal();
-      if (event.target === modal2) fecharModalTicket();
-    }
-  </script>
+  window.onclick = function(event) {
+    const modal1 = document.getElementById('modalCriarPedido');
+    const modal2 = document.getElementById('modalCriarPedidoTicket');
+    if (event.target === modal1) fecharModal();
+    if (event.target === modal2) fecharModalTicket();
+  }
+</script>>
 
   <!-- Carregamento do script modular da pasta /js -->
   <script type="module" src="js/pedidos_loja.js"></script>

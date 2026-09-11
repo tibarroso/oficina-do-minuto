@@ -1,3 +1,4 @@
+// Ajuste o caminho caso o supabase.js esteja na raiz (ex: "../supabase.js")
 import { supabase } from "./supabase.js";
 
 // Referências aos elementos do DOM
@@ -19,15 +20,15 @@ export async function carregarPedidos() {
     containerPedidos.innerHTML = "";
     containerPedidos.appendChild(loadingMessage);
 
-    // Consulta no Supabase incluindo os status correspondentes à Loja 5
+    // Consulta flexível com ILIKE para evitar erros de maiúsculas/minúsculas no banco
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
-      .in("status", [
-        "Entregue na Loja 5",
-        "Entregue na Loja de Destino para retrabalho",
-        "Em serviço"
-      ])
+      .or(
+        "status.ilike.%Entregue na Loja 5%," +
+        "status.ilike.%Loja de Destino para retrabalho%," +
+        "status.ilike.%Em serviço%"
+      )
       .order("id", { ascending: false });
 
     if (error) throw error;
@@ -56,7 +57,7 @@ export async function carregarPedidos() {
 }
 
 // =========================
-// CRIAR CARD DE PEDIDO (DESIGN COMPATÍVEL COM CSS NOVO)
+// CRIAR CARD DE PEDIDO
 // =========================
 function criarCardPedido(pedido) {
   const card = document.createElement("div");
@@ -68,11 +69,12 @@ function criarCardPedido(pedido) {
     ? pedido.loja_origem.trim()
     : "Não especificada";
 
+  const statusNormalizado = (pedido.status || "").toLowerCase();
   const podeFinalizar =
-    pedido.status === "Entregue na Loja 5" ||
-    pedido.status === "Em transporte para loja de origem" ||
-    pedido.status === "Entregue na Loja de Destino para retrabalho" ||
-    pedido.status === "Em serviço";
+    statusNormalizado.includes("loja 5") ||
+    statusNormalizado.includes("transporte") ||
+    statusNormalizado.includes("retrabalho") ||
+    statusNormalizado.includes("serviço");
 
   card.innerHTML = `
     <div>
@@ -102,12 +104,12 @@ function criarCardPedido(pedido) {
 
     <div>
       <strong>Observação Loja 5</strong>
-      <textarea id="obs_loja5_${pedido.id}" placeholder="Digite uma nota técnica antes de finalizar..." ${pedido.status === "Finalizado" ? "disabled" : ""}>${pedido.obs_loja5 || ""}</textarea>
+      <textarea id="obs_loja5_${pedido.id}" placeholder="Digite uma nota técnica antes de finalizar..." ${statusNormalizado.includes("finalizado") ? "disabled" : ""}>${pedido.obs_loja5 || ""}</textarea>
     </div>
 
-    ${pedido.status === "Em serviço" ? `<button class="btn-salvar" onclick="mudarStatusParaTransporte('${pedido.id}')">Mover para Transporte</button>` : ""}
+    ${statusNormalizado.includes("serviço") ? `<button class="btn-salvar" onclick="mudarStatusParaTransporte('${pedido.id}')">Mover para Transporte</button>` : ""}
 
-    ${podeFinalizar && pedido.status !== "Finalizado" ? `<button class="btn-principal" onclick="mudarStatusParaFinalizado('${pedido.id}', '${pedido.status}', '${lojaOrigemLimpa}')">Finalizar Pedido</button>` : ""}
+    ${podeFinalizar && !statusNormalizado.includes("finalizado") ? `<button class="btn-principal" onclick="mudarStatusParaFinalizado('${pedido.id}', '${pedido.status}', '${lojaOrigemLimpa}')">Finalizar Pedido</button>` : ""}
   `;
 
   return card;
@@ -160,10 +162,9 @@ window.mudarStatusParaFinalizado = async function (pedidoId, statusActual, lojaO
 
     const textoEvento = `Serviço feito aguardando coleta para: ${lojaOrigem}`;
 
-    let detalheEvento =
-      statusActual === "Entregue na Loja de Destino para retrabalho"
-        ? "Serviço de retrabalho concluído pela Central."
-        : "Serviço original concluído pela Central.";
+    let detalheEvento = (statusActual || "").toLowerCase().includes("retrabalho")
+      ? "Serviço de retrabalho concluído pela Central."
+      : "Serviço original concluído pela Central.";
 
     if (obsLoja5.trim()) {
       detalheEvento += ` Nota técnica: ${obsLoja5}`;
@@ -216,16 +217,10 @@ window.mudarStatusParaTransporte = async function (pedidoId) {
 // =========================
 function getStatusClass(status) {
   if (!status) return "status-Aguardando";
-  const st = status.trim();
-  if (
-    st === "Entregue na Loja 5" ||
-    st === "Entregue na Loja de Destino para retrabalho"
-  )
-    return "status-Loja5";
-  if (st === "Em serviço") return "status-Transporte";
-  if (st === "Em transporte para loja de origem") return "status-Transporte";
-  if (st === "Finalizado") return "status-Finalizado";
-  if (st === "Retrabalho") return "status-Retrabalho";
+  const st = status.toLowerCase();
+  if (st.includes("loja 5") || st.includes("retrabalho")) return "status-Loja5";
+  if (st.includes("serviço") || st.includes("transporte")) return "status-Transporte";
+  if (st.includes("finalizado")) return "status-Finalizado";
   return "status-Aguardando";
 }
 

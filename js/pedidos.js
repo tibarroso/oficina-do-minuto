@@ -37,7 +37,7 @@ async function verificarLogin() {
 // Criar Pedido
 // ===============================
 btnCriarPedido?.addEventListener("click", async (e) => {
-  e.preventDefault(); // Evita recarregamento de formulários se estiver dentro de uma tag <form>
+  e.preventDefault(); // Evita recarregamento de formulários
 
   if (!usuarioLogado) {
     alert("Usuário não logado!");
@@ -56,12 +56,18 @@ btnCriarPedido?.addEventListener("click", async (e) => {
     return;
   }
 
+  // Validação para impedir origem e destino iguais
+  if (lojaOrigem === lojaDestino) {
+    alert("A loja de origem não pode ser igual à loja de destino.");
+    return;
+  }
+
   // STATUS PADRONIZADO DO FLUXO
   const statusInicial = "Aguardando coleta";
   const obsInicial = observacao || `Serviço solicitado: ${tipo}`;
 
   try {
-    // Desabilita o botão para evitar envios duplicados em cliques múltiplos
+    // Desabilita o botão para evitar cliques múltiplos/duplicações
     if (btnCriarPedido) btnCriarPedido.disabled = true;
 
     // 1. Inserir na tabela de 'pedidos'
@@ -119,7 +125,8 @@ async function registrarEvento(pedidoId, evento, observacao = "") {
         pedido_id: pedidoId,
         evento: evento,
         observacao: observacao,
-        criado_por: usuarioLogado.email || "Sistema / Loja"
+        criado_por: usuarioLogado.email || "Sistema / Loja",
+        criado_em: new Date().toISOString()
       }]);
 
     if (error) throw error;

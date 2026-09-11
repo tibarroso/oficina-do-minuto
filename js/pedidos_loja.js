@@ -316,11 +316,8 @@ function getStatusClass(status) {
 document.addEventListener("DOMContentLoaded", () => {
   carregarPedidos();
 
-  // 1. FORMULÁRIO 1: CRIAR PEDIDO NORMAL
-  const formCriarPedidoModal = document.getElementById("formCriarPedidoModal");
-  formCriarPedidoModal?.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
+  // Lógica reutilizável para submissão do formulário 1
+  const executarCriacaoPedidoModal = async () => {
     const tipoServico = document.getElementById("tipo").value;
     const lojaOrigem = document.getElementById("lojaOrigem").value;
     const lojaDestino = document.getElementById("lojaDestino").value;
@@ -359,7 +356,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       alert("Pedido criado com sucesso!");
-      formCriarPedidoModal.reset();
+      document.getElementById("formCriarPedidoModal")?.reset();
       
       if (typeof window.fecharModal === "function") {
         window.fecharModal();
@@ -370,6 +367,18 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Erro ao criar pedido:", err);
       alert("Erro ao criar pedido. Veja o console.");
     }
+  };
+
+  // 1. FORMULÁRIO 1: CRIAR PEDIDO NORMAL
+  const formCriarPedidoModal = document.getElementById("formCriarPedidoModal");
+  formCriarPedidoModal?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    executarCriacaoPedidoModal();
+  });
+
+  // Gatilho para o botão com type="button" no modal 1
+  document.getElementById("btnCriarPedido")?.addEventListener("click", () => {
+    executarCriacaoPedidoModal();
   });
 
   // 2. FORMULÁRIO 2: CRIAR PEDIDO POR TICKET

@@ -36,7 +36,7 @@
     }
 
     /* ==========================================================================
-       HEADER PREMIUM INTEGRADO (MESMO ESTILO DO PAINEL DE PEDIDOS)
+       HEADER PREMIUM INTEGRADO
        ========================================================================== */
     header {
       background-color: var(--primary-blue);
@@ -74,7 +74,7 @@
       letter-spacing: 0.5px;
     }
 
-    header h1 span.tag-loja5 {
+    header h1 span.tag-loja5, .tag-loja5 {
       background: rgba(255, 255, 255, 0.15);
       color: #ffffff;
       padding: 4px 8px;
@@ -116,7 +116,6 @@
     header nav a.btn-sair { color: #ff8a8a; }
     header nav a.btn-sair:hover { background-color: rgba(255, 138, 138, 0.1); color: #ff8a8a; }
 
-    /* Espaçamento superior */
     main {
       max-width: 1400px;
       margin: 110px auto 40px auto;
@@ -167,7 +166,7 @@
       gap: 24px;
     }
 
-    /* CARD INTEGRADO PRESTÍGIO */
+    /* CARD INTEGRADO */
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -213,7 +212,6 @@
       border-left: 3px solid #cbd5e1;
     }
 
-    /* Textareas */
     .card textarea {
       width: 100%;
       min-height: 80px;
@@ -236,7 +234,7 @@
       box-shadow: 0 0 0 3px rgba(43, 182, 150, 0.15);
     }
 
-    /* STATUS TAGS ARREDONDADAS COM TEXTO BRANCO */
+    /* STATUS TAGS ARREDONDADAS */
     .status-tag {
       display: inline-block;
       padding: 4px 12px;
@@ -261,9 +259,7 @@
       background-color: #e74c3c !important;
     }
 
-    /* ==========================================================================
-       BOTÃO DE AÇÃO ÚNICA ULTRA-PRODUTIVO (VERDE MENTA CORPORATIVO)
-       ========================================================================== */
+    /* BOTÃO DE AÇÃO ÚNICA */
     .card button.btn-principal { 
       width: 100%;
       padding: 12px 14px;
@@ -288,7 +284,6 @@
       transform: scale(0.98);
     }
 
-    /* Estilo auxiliar para o botão secundário caso apareça no fluxo */
     .card button.btn-salvar {
       width: 100%;
       padding: 10px 14px;
@@ -355,6 +350,7 @@
     </section>
   </main>
 
-  <script type="module" src="/js/loja5.js"></script>
+  <!-- Caminho corrigido para o arquivo JS de integração do Supabase -->
+  <script type="module" src="./pedidos_loja.js"></script>
 </body>
 </html>

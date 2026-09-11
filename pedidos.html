@@ -10,388 +10,81 @@
 
   <style>
     /* RESET E BASE */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: 'Poppins', sans-serif;
-      background-color: #f1f5f9;
-      color: #1e293b;
-      min-height: 100vh;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; color: #1e293b; min-height: 100vh; }
 
     /* HEADER FIXO */
-    header {
-      background-color: #0f172a;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 65px;
-      z-index: 1000;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      display: flex;
-      align-items: center;
-    }
-
-    .container-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 95%;
-      max-width: 1600px;
-      margin: 0 auto;
-    }
-
-    .logo-area {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .icone-relogio {
-      font-size: 22px;
-    }
-
-    .marca-texto {
-      font-size: 20px;
-      font-weight: 700;
-      color: #f59e0b;
-      letter-spacing: 0.5px;
-    }
-
-    header nav {
-      display: flex;
-      gap: 20px;
-    }
-
-    header nav a {
-      color: #94a3b8;
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 500;
-      transition: color 0.2s;
-    }
-
-    header nav a:hover {
-      color: #38bdf8;
-    }
+    header { background-color: #0f172a; position: fixed; top: 0; left: 0; width: 100%; height: 65px; z-index: 1000; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); display: flex; align-items: center; }
+    .container-header { display: flex; justify-content: space-between; align-items: center; width: 95%; max-width: 1600px; margin: 0 auto; }
+    .logo-area { display: flex; align-items: center; gap: 10px; }
+    .icone-relogio { font-size: 22px; }
+    .marca-texto { font-size: 20px; font-weight: 700; color: #f59e0b; letter-spacing: 0.5px; }
+    header nav { display: flex; gap: 20px; }
+    header nav a { color: #94a3b8; text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+    header nav a:hover { color: #38bdf8; }
 
     /* CONTAINER PRINCIPAL */
-    main {
-      margin-top: 85px;
-      padding: 0 20px 40px 20px;
-      width: 100%;
-      max-width: 1600px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .titulo-pagina {
-      font-size: 26px;
-      font-weight: 700;
-      color: #0f172a;
-      margin-bottom: 4px;
-    }
-
-    .subtitulo {
-      color: #64748b;
-      font-size: 14px;
-      margin-bottom: 24px;
-    }
+    main { margin-top: 85px; padding: 0 20px 40px 20px; width: 100%; max-width: 1600px; margin-left: auto; margin-right: auto; }
+    .titulo-pagina { font-size: 26px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+    .subtitulo { color: #64748b; font-size: 14px; margin-bottom: 24px; }
 
     /* BARRA DE AÇÕES E FILTROS */
-    .barra-acoes-painel {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: #ffffff;
-      padding: 16px 20px;
-      border-radius: 12px;
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-      margin-bottom: 24px;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .grupo-botoes-criar {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .filtros-topo-compacto {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .filtros-topo-compacto select {
-      padding: 0 14px;
-      height: 42px;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      background-color: #ffffff;
-      font-size: 14px;
-      color: #334155;
-      outline: none;
-      min-width: 180px;
-    }
+    .barra-acoes-painel { display: flex; justify-content: space-between; align-items: center; background-color: #ffffff; padding: 16px 20px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); margin-bottom: 24px; gap: 16px; flex-wrap: wrap; }
+    .grupo-botoes-criar { display: flex; gap: 12px; flex-wrap: wrap; }
+    .filtros-topo-compacto { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .filtros-topo-compacto select { padding: 0 14px; height: 42px; border: 1px solid #cbd5e1; border-radius: 8px; background-color: #ffffff; font-size: 14px; color: #334155; outline: none; min-width: 180px; }
 
     /* BOTÕES */
-    .btn-verde-dash, .btn-azul-dash, .btn-filtrar-azul {
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      height: 42px;
-      padding: 0 20px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-
+    .btn-verde-dash, .btn-azul-dash, .btn-filtrar-azul { border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; }
     .btn-verde-dash { background-color: #10b981; color: white; }
     .btn-verde-dash:hover { background-color: #059669; }
-
     .btn-azul-dash { background-color: #0f172a; color: white; }
     .btn-azul-dash:hover { background-color: #1e293b; }
-
     .btn-filtrar-azul { background-color: #0284c7; color: white; }
     .btn-filtrar-azul:hover { background-color: #0369a1; }
 
     /* SEÇÃO DE LISTAGEM DE CARDS */
-    .lista-secao h2 {
-      font-size: 20px;
-      font-weight: 600;
-      color: #0f172a;
-      margin-bottom: 16px;
-    }
+    .lista-secao h2 { font-size: 20px; font-weight: 600; color: #0f172a; margin-bottom: 16px; }
+    .cards-container { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important; gap: 20px !important; width: 100% !important; align-items: start !important; }
+    .cards-container .card { background-color: #ffffff !important; padding: 18px 20px !important; border-radius: 12px !important; border: 1px solid #e2e8f0 !important; border-left: 6px solid #0284c7 !important; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important; height: auto !important; display: block !important; word-break: break-word !important; }
+    .cards-container .card p, .cards-container .card div { margin-bottom: 8px !important; }
+    .cards-container .card p:last-child, .cards-container .card div:last-child { margin-bottom: 0 !important; }
 
-    .cards-container {
-      display: grid !important;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
-      gap: 20px !important;
-      width: 100% !important;
-      align-items: start !important;
-    }
-
-    .cards-container .card {
-      background-color: #ffffff !important;
-      padding: 18px 20px !important;
-      border-radius: 12px !important;
-      border: 1px solid #e2e8f0 !important;
-      border-left: 6px solid #0284c7 !important;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
-      height: auto !important;
-      display: block !important;
-      word-break: break-word !important;
-    }
-
-    .cards-container .card p, 
-    .cards-container .card div {
-      margin-bottom: 8px !important;
-    }
-
-    .cards-container .card p:last-child, 
-    .cards-container .card div:last-child {
-      margin-bottom: 0 !important;
-    }
-
-    .status-badge {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      color: white;
-    }
-    
+    .status-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; color: white; }
     .status-aguardando { background-color: #f59e0b; }
     .status-transporte { background-color: #0284c7; }
     .status-finalizado { background-color: #10b981; }
     .status-retrabalho { background-color: #ef4444; }
 
     /* MODAL OVERLAY */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(15, 23, 42, 0.6);
-      backdrop-filter: blur(4px);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s ease;
-      padding: 16px;
-    }
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; padding: 16px; }
+    .modal-overlay.ativo { opacity: 1; pointer-events: auto; }
+    .modal-content { background-color: #ffffff; width: 100%; max-width: 520px; border-radius: 16px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); transform: scale(0.95); transition: transform 0.2s ease; max-height: 90vh; overflow-y: auto; }
+    .modal-overlay.ativo .modal-content { transform: scale(1); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 16px; }
+    .modal-header h2 { font-size: 18px; font-weight: 600; color: #0f172a; }
+    .btn-fechar-modal { background: none; border: none; font-size: 24px; color: #94a3b8; cursor: pointer; }
 
-    .modal-overlay.ativo {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .modal-content {
-      background-color: #ffffff;
-      width: 100%;
-      max-width: 520px;
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-      transform: scale(0.95);
-      transition: transform 0.2s ease;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-
-    .modal-overlay.ativo .modal-content {
-      transform: scale(1);
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #e2e8f0;
-      padding-bottom: 12px;
-      margin-bottom: 16px;
-    }
-
-    .modal-header h2 {
-      font-size: 18px;
-      font-weight: 600;
-      color: #0f172a;
-    }
-
-    .btn-fechar-modal {
-      background: none;
-      border: none;
-      font-size: 24px;
-      color: #94a3b8;
-      cursor: pointer;
-    }
-
-    .campo-modal {
-      margin-bottom: 14px;
-    }
-
-    .campo-modal label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: 500;
-      color: #475569;
-      font-size: 13px;
-    }
-
-    .campo-modal select, .campo-modal textarea, .campo-modal input[type="text"] {
-      width: 100%;
-      padding: 10px 12px;
-      border-radius: 8px;
-      border: 1px solid #cbd5e1;
-      font-size: 14px;
-      color: #1e293b;
-      outline: none;
-    }
-
-    .campo-busca-ticket {
-      display: flex;
-      gap: 8px;
-    }
-
+    .campo-modal { margin-bottom: 14px; }
+    .campo-modal label { display: block; margin-bottom: 6px; font-weight: 500; color: #475569; font-size: 13px; }
+    .campo-modal select, .campo-modal textarea, .campo-modal input[type="text"] { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 14px; color: #1e293b; outline: none; }
+    .campo-busca-ticket { display: flex; gap: 8px; }
     .campo-busca-ticket input { flex: 1; }
-
-    .campo-modal-checkbox {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 16px 0;
-    }
-
-    .card-info-ticket {
-      background-color: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 12px;
-      margin-bottom: 14px;
-      font-size: 13px;
-    }
-
-    .info-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 8px;
-    }
-
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      border-top: 1px solid #e2e8f0;
-      padding-top: 16px;
-      margin-top: 16px;
-    }
-
-    .btn-cancelar {
-      background-color: #f1f5f9;
-      color: #475569;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      padding: 0 16px;
-      height: 42px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-    }
+    .campo-modal-checkbox { display: flex; align-items: center; gap: 10px; margin: 16px 0; }
+    .card-info-ticket { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 14px; font-size: 13px; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 16px; }
+    .btn-cancelar { background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 16px; height: 42px; font-size: 14px; font-weight: 500; cursor: pointer; }
 
     @media (max-width: 768px) {
-      main {
-        margin-top: 75px;
-        padding: 0 12px 24px 12px;
-      }
-
-      .barra-acoes-painel {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .grupo-botoes-criar, .filtros-topo-compacto {
-        flex-direction: column;
-        width: 100%;
-        align-items: stretch;
-      }
-
-      .filtros-topo-compacto select, .btn-verde-dash, .btn-azul-dash, .btn-filtrar-azul {
-        width: 100%;
-      }
-
-      .cards-container {
-        grid-template-columns: 1fr !important;
-      }
-
-      .info-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .modal-footer {
-        flex-direction: column-reverse;
-      }
-
-      .modal-footer button {
-        width: 100%;
-      }
+      main { margin-top: 75px; padding: 0 12px 24px 12px; }
+      .barra-acoes-painel { flex-direction: column; align-items: stretch; }
+      .grupo-botoes-criar, .filtros-topo-compacto { flex-direction: column; width: 100%; align-items: stretch; }
+      .filtros-topo-compacto select, .btn-verde-dash, .btn-azul-dash, .btn-filtrar-azul { width: 100%; }
+      .cards-container { grid-template-columns: 1fr !important; }
+      .info-grid { grid-template-columns: 1fr; }
+      .modal-footer { flex-direction: column-reverse; }
+      .modal-footer button { width: 100%; }
     }
   </style>
 </head>
@@ -441,7 +134,7 @@
           <option value="Oficina do Minuto IV">Oficina do Minuto IV</option>
         </select>
 
-        <button id="btnFiltrar" class="btn-filtrar-azul" onclick="renderizarPedidos()">Filtrar</button>
+        <button id="btnFiltrar" class="btn-filtrar-azul">Filtrar</button>
       </div>
     </div>
 
@@ -453,7 +146,7 @@
           <button class="btn-fechar-modal" onclick="fecharModal()">&times;</button>
         </div>
 
-        <form id="formCriarPedidoModal" onsubmit="salvarPedido(event)">
+        <form id="formCriarPedidoModal">
           <div class="campo-modal">
             <label for="tipo">Tipo de serviço:</label>
             <select id="tipo" required>
@@ -499,7 +192,7 @@
 
           <div class="modal-footer">
             <button type="button" class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
-            <button type="submit" class="btn-verde-dash">Criar Pedido</button>
+            <button type="submit" id="btnCriarPedido" class="btn-verde-dash">Criar Pedido</button>
           </div>
         </form>
       </div>
@@ -511,6 +204,17 @@
         <div class="modal-header">
           <h2>Criar Pedido por Ticket</h2>
           <button class="btn-fechar-modal" onclick="fecharModalTicket()">&times;</button>
+        </div>
+
+        <div class="campo-modal">
+          <label for="lojaOrigemTicket">Loja de origem do Ticket:</label>
+          <select id="lojaOrigemTicket" required>
+            <option value="">Selecione a Loja primeiro</option>
+            <option value="Oficina do Minuto I">Oficina do Minuto I</option>
+            <option value="Oficina do Minuto II">Oficina do Minuto II</option>
+            <option value="Oficina do Minuto III">Oficina do Minuto III</option>
+            <option value="Oficina do Minuto IV">Oficina do Minuto IV</option>
+          </select>
         </div>
 
         <div class="campo-modal">
@@ -531,7 +235,7 @@
           </div>
         </div>
 
-        <form id="formCriarPedidoTicketModal" onsubmit="salvarPedidoTicket(event)">
+        <form id="formCriarPedidoTicketModal">
           <div class="campo-modal">
             <label for="tipoTicket">Tipo de serviço:</label>
             <select id="tipoTicket" required>
@@ -540,17 +244,6 @@
               <option value="Sapataria">Sapataria</option>
               <option value="Costura">Costura</option>
               <option value="Bordado">Bordado</option>
-            </select>
-          </div>
-          
-          <div class="campo-modal">
-            <label for="lojaOrigemTicket">Loja de origem:</label>
-            <select id="lojaOrigemTicket" required>
-              <option value="">Selecione</option>
-              <option value="Oficina do Minuto I">Oficina do Minuto I</option>
-              <option value="Oficina do Minuto II">Oficina do Minuto II</option>
-              <option value="Oficina do Minuto III">Oficina do Minuto III</option>
-              <option value="Oficina do Minuto IV">Oficina do Minuto IV</option>
             </select>
           </div>
           
@@ -577,7 +270,7 @@
 
           <div class="modal-footer">
             <button type="button" class="btn-cancelar" onclick="fecharModalTicket()">Cancelar</button>
-            <button type="submit" class="btn-verde-dash">Criar Pedido</button>
+            <button type="submit" id="btnCriarPedidoTicket" class="btn-verde-dash">Criar Pedido</button>
           </div>
         </form>
       </div>
@@ -593,21 +286,14 @@
 
   <script>
     const API_URL = 'http://localhost:3000';
-    let pedidosDB = JSON.parse(localStorage.getItem('pedidos_loja')) || [];
 
-    function abrirModal() {
-      document.getElementById('modalCriarPedido').classList.add('ativo');
-    }
-
+    function abrirModal() { document.getElementById('modalCriarPedido').classList.add('ativo'); }
     function fecharModal() {
       document.getElementById('modalCriarPedido').classList.remove('ativo');
       document.getElementById('formCriarPedidoModal').reset();
     }
 
-    function abrirModalTicket() {
-      document.getElementById('modalCriarPedidoTicket').classList.add('ativo');
-    }
-
+    function abrirModalTicket() { document.getElementById('modalCriarPedidoTicket').classList.add('ativo'); }
     function fecharModalTicket() {
       document.getElementById('modalCriarPedidoTicket').classList.remove('ativo');
       document.getElementById('boxInfoTicket').style.display = 'none';
@@ -616,6 +302,12 @@
 
     async function buscarDadosTicket() {
       const numeroTicket = document.getElementById('numeroTicketInput').value.trim();
+      const lojaOrigem = document.getElementById('lojaOrigemTicket').value;
+
+      if (!lojaOrigem) {
+        alert('Por favor, selecione a Loja de Origem primeiro.');
+        return;
+      }
 
       if (!numeroTicket) {
         alert('Por favor, informe o número do ticket.');
@@ -623,8 +315,8 @@
       }
 
       try {
-        const response = await fetch(`${API_URL}/api/ticket/${numeroTicket}`);
-        if (!response.ok) throw new Error(`Ticket não encontrado (Status: ${response.status})`);
+        const response = await fetch(`${API_URL}/api/ticket/${numeroTicket}?loja=${encodeURIComponent(lojaOrigem)}`);
+        if (!response.ok) throw new Error(`Ticket não encontrado na ${lojaOrigem} (Status: ${response.status})`);
 
         const dados = await response.json();
         document.getElementById('infoNomeCliente').innerText = dados.nomeCliente || 'Não informado';
@@ -642,93 +334,9 @@
         document.getElementById('observacaoTicket').value = obsFormatada;
 
       } catch (erro) {
-        console.warn('Backend indisponível, gerando dados de teste:', erro.message);
-        document.getElementById('infoNomeCliente').innerText = 'Cliente Teste';
-        document.getElementById('infoTelefone').innerText = '(86) 99999-0000';
-        document.getElementById('infoPosicaoSaco').innerText = 'Saco 05';
-        document.getElementById('infoTotalPecas').innerText = '3';
-        document.getElementById('infoValorTotal').innerText = 'R$ 150,00';
-        document.getElementById('boxInfoTicket').style.display = 'block';
-        document.getElementById('observacaoTicket').value = `Ticket: ${numeroTicket} | Cliente: Cliente Teste | Saco: 05`;
+        console.warn('Erro ao buscar ticket:', erro.message);
+        alert(erro.message);
       }
-    }
-
-    function salvarPedido(e) {
-      e.preventDefault();
-      const novoPedido = {
-        id: Date.now(),
-        tipo: document.getElementById('tipo').value,
-        lojaOrigem: document.getElementById('lojaOrigem').value,
-        lojaDestino: document.getElementById('lojaDestino').value,
-        orcamento: document.getElementById('orcamento').checked,
-        observacao: document.getElementById('observacao').value,
-        status: 'Aguardando coleta',
-        data: new Date().toLocaleDateString('pt-BR')
-      };
-
-      pedidosDB.unshift(novoPedido);
-      localStorage.setItem('pedidos_loja', JSON.stringify(pedidosDB));
-      fecharModal();
-      renderizarPedidos();
-    }
-
-    function salvarPedidoTicket(e) {
-      e.preventDefault();
-      const novoPedido = {
-        id: Date.now(),
-        tipo: document.getElementById('tipoTicket').value,
-        lojaOrigem: document.getElementById('lojaOrigemTicket').value,
-        lojaDestino: document.getElementById('lojaDestinoTicket').value,
-        orcamento: document.getElementById('orcamentoTicket').checked,
-        observacao: document.getElementById('observacaoTicket').value,
-        status: 'Aguardando coleta',
-        data: new Date().toLocaleDateString('pt-BR')
-      };
-
-      pedidosDB.unshift(novoPedido);
-      localStorage.setItem('pedidos_loja', JSON.stringify(pedidosDB));
-      fecharModalTicket();
-      renderizarPedidos();
-    }
-
-    function renderizarPedidos() {
-      const container = document.getElementById('containerPedidos');
-      const filtroStatus = document.getElementById('filtroStatus').value;
-      const filtroLoja = document.getElementById('filtroLoja').value;
-
-      let filtrados = pedidosDB.filter(p => {
-        const bateuStatus = !filtroStatus || p.status === filtroStatus;
-        const bateuLoja = !filtroLoja || p.lojaOrigem === filtroLoja || p.lojaDestino === filtroLoja;
-        return bateuStatus && bateuLoja;
-      });
-
-      if (filtrados.length === 0) {
-        container.innerHTML = `<p style="grid-column: 1 / -1; text-align: center; color: #64748b;">Nenhum pedido encontrado.</p>`;
-        return;
-      }
-
-      container.innerHTML = filtrados.map(p => {
-        let classeStatus = 'status-aguardando';
-        if (p.status.includes('transporte')) classeStatus = 'status-transporte';
-        if (p.status === 'Finalizado') classeStatus = 'status-finalizado';
-        if (p.status === 'Retrabalho') classeStatus = 'status-retrabalho';
-
-        return `
-          <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <strong>#${p.id.toString().slice(-4)} - ${p.tipo}</strong>
-              <span class="status-badge ${classeStatus}">${p.status}</span>
-            </div>
-            <p style="font-size: 13px; color: #64748b; margin-top: 6px;">
-              <strong>Origem:</strong> ${p.lojaOrigem}<br>
-              <strong>Destino:</strong> ${p.lojaDestino}
-            </p>
-            ${p.orcamento ? '<p style="color: #d97706; font-size: 12px;"><strong>⚠️ Requer Orçamento</strong></p>' : ''}
-            <p style="font-size: 13px; background: #f8fafc; padding: 6px; border-radius: 6px;">${p.observacao || 'Sem observações'}</p>
-            <p style="font-size: 11px; color: #94a3b8; text-align: right;">${p.data}</p>
-          </div>
-        `;
-      }).join('');
     }
 
     window.onclick = function(event) {
@@ -737,9 +345,10 @@
       if (event.target === modal1) fecharModal();
       if (event.target === modal2) fecharModalTicket();
     }
-
-    document.addEventListener('DOMContentLoaded', renderizarPedidos);
   </script>
+
+  <!-- JS vinculado ao Supabase -->
+  <script type="module" src="pedidos.js"></script>
 
 </body>
 </html>

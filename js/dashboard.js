@@ -1,6 +1,6 @@
 import { supabase } from "./supabase.js";
 
-// Elementos do DOM (com verificações para evitar crashes)
+// Elementos do DOM
 const container = document.getElementById("containerPedidos");
 const filtroStatus = document.getElementById("filtroStatus");
 const pesquisaOS = document.getElementById("pesquisaOS");
@@ -25,7 +25,7 @@ let chartServico = null;
 // ===============================
 async function realizarLogin() {
   try {
-    const { data } = await supabase.auth.getUser();
+    const { data, error } = await supabase.auth.getUser();
     if (data?.user) return data.user;
   } catch (err) {
     console.warn("Sessão não identificada, usando perfil padrão.", err);
@@ -40,7 +40,7 @@ function criarBotaoPedido() {
     btn.textContent = "+ Novo Pedido";
     btn.className = "filter-btn";
     btn.style.backgroundColor = "#2563eb";
-    btn.onclick = () => window.location.href = "pedidos.html"; 
+    btn.onclick = () => (window.location.href = "pedidos.html"); 
     btnCriarPedidoContainer.appendChild(btn);
   }
 }
@@ -82,17 +82,13 @@ function extrairDadosObs(obsText) {
 // ===============================
 async function carregarPedidos() {
   try {
+    // Exibe o feedback de carregamento apenas na primeira carga
     if (container && pedidosGlobais.length === 0) {
       container.innerHTML = "<p class='loading'>Carregando dados do painel...</p>";
     }
 
+    // Montagem segura da Query
     let query = supabase.from("pedidos").select("*");
-
-    try {
-      query = query.order("criado_em", { ascending: false });
-    } catch (e) {
-      console.warn("Coluna criado_em ausente para ordenação.");
-    }
 
     if (usuarioTipo === "loja" && usuarioLogado?.email) {
       query = query.eq("loja_origem", usuarioLogado.email);
@@ -114,12 +110,13 @@ async function carregarPedidos() {
       }
     }
 
-    const { data, error } = await query;
+    // Executa a busca ordenando pelo ID de forma decrescente para garantir os mais recentes primeiro
+    const { data, error } = await query.order("id", { ascending: false });
     
     if (error) {
-      console.error("Erro Supabase:", error);
-      if (container) {
-        container.innerHTML = `<p class='loading' style='color: #ef4444;'>Erro ao carregar os dados do banco: ${error.message}</p>`;
+      console.error("Erro Supabase ao consultar pedidos:", error);
+      if (container && pedidosGlobais.length === 0) {
+        container.innerHTML = `<p class='loading' style='color: #ef4444;'>Erro ao carregar do banco: ${error.message}</p>`;
       }
       return;
     }
@@ -129,9 +126,9 @@ async function carregarPedidos() {
     renderizarPedidosTabela(pedidosGlobais);
     atualizarGraficos(); 
   } catch (err) {
-    console.error("Erro crítico ao carregar pedidos:", err);
-    if (container) {
-      container.innerHTML = `<p class='loading' style='color: #ef4444;'>Ocorreu um erro ao processar os dados.</p>`;
+    console.error("Erro crítico em carregarPedidos:", err);
+    if (container && pedidosGlobais.length === 0) {
+      container.innerHTML = `<p class='loading' style='color: #ef4444;'>Ocorreu um erro ao processar os dados do painel.</p>`;
     }
   }
 }
@@ -146,7 +143,7 @@ function renderizarKPIs(pedidos) {
   let emServico = 0;
   let finalizados = 0;
 
-  pedidos.forEach(p => {
+  pedidos.forEach((p) => {
     const st = (p.status || "").toLowerCase();
     
     if (st.includes("coleta")) {
@@ -172,7 +169,6 @@ function renderizarKPIs(pedidos) {
 // ===============================
 function renderizarPedidosTabela(pedidos) {
   if (!container) return;
-  container.innerHTML = ""; 
 
   if (!pedidos || pedidos.length === 0) {
     container.innerHTML = "<p class='loading'>Nenhum pedido encontrado.</p>"; 
@@ -251,6 +247,8 @@ function renderizarPedidosTabela(pedidos) {
     corpoTabela.appendChild(tr);
   });
 
+  // Atualiza o DOM apenas de uma vez
+  container.innerHTML = "";
   container.appendChild(tabela);
 }
 
@@ -261,7 +259,7 @@ function atualizarGraficos() {
   const statusCount = {};
   const servicoCount = {};
 
-  pedidosGlobais.forEach(p => {
+  pedidosGlobais.forEach((p) => {
     const st = p.status ?? "Outros";
     const sr = p.tipo_servico ?? "Outros";
     statusCount[st] = (statusCount[st] || 0) + 1;
@@ -293,7 +291,7 @@ function atualizarGraficos() {
         }
       });
     } catch (e) {
-      console.warn("Erro ao carregar Gráfico de Status:", e);
+      console.warn("Aviso no Gráfico de Status:", e);
     }
   }
 
@@ -328,7 +326,7 @@ function atualizarGraficos() {
         }
       });
     } catch (e) {
-      console.warn("Erro ao carregar Gráfico de Serviço:", e);
+      console.warn("Aviso no Gráfico de Serviço:", e);
     }
   }
 }
@@ -356,6 +354,6 @@ function atualizarGraficos() {
     carregarPedidos();
     setInterval(carregarPedidos, 15000);
   } catch (err) {
-    console.error("Erro na inicialização:", err);
+    console.error("Erro na inicialização do script:", err);
   }
 })();

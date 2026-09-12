@@ -1,3 +1,358 @@
-<h2>Relatórios</h2>
-<div id="relatorio"></div>
-<script type="module" src="js/admin.js"></script>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Oficina do Minuto – Painel Administrativo</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* Identidade Visual Extraída da Fachada Real */
+    :root {
+      --primary-blue: #0b53a7;       /* Azul Royal da Fachada */
+      --primary-yellow: #f1c40f;     /* Amarelo Ouro dos Detalhes */
+      --bg-light: #f4f6f9;           /* Fundo Cinza Claro Corporativo */
+      --surface: #ffffff;            /* Fundo dos Containers */
+      --text-dark: #1e293b;          /* Texto Principal */
+      --text-muted: #64748b;         /* Texto Secundário */
+      --border-color: #e2e8f0;       /* Divisórias */
+      --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-light);
+      color: var(--text-dark);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    h1, h2, h3 {
+      font-family: 'Poppins', sans-serif;
+    }
+
+    /* Barra de Navegação Premium (Azul Corporativo) */
+    header {
+      background-color: var(--primary-blue);
+      color: white;
+      padding: 16px 48px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    header h1 span {
+      color: var(--primary-yellow);
+      font-weight: 500;
+      font-size: 14px;
+      margin-left: 6px;
+      border-left: 2px solid rgba(255,255,255,0.3);
+      padding-left: 8px;
+    }
+
+    header nav {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    header nav a {
+      color: rgba(255, 255, 255, 0.85);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+
+    header nav a:hover {
+      color: white;
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    header nav a.active {
+      color: var(--text-dark);
+      background-color: var(--primary-yellow);
+      font-weight: 600;
+    }
+
+    header nav a.btn-sair {
+      color: #ff8a8a;
+    }
+    header nav a.btn-sair:hover {
+      background-color: rgba(255, 138, 138, 0.1);
+    }
+
+    /* Área de Conteúdo Centralizada */
+    main {
+      flex: 1;
+      padding-top: 110px; /* Garante que o conteúdo não fique oculto sob o header fixo */
+      padding-bottom: 60px;
+      max-width: 1440px;
+      width: 100%;
+      margin: 0 auto;
+      padding-left: 48px;
+      padding-right: 48px;
+    }
+
+    .section-intro {
+      margin-bottom: 28px;
+      text-align: left;
+    }
+
+    .section-intro h2 {
+      font-size: 26px;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+
+    .section-intro p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Barra de Filtros Alinhada e Clean */
+    .filter-bar {
+      background-color: var(--surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: var(--shadow-soft);
+      margin-bottom: 32px;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-group label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .filter-bar select, 
+    .filter-bar input {
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: var(--text-dark);
+      background-color: #f8fafc;
+      transition: all 0.2s;
+    }
+
+    .filter-bar input {
+      flex: 1;
+      min-width: 300px;
+    }
+
+    .filter-bar select:focus,
+    .filter-bar input:focus {
+      outline: none;
+      border-color: var(--primary-blue);
+      background-color: white;
+      box-shadow: 0 0 0 3px rgba(11, 83, 167, 0.15);
+    }
+
+    /* Botão Filtrar Ajustado com a Identidade da Marca */
+    .btn-filtrar {
+      background-color: var(--primary-blue);
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .btn-filtrar:hover {
+      background-color: #083d7a;
+    }
+
+    /* Grid de Gráficos Operacionais */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .chart-container {
+      background-color: var(--surface);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: var(--shadow-soft);
+      min-height: 380px;
+    }
+
+    .chart-container h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+    }
+
+    /* Estilos dinâmicos injetados para tabelas geradas pelo script admin.js */
+    #relatorio table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      text-align: left;
+      color: #1e293b;
+    }
+
+    #relatorio th {
+      background-color: var(--primary-blue);
+      color: #ffffff;
+      font-weight: 600;
+      padding: 14px 16px;
+      letter-spacing: 0.5px;
+    }
+
+    #relatorio td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    #relatorio tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+
+    #relatorio tr:hover {
+      background-color: #f1f5f9;
+      transition: background-color 0.2s ease;
+    }
+
+    /* Responsividade */
+    @media (max-width: 968px) {
+      header {
+        padding: 16px 24px;
+        flex-direction: column;
+        gap: 12px;
+        position: static;
+      }
+      header nav {
+        width: 100%;
+        justify-content: center;
+      }
+      main {
+        padding: 24px;
+        padding-top: 24px;
+      }
+      .filter-bar {
+        flex-direction: column;
+        align-items: stroke;
+      }
+      .filter-bar input {
+        min-width: 100%;
+      }
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Oficina do Minuto <span>Painel Admin</span></h1>
+    <nav>
+      <a href="/admin" class="active">Dashboard</a>
+      <a href="/loja5">Central Loja 5</a>
+      <a href="/pedidos">Pedidos</a>
+      <a href="/" class="btn-sair">Sair</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="section-intro">
+      <h2>Dashboard Operacional</h2>
+      <p>Indicadores gerenciais e monitoramento de ordens de serviço em tempo real.</p>
+    </section>
+
+    <div class="filter-bar">
+      <div class="filter-group">
+        <label for="statusSelect">Status:</label>
+        <select id="statusSelect">
+          <option value="todos">Todos</option>
+          <option value="aguardando">Aguardando</option>
+          <option value="finalizado">Finalizado</option>
+          <option value="retrabalho">Retrabalho</option>
+        </select>
+      </div>
+
+      <div class="filter-group" style="flex: 1;">
+        <label for="searchInput">Pesquisar:</label>
+        <input type="text" id="searchInput" placeholder="Digite o número da OS ou o nome da loja...">
+      </div>
+
+      <button class="btn-filtrar">Filtrar Dados</button>
+    </div>
+
+    <div class="dashboard-grid">
+      <div class="chart-container">
+        <h3>Gráficos de Produtividade</h3>
+      </div>
+      <div class="chart-container">
+        <h3>Pedidos por Serviço</h3>
+      </div>
+    </div>
+
+    <section class="secao-relatorios" style="padding: 32px; background: #ffffff; border-radius: 16px; box-shadow: var(--shadow-soft); margin-top: 32px; border: 1px solid #e2e8f0;">
+      <h2 style="font-family: 'Poppins', sans-serif; font-size: 22px; color: #0b53a7; font-weight: 600; margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
+        <span style="background: rgba(241, 196, 15, 0.15); padding: 6px 10px; border-radius: 8px;">📊</span> 
+        Relatórios Gerenciais e Volumetria
+      </h2>
+      
+      <div style="overflow-x: auto; width: 100%; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <div id="relatorio">
+          <p style="text-align: center; color: #64748b; padding: 40px; font-family: 'Inter', sans-serif; font-size: 14px;">
+            Buscando dados consolidados da Oficina...
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+       </div> <footer>
+        &copy; 2026 Oficina do Minuto. Todos os direitos reservados.
+    </footer>
+  <script type="module" src="/js/admin.js"></script>
+</body>
+</html>

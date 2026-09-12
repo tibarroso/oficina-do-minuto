@@ -8,7 +8,8 @@ const API_URL = 'http://localhost:3000';
 // =========================
 async function carregarPedidos(filtroStatus = "", filtroLoja = "") {
   try {
-    let query = supabase.from("pedidos").select("*").order("id", { ascending: false });
+    // CORRIGIDO: Ordenação por data de criação decrescente (mais recentes primeiro)
+    let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false });
 
     // REGRA DE OURO DO FILTRO:
     if (filtroStatus && filtroStatus !== "Todos") {
@@ -202,9 +203,9 @@ async function atualizarStatus(novoStatus, pedidoId) {
 
     const { error: errorEvento } = await supabase.from("pedido_eventos").insert([{
       pedido_id: pedidoId,
-      evento: statusLimpo,              
+      evento: statusLimpo,                 
       observacao: novaObservacao,        
-      criado_por: operador              
+      criado_por: operador                
     }]);
 
     if (errorEvento) throw errorEvento;

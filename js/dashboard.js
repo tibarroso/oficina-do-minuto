@@ -1,12 +1,13 @@
 import { supabase } from "./supabase.js";
 
+// Elementos do DOM (com verificações para evitar crashes)
 const container = document.getElementById("containerPedidos");
 const filtroStatus = document.getElementById("filtroStatus");
 const pesquisaOS = document.getElementById("pesquisaOS");
 const btnFiltrar = document.getElementById("btnFiltrar");
 const btnCriarPedidoContainer = document.getElementById("btnCriarPedidoContainer");
 
-// Elementos dos KPIs (Separados)
+// Elementos dos KPIs
 const kpiTotal = document.getElementById("kpiTotal");
 const kpiColeta = document.getElementById("kpiColeta");
 const kpiEmTransporte = document.getElementById("kpiEmTransporte");
@@ -61,7 +62,7 @@ function extrairDadosObs(obsText) {
   const partes = obsText.split("|");
 
   partes.forEach((parte) => {
-    const [chave, valor] = parte.split(":").map((item) => item.trim());
+    const [chave, valor] = parte.split(":").map((item) => item?.trim() || "");
     if (!chave || !valor) return;
 
     const chaveLower = chave.toLowerCase();
@@ -98,11 +99,11 @@ async function carregarPedidos() {
     }
 
     const status = filtroStatus?.value;
-    if (status && status !== "Todos") {
+    if (status && status !== "" && status !== "Todos") {
       query = query.eq("status", status);
     }
 
-    const pesquisa = pesquisaOS?.value.trim();
+    const pesquisa = pesquisaOS?.value?.trim();
     if (pesquisa) {
       if (!isNaN(pesquisa) && pesquisa.length < 8) {
         query = query.eq("id", parseInt(pesquisa));
@@ -118,7 +119,7 @@ async function carregarPedidos() {
     if (error) {
       console.error("Erro Supabase:", error);
       if (container) {
-        container.innerHTML = `<p class='loading' style='color: #ef4444;'>Erro ao carregar os dados: ${error.message}</p>`;
+        container.innerHTML = `<p class='loading' style='color: #ef4444;'>Erro ao carregar os dados do banco: ${error.message}</p>`;
       }
       return;
     }
@@ -128,7 +129,7 @@ async function carregarPedidos() {
     renderizarPedidosTabela(pedidosGlobais);
     atualizarGraficos(); 
   } catch (err) {
-    console.error("Erro crítico:", err);
+    console.error("Erro crítico ao carregar pedidos:", err);
     if (container) {
       container.innerHTML = `<p class='loading' style='color: #ef4444;'>Ocorreu um erro ao processar os dados.</p>`;
     }
@@ -136,11 +137,9 @@ async function carregarPedidos() {
 }
 
 // ===============================
-// Atualizar KPIs Topo (Ajustado)
+// Atualizar KPIs Topo
 // ===============================
 function renderizarKPIs(pedidos) {
-  if (!kpiTotal) return;
-  
   let total = pedidos.length;
   let coleta = 0;
   let emTransporte = 0;
@@ -154,14 +153,14 @@ function renderizarKPIs(pedidos) {
       coleta++;
     } else if (st.includes("transporte") || st.includes("retorno")) {
       emTransporte++;
-    } else if (st.includes("serviço") || st.includes("servico") || st.includes("entregue na loja 5")) {
+    } else if (st.includes("serviço") || st.includes("servico") || st.includes("entregue")) {
       emServico++;
     } else if (st.includes("finalizado")) {
       finalizados++;
     }
   });
 
-  kpiTotal.textContent = total;
+  if (kpiTotal) kpiTotal.textContent = total;
   if (kpiColeta) kpiColeta.textContent = coleta;
   if (kpiEmTransporte) kpiEmTransporte.textContent = emTransporte;
   if (kpiEmServico) kpiEmServico.textContent = emServico;
@@ -205,7 +204,7 @@ function renderizarPedidosTabela(pedidos) {
     const servico = p.tipo_servico ?? "Geral";
     const status = p.status ?? "Sem status";
     
-    // Processa a string de obs_loja_origem
+    // Processa a string de observação
     const obsTexto = p.obs_loja_origem || p.observacao || "";
     const parsedObs = extrairDadosObs(obsTexto);
 
@@ -218,7 +217,11 @@ function renderizarPedidosTabela(pedidos) {
     let dataFormatada = "---";
     const dataRegistro = p.criado_em || p.created_at;
     if (dataRegistro) {
-      dataFormatada = new Date(dataRegistro).toLocaleDateString("pt-BR");
+      try {
+        dataFormatada = new Date(dataRegistro).toLocaleDateString("pt-BR");
+      } catch (e) {
+        dataFormatada = "---";
+      }
     }
 
     // Badge de status
@@ -268,57 +271,65 @@ function atualizarGraficos() {
   // Chart Status (Doughnut)
   const elStatus = document.getElementById("graficoStatus");
   if (elStatus && window.Chart) {
-    const ctxStatus = elStatus.getContext("2d");
-    if (chartStatus) chartStatus.destroy(); 
-    chartStatus = new Chart(ctxStatus, {
-      type: "doughnut",
-      data: {
-        labels: Object.keys(statusCount),
-        datasets: [{
-          data: Object.values(statusCount),
-          backgroundColor: ["#0d9488", "#2563eb", "#d97706", "#dc2626", "#7c3aed", "#475569"]
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } },
-          title: { display: true, text: 'Status dos Pedidos', font: { size: 13, weight: '600' }, color: '#0f172a' }
+    try {
+      const ctxStatus = elStatus.getContext("2d");
+      if (chartStatus) chartStatus.destroy(); 
+      chartStatus = new Chart(ctxStatus, {
+        type: "doughnut",
+        data: {
+          labels: Object.keys(statusCount),
+          datasets: [{
+            data: Object.values(statusCount),
+            backgroundColor: ["#0d9488", "#2563eb", "#d97706", "#dc2626", "#7c3aed", "#475569"]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } },
+            title: { display: true, text: 'Status dos Pedidos', font: { size: 13, weight: '600' }, color: '#0f172a' }
+          }
         }
-      }
-    });
+      });
+    } catch (e) {
+      console.warn("Erro ao carregar Gráfico de Status:", e);
+    }
   }
 
   // Chart Serviços (Bar)
   const elServico = document.getElementById("graficoServico");
   if (elServico && window.Chart) {
-    const ctxServico = elServico.getContext("2d");
-    if (chartServico) chartServico.destroy(); 
-    chartServico = new Chart(ctxServico, {
-      type: "bar",
-      data: {
-        labels: Object.keys(servicoCount),
-        datasets: [{
-          label: "Pedidos",
-          data: Object.values(servicoCount),
-          backgroundColor: "#334155",
-          borderRadius: 4
-        }],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: { 
-          y: { beginAtZero: true, ticks: { precision: 0 } },
-          x: { grid: { display: false } }
+    try {
+      const ctxServico = elServico.getContext("2d");
+      if (chartServico) chartServico.destroy(); 
+      chartServico = new Chart(ctxServico, {
+        type: "bar",
+        data: {
+          labels: Object.keys(servicoCount),
+          datasets: [{
+            label: "Pedidos",
+            data: Object.values(servicoCount),
+            backgroundColor: "#334155",
+            borderRadius: 4
+          }],
         },
-        plugins: {
-          legend: { display: false },
-          title: { display: true, text: 'Volume por Serviço', font: { size: 13, weight: '600' }, color: '#0f172a' }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { 
+            y: { beginAtZero: true, ticks: { precision: 0 } },
+            x: { grid: { display: false } }
+          },
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: 'Volume por Serviço', font: { size: 13, weight: '600' }, color: '#0f172a' }
+          }
         }
-      }
-    });
+      });
+    } catch (e) {
+      console.warn("Erro ao carregar Gráfico de Serviço:", e);
+    }
   }
 }
 
@@ -326,21 +337,25 @@ function atualizarGraficos() {
 // Inicialização
 // ===============================
 (async () => {
-  usuarioLogado = await realizarLogin();
-  usuarioTipo = usuarioLogado?.email?.includes("loja") ? "loja" : "admin";
-  
-  criarBotaoPedido();
-  
-  if (btnFiltrar) {
-    btnFiltrar.addEventListener("click", carregarPedidos);
-  }
+  try {
+    usuarioLogado = await realizarLogin();
+    usuarioTipo = usuarioLogado?.email?.includes("loja") ? "loja" : "admin";
+    
+    criarBotaoPedido();
+    
+    if (btnFiltrar) {
+      btnFiltrar.addEventListener("click", carregarPedidos);
+    }
 
-  if (pesquisaOS) {
-    pesquisaOS.addEventListener("input", () => {
-      carregarPedidos();
-    });
+    if (pesquisaOS) {
+      pesquisaOS.addEventListener("input", () => {
+        carregarPedidos();
+      });
+    }
+    
+    carregarPedidos();
+    setInterval(carregarPedidos, 15000);
+  } catch (err) {
+    console.error("Erro na inicialização:", err);
   }
-  
-  carregarPedidos();
-  setInterval(carregarPedidos, 15000);
 })();

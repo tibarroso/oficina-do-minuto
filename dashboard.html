@@ -20,16 +20,16 @@
     }
 
     body {
-      background-color: #f4f7f9;
-      color: #2c3e50;
+      background-color: #f8fafc;
+      color: #1e293b;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
     }
 
     header {
-      background-color: white;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      background-color: #ffffff;
+      border-bottom: 1px solid #e2e8f0;
       position: fixed;
       top: 0;
       left: 0;
@@ -38,9 +38,9 @@
     }
 
     .header-container {
-      max-width: 1200px;
+      max-width: 1280px;
       margin: 0 auto;
-      padding: 15px 20px;
+      padding: 16px 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -49,82 +49,104 @@
     .header-container h1 {
       font-size: 20px;
       font-weight: 700;
-      color: #2c3e50;
-      margin: 0;
+      color: #0f172a;
     }
 
     .header-container h1 span {
-      color: #18BC9C;
+      color: #0d9488;
     }
 
     nav {
       display: flex;
-      gap: 15px;
+      gap: 12px;
     }
 
     nav a {
       text-decoration: none;
-      color: #7f8c8d;
+      color: #64748b;
       font-weight: 500;
       font-size: 14px;
       padding: 8px 16px;
       border-radius: 8px;
-      transition: all 0.3s ease;
+      transition: all 0.2s ease;
     }
 
     nav a:hover, nav a.active {
-      color: #18BC9C;
-      background-color: #e8f8f5;
+      color: #0d9488;
+      background-color: #ccfbf1;
     }
 
     nav a.logout-btn {
-      color: #e74c3c;
+      color: #ef4444;
     }
     nav a.logout-btn:hover {
-      background-color: #fdedec;
+      background-color: #fee2e2;
     }
 
     main {
-      max-width: 1200px;
+      max-width: 1280px;
       width: 100%;
       margin: 90px auto 40px auto;
-      padding: 20px;
+      padding: 0 24px;
       flex: 1;
     }
 
+    .header-page-block {
+      margin-bottom: 24px;
+    }
+
     .page-title {
-      font-size: 26px;
-      font-weight: 600;
-      color: #2c3e50;
-      text-align: center;
-      margin-bottom: 5px;
+      font-size: 24px;
+      font-weight: 700;
+      color: #0f172a;
     }
 
     .page-subtitle {
-      text-align: center;
-      color: #7f8c8d;
+      color: #64748b;
       font-size: 14px;
-      margin-bottom: 30px;
     }
 
-    h2 {
-      font-size: 18px;
-      font-weight: 600;
-      color: #2c3e50;
-      margin-bottom: 20px;
-      margin-top: 10px;
+    /* Cards KPI / Resumo Operacional */
+    .kpi-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
     }
 
-    .filtros-dashboard {
-      background-color: white;
+    .kpi-card {
+      background: white;
       padding: 20px;
       border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .kpi-card .kpi-title {
+      font-size: 13px;
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    .kpi-card .kpi-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-top: 4px;
+    }
+
+    /* Bloco de Filtros */
+    .filtros-dashboard {
+      background-color: white;
+      padding: 16px 20px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
       display: flex;
       flex-wrap: wrap;
-      gap: 15px;
+      gap: 16px;
       align-items: center;
-      margin-bottom: 35px;
+      margin-bottom: 24px;
     }
 
     .filtro-item {
@@ -135,115 +157,168 @@
 
     .filtros-dashboard label {
       font-weight: 600;
-      font-size: 14px;
-      color: #34495e;
-      white-space: nowrap;
+      font-size: 13px;
+      color: #475569;
     }
 
     .filtros-dashboard select, 
     .filtros-dashboard input {
-      padding: 10px 14px;
+      padding: 9px 14px;
       border-radius: 8px;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #cbd5e1;
       font-size: 14px;
-      background-color: #f8fafc;
+      background-color: #ffffff;
       outline: none;
-      transition: all 0.3s;
+      transition: all 0.2s;
     }
 
     .filtros-dashboard select:focus, 
     .filtros-dashboard input:focus {
-      border-color: #18BC9C;
-      background-color: white;
-      box-shadow: 0 0 0 3px rgba(24, 188, 156, 0.1);
-    }
-
-    .filtros-dashboard input {
-      flex: 1;
-      min-width: 250px;
+      border-color: #0d9488;
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
     }
 
     .filter-btn {
-      padding: 10px 25px;
-      background-color: #18BC9C;
+      padding: 9px 20px;
+      background-color: #0d9488;
       color: white;
       border: none;
       border-radius: 8px;
       font-weight: 600;
       font-size: 14px;
       cursor: pointer;
-      transition: background-color 0.3s;
+      transition: background-color 0.2s;
     }
 
     .filter-btn:hover {
-      background-color: #128f76;
+      background-color: #0f766e;
+    }
+
+    /* Gráficos */
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 16px;
     }
 
     .charts-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-      gap: 25px;
-      margin-bottom: 40px;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
     }
 
     .chart-box {
       background: white;
       padding: 20px;
       border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      height: 300px;
       position: relative;
-      height: 320px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
     }
 
-    .cards-container {
+    /* Container de Tabela */
+    .table-card {
       background: white;
-      padding: 20px;
       border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
-      min-height: 100px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+    }
+
+    .table-wrapper {
+      width: 100%;
       overflow-x: auto;
     }
 
-    .loading {
-      text-align: center;
-      color: #7f8c8d;
-      padding: 20px;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
     }
 
-    /* Badges de Status Personalizados */
+    th {
+      background-color: #f1f5f9;
+      color: #475569;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 14px 18px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    td {
+      padding: 14px 18px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 13px;
+      color: #334155;
+    }
+
+    tr:hover {
+      background-color: #f8fafc;
+    }
+
+    /* Componentes Visuais de Tabela */
     .status-badge {
       padding: 4px 10px;
-      border-radius: 12px;
+      border-radius: 20px;
       font-size: 12px;
       font-weight: 600;
       display: inline-block;
+      white-space: nowrap;
     }
     .status-finalizado { background-color: #d1fae5; color: #065f46; }
-    .status-aguardando { background-color: #fef3c7; color: #92400e; }
+    .status-coleta { background-color: #fef3c7; color: #92400e; }
     .status-transporte { background-color: #dbeafe; color: #1e40af; }
     .status-servico { background-color: #e0e7ff; color: #3730a3; }
     .status-default { background-color: #f1f5f9; color: #475569; }
 
+    .obs-pill-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .obs-pill {
+      background-color: #f1f5f9;
+      color: #475569;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .obs-pill strong {
+      color: #0f172a;
+    }
+
+    .loading {
+      text-align: center;
+      color: #64748b;
+      padding: 30px;
+      font-size: 14px;
+    }
+
     footer {
       text-align: center;
       padding: 20px;
-      color: #7f8c8d;
+      color: #94a3b8;
       font-size: 13px;
       background-color: #ffffff;
       border-top: 1px solid #e2e8f0;
+      margin-top: auto;
     }
 
     @media (max-width: 768px) {
       .header-container {
         flex-direction: column;
         gap: 12px;
-        text-align: center;
       }
       main {
-        margin-top: 140px;
+        margin-top: 130px;
       }
       .filtros-dashboard {
         flex-direction: column;
@@ -253,11 +328,8 @@
         flex-direction: column;
         align-items: flex-start;
       }
-      .filtros-dashboard select, .filtros-dashboard input, .filter-btn {
+      .filtros-dashboard input, .filtros-dashboard select, .filter-btn {
         width: 100%;
-      }
-      .charts-container {
-        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -276,9 +348,32 @@
   </header>
 
   <main>
-    <h1 class="page-title">Dashboard Operacional</h1>
-    <p class="page-subtitle">Indicadores gerenciais e monitoramento de ordens de serviço em tempo real.</p>
+    <div class="header-page-block">
+      <h1 class="page-title">Dashboard Operacional</h1>
+      <p class="page-subtitle">Acompanhamento das ordens de serviço e indicadores operacionais em tempo real.</p>
+    </div>
 
+    <!-- Cards de KPIs Rápidos -->
+    <div class="kpi-container">
+      <div class="kpi-card">
+        <div class="kpi-title">Total de Pedidos</div>
+        <div class="kpi-value" id="kpiTotal">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Aguardando Coleta</div>
+        <div class="kpi-value" id="kpiColeta" style="color: #d97706;">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Em Transporte / Serviço</div>
+        <div class="kpi-value" id="kpiEmAndamento" style="color: #2563eb;">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Finalizados</div>
+        <div class="kpi-value" id="kpiFinalizados" style="color: #059669;">0</div>
+      </div>
+    </div>
+
+    <!-- Filtros -->
     <div class="filtros-dashboard">
       <div class="filtro-item">
         <label for="filtroStatus">Status:</label>
@@ -297,15 +392,16 @@
       </div>
 
       <div class="filtro-item" style="flex: 1;">
-        <label for="pesquisaOS">Pesquisar:</label>
-        <input type="text" id="pesquisaOS" placeholder="Digite a OS, cliente ou loja...">
+        <label for="pesquisaOS">Buscar:</label>
+        <input type="text" id="pesquisaOS" placeholder="Pesquisar por OS, Loja ou Serviço...">
       </div>
       
-      <button id="btnFiltrar" class="filter-btn">Filtrar Dados</button>
+      <button id="btnFiltrar" class="filter-btn">Filtrar</button>
       <div id="btnCriarPedidoContainer"></div>
     </div>
 
-    <h2>📊 Gráficos de Produtividade</h2>
+    <!-- Gráficos -->
+    <h2 class="section-title">📊 Visão Geral Operacional</h2>
     <div class="charts-container">
       <div class="chart-box">
         <canvas id="graficoStatus"></canvas>
@@ -315,9 +411,12 @@
       </div>
     </div>
 
-    <h2>📋 Fluxo Geral de Pedidos</h2>
-    <div id="containerPedidos" class="cards-container">
-      <p class="loading">Carregando dados do painel...</p>
+    <!-- Tabela -->
+    <h2 class="section-title">📋 Fluxo Geral de Pedidos</h2>
+    <div class="table-card">
+      <div id="containerPedidos" class="table-wrapper">
+        <p class="loading">Carregando dados do painel...</p>
+      </div>
     </div>
   </main>
 

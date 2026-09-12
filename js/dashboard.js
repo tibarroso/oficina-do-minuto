@@ -6,10 +6,11 @@ const pesquisaOS = document.getElementById("pesquisaOS");
 const btnFiltrar = document.getElementById("btnFiltrar");
 const btnCriarPedidoContainer = document.getElementById("btnCriarPedidoContainer");
 
-// Elementos dos KPIs
+// Elementos dos KPIs (Separados)
 const kpiTotal = document.getElementById("kpiTotal");
 const kpiColeta = document.getElementById("kpiColeta");
-const kpiEmAndamento = document.getElementById("kpiEmAndamento");
+const kpiEmTransporte = document.getElementById("kpiEmTransporte");
+const kpiEmServico = document.getElementById("kpiEmServico");
 const kpiFinalizados = document.getElementById("kpiFinalizados");
 
 let pedidosGlobais = [];
@@ -135,27 +136,36 @@ async function carregarPedidos() {
 }
 
 // ===============================
-// Atualizar KPIs Topo
+// Atualizar KPIs Topo (Ajustado)
 // ===============================
 function renderizarKPIs(pedidos) {
   if (!kpiTotal) return;
   
   let total = pedidos.length;
   let coleta = 0;
-  let emAndamento = 0;
+  let emTransporte = 0;
+  let emServico = 0;
   let finalizados = 0;
 
   pedidos.forEach(p => {
-    const st = p.status || "";
-    if (st.includes("Aguardando coleta")) coleta++;
-    else if (st.includes("Finalizado")) finalizados++;
-    else emAndamento++;
+    const st = (p.status || "").toLowerCase();
+    
+    if (st.includes("coleta")) {
+      coleta++;
+    } else if (st.includes("transporte") || st.includes("retorno")) {
+      emTransporte++;
+    } else if (st.includes("serviço") || st.includes("servico") || st.includes("entregue na loja 5")) {
+      emServico++;
+    } else if (st.includes("finalizado")) {
+      finalizados++;
+    }
   });
 
   kpiTotal.textContent = total;
-  kpiColeta.textContent = coleta;
-  kpiEmAndamento.textContent = emAndamento;
-  kpiFinalizados.textContent = finalizados;
+  if (kpiColeta) kpiColeta.textContent = coleta;
+  if (kpiEmTransporte) kpiEmTransporte.textContent = emTransporte;
+  if (kpiEmServico) kpiEmServico.textContent = emServico;
+  if (kpiFinalizados) kpiFinalizados.textContent = finalizados;
 }
 
 // ===============================
@@ -213,10 +223,11 @@ function renderizarPedidosTabela(pedidos) {
 
     // Badge de status
     let statusClass = "status-default";
-    if (status.includes("Finalizado")) statusClass = "status-finalizado";
-    else if (status.includes("coleta")) statusClass = "status-coleta";
-    else if (status.includes("transporte")) statusClass = "status-transporte";
-    else if (status.includes("serviço")) statusClass = "status-servico";
+    const stLower = status.toLowerCase();
+    if (stLower.includes("finalizado")) statusClass = "status-finalizado";
+    else if (stLower.includes("coleta")) statusClass = "status-coleta";
+    else if (stLower.includes("transporte") || stLower.includes("retorno")) statusClass = "status-transporte";
+    else if (stLower.includes("serviço") || stLower.includes("servico") || stLower.includes("entregue")) statusClass = "status-servico";
 
     tr.innerHTML = `
       <td style="font-weight: 600; color: #0f172a;">#${osId}</td>

@@ -5,51 +5,305 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard - Oficina do Minuto</title>
   
-  <!-- Link para o estilo -->
-  <link rel="stylesheet" href="./css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
-<!-- Carregar a versão específica do Chart.js (versão estável) -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
-
-
-  <!-- CDN do Supabase (Aqui é onde você carrega o Supabase) -->
+  <link rel="stylesheet" href="/css/style.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
+  <style>
+    /* Estilos de Reset e Base */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background-color: #f4f7f9;
+      color: #2c3e50;
+    }
+
+    /* CORREÇÃO DO HEADER: Criação da barra fixa, limpa e alinhada */
+    header {
+      background-color: white;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
+    }
+
+    .header-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-container h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin: 0;
+      text-align: left;
+    }
+
+    .header-container h1 span {
+      color: #18BC9C;
+    }
+
+    nav {
+      display: flex;
+      gap: 15px;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: #7f8c8d;
+      font-weight: 500;
+      font-size: 14px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+
+    nav a:hover, nav a.active {
+      color: #18BC9C;
+      background-color: #e8f8f5;
+    }
+
+    nav a.logout-btn {
+      color: #e74c3c;
+    }
+    nav a.logout-btn:hover {
+      background-color: #fdedec;
+    }
+
+    /* Organização do Espaçamento do Conteúdo */
+    main {
+      max-width: 1200px;
+      margin: 90px auto 40px auto; /* Afastamento seguro da barra fixa superior */
+      padding: 20px;
+    }
+
+    .page-title {
+      font-size: 26px;
+      font-weight: 600;
+      color: #2c3e50;
+      text-align: center;
+      margin-bottom: 5px;
+    }
+
+    .page-subtitle {
+      text-align: center;
+      color: #7f8c8d;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+
+    h2 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 20px;
+      margin-top: 10px;
+    }
+
+    /* Área de Filtros Gerenciais Remodelada */
+    .filtros-dashboard {
+      background-color: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      align-items: center;
+      margin-bottom: 35px;
+    }
+
+    .filtro-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .filtros-dashboard label {
+      font-weight: 600;
+      font-size: 14px;
+      color: #34495e;
+      white-space: nowrap;
+    }
+
+    .filtros-dashboard select, 
+    .filtros-dashboard input {
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      font-size: 14px;
+      background-color: #f8fafc;
+      outline: none;
+      transition: all 0.3s;
+    }
+
+    .filtros-dashboard select:focus, 
+    .filtros-dashboard input:focus {
+      border-color: #18BC9C;
+      background-color: white;
+      box-shadow: 0 0 0 3px rgba(24, 188, 156, 0.1);
+    }
+
+    .filtros-dashboard input {
+      flex: 1;
+      min-width: 250px;
+    }
+
+    .filter-btn {
+      padding: 10px 25px;
+      background-color: #18BC9C;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .filter-btn:hover {
+      background-color: #128f76;
+    }
+
+    /* Ajuste estrutural e alinhamento dos Gráficos */
+    .charts-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+      gap: 25px;
+      margin-bottom: 40px;
+    }
+
+    .chart-box {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Área de Relatório / Tabela */
+    .cards-container {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+      min-height: 100px;
+    }
+
+    .loading {
+      text-align: center;
+      color: #7f8c8d;
+      padding: 20px;
+    }
+
+    /* Ajustes para Telas Pequenas (Celulares) */
+    @media (max-width: 768px) {
+      .header-container {
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+      }
+      .header-container h1 {
+        text-align: center;
+      }
+      main {
+        margin-top: 140px;
+      }
+      .filtros-dashboard {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .filtro-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .filtros-dashboard select, .filtros-dashboard input, .filter-btn {
+        width: 100%;
+      }
+      .charts-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 <body>
 
-  <h1>Dashboard - Oficina do Minuto</h1>
+  <header>
+    <div class="header-container">
+      <h1>Oficina do Minuto • <span>Admin</span></h1>
+      <nav>
+        <a href="/admin" class="active">Dashboard</a>
+        <a href="/sobre">Sobre</a>
+        <a href="/" class="logout-btn">Sair</a>
+      </nav>
+    </div>
+  </header>
 
-  <!-- Filtros -->
-  <div class="filtros">
-    <label for="filtroStatus">Status:</label>
-    <select id="filtroStatus">
-      <option value="">Todos</option>
-      <option value="Aguardando coleta">Aguardando coleta</option>
-      <option value="Entregue na Loja 5">Entregue na Loja 5</option>
-      <option value="Finalizado">Finalizado</option>
-    </select>
+  <main>
+    <h1 class="page-title">Dashboard Operacional</h1>
+    <p class="page-subtitle">Indicadores gerenciais e monitoramento de ordens de serviço em tempo real.</p>
 
-    <label for="pesquisaOS">Pesquisar OS/Loja:</label>
-    <input type="text" id="pesquisaOS" placeholder="Digite OS ou Loja">
-    <button id="btnFiltrar">Filtrar</button>
-  </div>
+    <div class="filtros-dashboard">
+      <div class="filtro-item">
+        <label for="filtroStatus">Status:</label>
+        <select id="filtroStatus">
+          <option value="">Todos</option>
+          <option value="Aguardando coleta">Aguardando coleta</option>
+          <option value="Em transporte para Loja 5">Em transporte (ida)</option>
+          <option value="Entregue na Loja 5">Entregue na Loja 5</option>
+          <option value="Em serviço">Em serviço</option>
+          <option value="Aguardando retorno do transporte">Aguardando retorno</option>
+          <option value="Em transporte para loja de origem">Em transporte (volta)</option>
+          <option value="Recebido na loja de origem">Recebido na loja de origem</option>
+          <option value="Finalizado">Finalizado</option>
+          <option value="Retrabalho">Retrabalho</option>
+        </select>
+      </div>
 
-  <!-- Gráficos -->
-  <h2>Gráficos de Pedidos</h2>
-  <div class="charts-container">
-    <canvas id="graficoStatus" width="400" height="150"></canvas>
-    <canvas id="graficoServico" width="400" height="150"></canvas>
-  </div>
+      <div class="filtro-item" style="flex: 1;">
+        <label for="pesquisaOS">Pesquisar:</label>
+        <input type="text" id="pesquisaOS" placeholder="Digite o número da OS ou nome da loja...">
+      </div>
+      
+      <button id="btnFiltrar" class="filter-btn">Filtrar Dados</button>
+    </div>
 
-  <!-- Lista de Pedidos -->
-  <h2>Lista de Pedidos</h2>
-  <div id="containerPedidos" class="cards-container">
-    <p class="loading">Carregando pedidos...</p>
-  </div>
+    <h2>📊 Gráficos de Produtividade</h2>
+    <div class="charts-container">
+      <div class="chart-box">
+        <canvas id="graficoStatus"></canvas>
+      </div>
+      <div class="chart-box">
+        <canvas id="graficoServico"></canvas>
+      </div>
+    </div>
 
-  <!-- Script -->
-  <script type="module" src="./js/dashboard.js"></script> <!-- O seu JS deve ser carregado aqui depois do Supabase -->
+    <h2>📋 Fluxo Geral de Pedidos</h2>
+    <div id="containerPedidos" class="cards-container">
+      <p class="loading">Carregando dados do painel...</p>
+    </div>
+  </main>
+        </div> <footer>
+        &copy; 2026 Oficina do Minuto. Todos os direitos reservados.
+    </footer>
+  <script type="module" src="/js/dashboard.js"></script>
 
 </body>
 </html>

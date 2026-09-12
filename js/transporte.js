@@ -44,6 +44,7 @@ async function carregarAguardando(filtroLoja) {
     return;
   }
 
+  // Garante a limpeza total do container antes de inserir novos elementos
   div.innerHTML = "";
   for (const p of data) {
     const cardNode = await criarCard(p, "ida");
@@ -152,7 +153,14 @@ async function criarCard(pedido, tipo) {
 
   let HTMLeventos = "";
   if (eventos && eventos.length > 0) {
-    HTMLeventos = eventos.map(ev => {
+    // Evita duplicidade visual caso haja registros idênticos consecutivos
+    const eventosUnicos = eventos.filter((ev, index, self) =>
+      index === self.findIndex((t) => (
+        t.evento === ev.evento && t.criado_em === ev.criado_em
+      ))
+    );
+
+    HTMLeventos = eventosUnicos.map(ev => {
       const dataFormatada = new Date(ev.criado_em).toLocaleString('pt-BR');
       const obsTexto = ev.observacao ? ` - <em style="color: #475569;">${ev.observacao}</em>` : "";
       return `<li style="margin-bottom: 4px; padding-bottom: 2px; border-bottom: 1px dashed #f1f5f9;">• <strong>${ev.evento}</strong>${obsTexto} <span style="color: #64748b; font-size: 10px;">(${dataFormatada})</span></li>`;
@@ -190,7 +198,6 @@ async function criarCard(pedido, tipo) {
     </div>
   `;
 
-  // Botões de Ação com base no tipo e status rigoroso
   const acaoContainer = document.createElement("div");
   acaoContainer.style.marginTop = "10px";
 
@@ -301,6 +308,5 @@ function statusClasse(status) {
 
   carregarPedidos(filtroAtivo);
 
-  // Atualização automática a cada 5 minutos
   setInterval(() => carregarPedidos(filtroAtivo), 300000);
 })();

@@ -285,7 +285,6 @@
   </main>
 
   <script>
-    // Configuração apontada diretamente para a API local na porta 3000
     const API_URL = 'http://localhost:3000';
 
     function abrirModal() { document.getElementById('modalCriarPedido').classList.add('ativo'); }
@@ -359,7 +358,7 @@
     }
   </script>
 
-  <!-- Carregamento do script modular da pasta /js -->
+  <!-- Carregamento do script modular da pasta /js (Garantir ordenação .order('criado_em', { ascending: false })) -->
   <script type="module" src="js/pedidos_loja.js"></script>
 
 </body>

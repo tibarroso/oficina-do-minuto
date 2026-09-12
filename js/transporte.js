@@ -3,15 +3,26 @@ import { supabase } from "./supabase.js";
 // Variável para armazenar o filtro de loja ativo
 let filtroAtivo = "Todas";
 
+// TRAVA DE SEGURANÇA: Evita que execuções simultâneas dupliquem os cards ao apertar F5
+let carregandoEmAndamento = false;
+
 // =====================
 // Inicialização Principal
 // =====================
 export async function carregarPedidos(filtroLoja = "Todas") {
+  if (carregandoEmAndamento) return;
+  carregandoEmAndamento = true;
+
   filtroAtivo = filtroLoja;
 
-  await carregarAguardando(filtroLoja);      // Ida
-  await carregarEmTransporte(filtroLoja);   // Ida, Volta e Retrabalho
-  await carregarRetorno(filtroLoja);        // Volta e Retrabalho
+  try {
+    await carregarAguardando(filtroLoja);      // Ida
+    await carregarEmTransporte(filtroLoja);   // Ida, Volta e Retrabalho
+    await carregarRetorno(filtroLoja);        // Volta e Retrabalho
+  } finally {
+    // Libera a trava após concluir todas as requisições
+    carregandoEmAndamento = false;
+  }
 }
 
 // =====================
@@ -20,6 +31,7 @@ export async function carregarPedidos(filtroLoja = "Todas") {
 async function carregarAguardando(filtroLoja) {
   const div = document.getElementById("aguardando");
   if (!div) return;
+  
   div.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Carregando pedidos...</p>";
 
   let query = supabase
@@ -39,13 +51,13 @@ async function carregarAguardando(filtroLoja) {
     return;
   }
 
+  div.innerHTML = "";
+
   if (!data || data.length === 0) {
     div.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Nenhum pedido aguardando coleta.</p>";
     return;
   }
 
-  // Garante a limpeza total do container antes de inserir novos elementos
-  div.innerHTML = "";
   for (const p of data) {
     const cardNode = await criarCard(p, "ida");
     div.appendChild(cardNode);
@@ -58,6 +70,7 @@ async function carregarAguardando(filtroLoja) {
 async function carregarEmTransporte(filtroLoja) {
   const div = document.getElementById("transporte");
   if (!div) return;
+  
   div.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Carregando pedidos...</p>";
 
   let query = supabase
@@ -81,12 +94,13 @@ async function carregarEmTransporte(filtroLoja) {
     return;
   }
 
+  div.innerHTML = "";
+
   if (!data || data.length === 0) {
     div.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Nenhum pedido em transporte.</p>";
     return;
   }
 
-  div.innerHTML = "";
   for (const p of data) {
     const cardNode = await criarCard(p, "emTransporte");
     div.appendChild(cardNode);
@@ -99,6 +113,7 @@ async function carregarEmTransporte(filtroLoja) {
 async function carregarRetorno(filtroLoja) {
   const div = document.getElementById("retorno");
   if (!div) return;
+  
   div.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Carregando pedidos...</p>";
 
   let query = supabase
@@ -123,12 +138,13 @@ async function carregarRetorno(filtroLoja) {
     return;
   }
 
+  div.innerHTML = "";
+
   if (!data || data.length === 0) {
     div.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Nenhum pedido aguardando retorno.</p>";
     return;
   }
 
-  div.innerHTML = "";
   for (const p of data) {
     const cardNode = await criarCard(p, "volta");
     div.appendChild(cardNode);
@@ -144,7 +160,6 @@ async function criarCard(pedido, tipo) {
 
   const statusComparacao = pedido.status ? pedido.status.trim() : "";
 
-  // Carrega o histórico de eventos do pedido do banco de dados
   const { data: eventos } = await supabase
     .from("pedido_eventos")
     .select("*")
@@ -153,7 +168,6 @@ async function criarCard(pedido, tipo) {
 
   let HTMLeventos = "";
   if (eventos && eventos.length > 0) {
-    // Evita duplicidade visual caso haja registros idênticos consecutivos
     const eventosUnicos = eventos.filter((ev, index, self) =>
       index === self.findIndex((t) => (
         t.evento === ev.evento && t.criado_em === ev.criado_em

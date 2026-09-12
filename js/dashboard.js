@@ -44,6 +44,38 @@ function criarBotaoPedido() {
 }
 
 // ===============================
+// Extração de Dados da Observação
+// ===============================
+function extrairDadosObs(obsText) {
+  const dados = {
+    ticket: "---",
+    cliente: "Não informado",
+    saco: "---",
+    pecas: "0",
+    valor: "0,00"
+  };
+
+  if (!obsText || typeof obsText !== "string") return dados;
+
+  const partes = obsText.split("|");
+
+  partes.forEach((parte) => {
+    const [chave, valor] = parte.split(":").map((item) => item.trim());
+    if (!chave || !valor) return;
+
+    const chaveLower = chave.toLowerCase();
+
+    if (chaveLower.includes("ticket")) dados.ticket = valor;
+    else if (chaveLower.includes("cliente")) dados.cliente = valor;
+    else if (chaveLower.includes("saco")) dados.saco = valor;
+    else if (chaveLower.includes("peça") || chaveLower.includes("peca")) dados.pecas = valor;
+    else if (chaveLower.includes("valor")) dados.valor = valor.replace("R$", "").trim();
+  });
+
+  return dados;
+}
+
+// ===============================
 // Busca de Dados no Supabase
 // ===============================
 async function carregarPedidos() {
@@ -75,7 +107,7 @@ async function carregarPedidos() {
         query = query.eq("id", parseInt(pesquisa));
       } else {
         query = query.or(
-          `loja_origem.ilike.%${pesquisa}%,tipo_servico.ilike.%${pesquisa}%,status.ilike.%${pesquisa}%`
+          `loja_origem.ilike.%${pesquisa}%,tipo_servico.ilike.%${pesquisa}%,status.ilike.%${pesquisa}%,obs_loja_origem.ilike.%${pesquisa}%`
         );
       }
     }
@@ -163,11 +195,15 @@ function renderizarPedidosTabela(pedidos) {
     const servico = p.tipo_servico ?? "Geral";
     const status = p.status ?? "Sem status";
     
-    const ticket = p.ticket || p.numero_ticket || "---";
-    const cliente = p.cliente || p.nome_cliente || "Não informado";
-    const saco = p.saco || p.numero_saco || "---";
-    const pecas = p.pecas || p.quantidade_pecas || "0";
-    const valor = p.valor || p.preco || "0";
+    // Processa a string de obs_loja_origem
+    const obsTexto = p.obs_loja_origem || p.observacao || "";
+    const parsedObs = extrairDadosObs(obsTexto);
+
+    const ticket = p.ticket || parsedObs.ticket;
+    const cliente = p.cliente || parsedObs.cliente;
+    const saco = p.saco || parsedObs.saco;
+    const pecas = p.pecas || parsedObs.pecas;
+    const valor = p.valor || parsedObs.valor;
 
     let dataFormatada = "---";
     const dataRegistro = p.criado_em || p.created_at;

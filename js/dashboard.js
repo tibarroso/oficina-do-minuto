@@ -46,7 +46,7 @@ function criarBotaoPedido() {
 }
 
 // ===============================
-// Extração de Dados da Observação
+// Extração de Dados da Observação (Melhorada)
 // ===============================
 function extrairDadosObs(obsText) {
   const dados = {
@@ -57,21 +57,44 @@ function extrairDadosObs(obsText) {
     valor: "0,00"
   };
 
-  if (!obsText || typeof obsText !== "string") return dados;
+  if (!obsText) return dados;
 
-  const partes = obsText.split("|");
+  // Se a observação veio como Objeto JSON do Supabase
+  if (typeof obsText === "object") {
+    return {
+      ticket: obsText.ticket || obsText.cod || "---",
+      cliente: obsText.cliente || obsText.nome || "Não informado",
+      saco: obsText.saco || obsText.bag || "---",
+      pecas: obsText.pecas || obsText.qtd || "0",
+      valor: obsText.valor || obsText.total || "0,00"
+    };
+  }
+
+  if (typeof obsText !== "string") return dados;
+
+  // Aceita separadores: "|", quebra de linha "\n", ou hífens
+  const partes = obsText.split(/[|\n]/);
 
   partes.forEach((parte) => {
-    const [chave, valor] = parte.split(":").map((item) => item?.trim() || "");
-    if (!chave || !valor) return;
+    if (!parte.includes(":")) return;
 
-    const chaveLower = chave.toLowerCase();
+    const [chave, ...valorArr] = parte.split(":");
+    const valor = valorArr.join(":").trim();
+    const chaveLower = chave.trim().toLowerCase();
 
-    if (chaveLower.includes("ticket")) dados.ticket = valor;
-    else if (chaveLower.includes("cliente")) dados.cliente = valor;
-    else if (chaveLower.includes("saco")) dados.saco = valor;
-    else if (chaveLower.includes("peça") || chaveLower.includes("peca")) dados.pecas = valor;
-    else if (chaveLower.includes("valor")) dados.valor = valor.replace("R$", "").trim();
+    if (!chaveLower || !valor) return;
+
+    if (chaveLower.includes("ticket") || chaveLower.includes("cod") || chaveLower.includes("os")) {
+      dados.ticket = valor;
+    } else if (chaveLower.includes("cliente") || chaveLower.includes("cli") || chaveLower.includes("nome")) {
+      dados.cliente = valor;
+    } else if (chaveLower.includes("saco") || chaveLower.includes("bag")) {
+      dados.saco = valor;
+    } else if (chaveLower.includes("peça") || chaveLower.includes("peca") || chaveLower.includes("qtd")) {
+      dados.pecas = valor;
+    } else if (chaveLower.includes("valor") || chaveLower.includes("total") || chaveLower.includes("vlr")) {
+      dados.valor = valor.replace("R$", "").trim();
+    }
   });
 
   return dados;
@@ -86,7 +109,7 @@ async function carregarPedidos() {
       container.innerHTML = "<p class='loading'>Carregando dados do painel...</p>";
     }
 
-    // Traz todos os campos de pedidos + a coluna observacao de pedido_eventos
+    // Traz todos os campos de pedidos + a relação com pedido_eventos
     let query = supabase.from("pedidos").select(`
       *,
       pedido_eventos (
@@ -203,13 +226,23 @@ function renderizarPedidosTabela(pedidos) {
     const servico = p.tipo_servico ?? "Geral";
     const status = p.status ?? "Sem status";
     
-    // Puxa a observação do pedido_eventos
+    // Procura o texto de observação no relacionamento pedido_eventos
     let obsTexto = "";
+
     if (p.pedido_eventos && Array.isArray(p.pedido_eventos) && p.pedido_eventos.length > 0) {
-      obsTexto = p.pedido_eventos[p.pedido_eventos.length - 1]?.observacao || "";
+      // Tenta encontrar algum evento que possua observação válida
+      const eventoValido = p.pedido_eventos.find((ev) => ev && ev.observacao);
+      if (eventoValido) {
+        obsTexto = eventoValido.observacao;
+      } else {
+        obsTexto = p.pedido_eventos[p.pedido_eventos.length - 1]?.observacao || "";
+      }
     } else if (typeof p.pedido_eventos === "object" && p.pedido_eventos?.observacao) {
       obsTexto = p.pedido_eventos.observacao;
-    } else {
+    }
+
+    // Fallback: Se não encontrou em pedido_eventos, busca direto na tabela do pedido
+    if (!obsTexto) {
       obsTexto = p.obs_loja_origem || p.observacao || "";
     }
 

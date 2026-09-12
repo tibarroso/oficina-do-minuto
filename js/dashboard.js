@@ -6,6 +6,12 @@ const pesquisaOS = document.getElementById("pesquisaOS");
 const btnFiltrar = document.getElementById("btnFiltrar");
 const btnCriarPedidoContainer = document.getElementById("btnCriarPedidoContainer");
 
+// Elementos dos KPIs
+const kpiTotal = document.getElementById("kpiTotal");
+const kpiColeta = document.getElementById("kpiColeta");
+const kpiEmAndamento = document.getElementById("kpiEmAndamento");
+const kpiFinalizados = document.getElementById("kpiFinalizados");
+
 let pedidosGlobais = [];
 let usuarioLogado = null;
 let usuarioTipo = "admin";
@@ -13,37 +19,32 @@ let chartStatus = null;
 let chartServico = null;
 
 // ===============================
-// Validação de Sessão
+// Sessão do Usuário
 // ===============================
 async function realizarLogin() {
   try {
     const { data } = await supabase.auth.getUser();
-    if (data?.user) {
-      return data.user;
-    }
+    if (data?.user) return data.user;
   } catch (err) {
-    console.warn("Aviso na sessão, usando perfil padrão.", err);
+    console.warn("Sessão não identificada, usando perfil padrão.", err);
   }
   return { email: "ti@ebarroso.com.br" };
 }
 
-// ===============================
-// Botão de Criar Pedido (Apenas Perfil Loja)
-// ===============================
 function criarBotaoPedido() {
   if (usuarioTipo === "loja" && btnCriarPedidoContainer) {
     btnCriarPedidoContainer.innerHTML = ""; 
     const btn = document.createElement("button");
-    btn.textContent = "➕ Criar Novo Pedido";
+    btn.textContent = "+ Novo Pedido";
     btn.className = "filter-btn";
-    btn.style.backgroundColor = "#2980b9";
+    btn.style.backgroundColor = "#2563eb";
     btn.onclick = () => window.location.href = "pedidos.html"; 
     btnCriarPedidoContainer.appendChild(btn);
   }
 }
 
 // ===============================
-// Carregar Pedidos com Supabase
+// Busca de Dados no Supabase
 // ===============================
 async function carregarPedidos() {
   try {
@@ -53,11 +54,10 @@ async function carregarPedidos() {
 
     let query = supabase.from("pedidos").select("*");
 
-    // Ordenação segura
     try {
       query = query.order("criado_em", { ascending: false });
     } catch (e) {
-      console.warn("Coluna criado_em não encontrada para ordenação.");
+      console.warn("Coluna criado_em ausente para ordenação.");
     }
 
     if (usuarioTipo === "loja" && usuarioLogado?.email) {
@@ -83,22 +83,47 @@ async function carregarPedidos() {
     const { data, error } = await query;
     
     if (error) {
-      console.error("Erro retornado pelo Supabase:", error);
+      console.error("Erro Supabase:", error);
       if (container) {
-        container.innerHTML = `<p class='loading' style='color: #e74c3c;'>Erro do Supabase: ${error.message}</p>`;
+        container.innerHTML = `<p class='loading' style='color: #ef4444;'>Erro ao carregar os dados: ${error.message}</p>`;
       }
       return;
     }
 
     pedidosGlobais = data || []; 
+    renderizarKPIs(pedidosGlobais);
     renderizarPedidosTabela(pedidosGlobais);
     atualizarGraficos(); 
   } catch (err) {
-    console.error("Erro crítico ao carregar pedidos:", err);
+    console.error("Erro crítico:", err);
     if (container) {
-      container.innerHTML = `<p class='loading' style='color: #e74c3c;'>Erro crítico ao carregar os dados. Veja o console.</p>`;
+      container.innerHTML = `<p class='loading' style='color: #ef4444;'>Ocorreu um erro ao processar os dados.</p>`;
     }
   }
+}
+
+// ===============================
+// Atualizar KPIs Topo
+// ===============================
+function renderizarKPIs(pedidos) {
+  if (!kpiTotal) return;
+  
+  let total = pedidos.length;
+  let coleta = 0;
+  let emAndamento = 0;
+  let finalizados = 0;
+
+  pedidos.forEach(p => {
+    const st = p.status || "";
+    if (st.includes("Aguardando coleta")) coleta++;
+    else if (st.includes("Finalizado")) finalizados++;
+    else emAndamento++;
+  });
+
+  kpiTotal.textContent = total;
+  kpiColeta.textContent = coleta;
+  kpiEmAndamento.textContent = emAndamento;
+  kpiFinalizados.textContent = finalizados;
 }
 
 // ===============================
@@ -109,24 +134,20 @@ function renderizarPedidosTabela(pedidos) {
   container.innerHTML = ""; 
 
   if (!pedidos || pedidos.length === 0) {
-    container.innerHTML = "<p class='loading'>Nenhum pedido encontrado com os filtros aplicados.</p>"; 
+    container.innerHTML = "<p class='loading'>Nenhum pedido encontrado.</p>"; 
     return;
   }
 
   const tabela = document.createElement("table");
-  tabela.style.width = "100%";
-  tabela.style.borderCollapse = "collapse";
-  tabela.style.fontSize = "14px";
-
   tabela.innerHTML = `
     <thead>
-      <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; text-align: left;">
-        <th style="padding: 12px 15px; color: #64748b; font-weight: 600;">OS</th>
-        <th style="padding: 12px 15px; color: #64748b; font-weight: 600;">Loja Origem</th>
-        <th style="padding: 12px 15px; color: #64748b; font-weight: 600;">Serviço</th>
-        <th style="padding: 12px 15px; color: #64748b; font-weight: 600;">Status</th>
-        <th style="padding: 12px 15px; color: #64748b; font-weight: 600;">Detalhes / Observação</th>
-        <th style="padding: 12px 15px; color: #64748b; font-weight: 600;">Data</th>
+      <tr>
+        <th>OS</th>
+        <th>Loja Origem</th>
+        <th>Serviço</th>
+        <th>Status</th>
+        <th>Detalhes / Observação</th>
+        <th>Data</th>
       </tr>
     </thead>
     <tbody id="corpoTabelaDashboard"></tbody>
@@ -134,24 +155,19 @@ function renderizarPedidosTabela(pedidos) {
 
   const corpoTabela = tabela.querySelector("#corpoTabelaDashboard");
 
-  pedidos.forEach((p, idx) => {
+  pedidos.forEach((p) => {
     const tr = document.createElement("tr");
-    tr.style.borderBottom = "1px solid #f1f5f9";
-    tr.style.backgroundColor = idx % 2 === 0 ? "#ffffff" : "#f8fafc";
 
     const osId = p.id ? String(p.id).substring(0, 8) : "N/A";
     const loja = p.loja_origem ?? "Não informada";
     const servico = p.tipo_servico ?? "Geral";
     const status = p.status ?? "Sem status";
     
-    // Formatação de observações
     const ticket = p.ticket || p.numero_ticket || "---";
     const cliente = p.cliente || p.nome_cliente || "Não informado";
     const saco = p.saco || p.numero_saco || "---";
     const pecas = p.pecas || p.quantidade_pecas || "0";
     const valor = p.valor || p.preco || "0";
-
-    const observacaoFormatada = `Ticket: ${ticket} | Cliente: ${cliente} | Saco: ${saco} | Peças: ${pecas} | Valor: R$ ${valor}`;
 
     let dataFormatada = "---";
     const dataRegistro = p.criado_em || p.created_at;
@@ -159,20 +175,28 @@ function renderizarPedidosTabela(pedidos) {
       dataFormatada = new Date(dataRegistro).toLocaleDateString("pt-BR");
     }
 
-    // Definir classe CSS da tag de status
+    // Badge de status
     let statusClass = "status-default";
     if (status.includes("Finalizado")) statusClass = "status-finalizado";
-    else if (status.includes("Aguardando")) statusClass = "status-aguardando";
+    else if (status.includes("coleta")) statusClass = "status-coleta";
     else if (status.includes("transporte")) statusClass = "status-transporte";
     else if (status.includes("serviço")) statusClass = "status-servico";
 
     tr.innerHTML = `
-      <td style="padding: 12px 15px; font-weight: 600; color: #2c3e50;">#${osId}</td>
-      <td style="padding: 12px 15px; color: #334155;">${loja}</td>
-      <td style="padding: 12px 15px;"><span style="background: #e2e8f0; padding: 3px 8px; border-radius: 4px; font-size: 12px; color: #475569;">${servico}</span></td>
-      <td style="padding: 12px 15px;"><span class="status-badge ${statusClass}">${status}</span></td>
-      <td style="padding: 12px 15px; color: #475569; font-size: 13px;">${observacaoFormatada}</td>
-      <td style="padding: 12px 15px; color: #64748b; font-size: 13px;">${dataFormatada}</td>
+      <td style="font-weight: 600; color: #0f172a;">#${osId}</td>
+      <td style="font-weight: 500;">${loja}</td>
+      <td><span style="background: #e2e8f0; padding: 4px 8px; border-radius: 6px; font-size: 12px; color: #334155; font-weight: 500;">${servico}</span></td>
+      <td><span class="status-badge ${statusClass}">${status}</span></td>
+      <td>
+        <div class="obs-pill-group">
+          <span class="obs-pill">Ticket: <strong>${ticket}</strong></span>
+          <span class="obs-pill">Cliente: <strong>${cliente}</strong></span>
+          <span class="obs-pill">Saco: <strong>${saco}</strong></span>
+          <span class="obs-pill">Peças: <strong>${pecas}</strong></span>
+          <span class="obs-pill">Valor: <strong>R$ ${valor}</strong></span>
+        </div>
+      </td>
+      <td style="color: #64748b; font-size: 12px;">${dataFormatada}</td>
     `;
     corpoTabela.appendChild(tr);
   });
@@ -181,20 +205,20 @@ function renderizarPedidosTabela(pedidos) {
 }
 
 // ===============================
-// Renderizar Gráficos (Chart.js)
+// Chart.js - Gráficos
 // ===============================
 function atualizarGraficos() {
   const statusCount = {};
   const servicoCount = {};
 
   pedidosGlobais.forEach(p => {
-    const st = p.status ?? "Sem Status";
+    const st = p.status ?? "Outros";
     const sr = p.tipo_servico ?? "Outros";
     statusCount[st] = (statusCount[st] || 0) + 1;
     servicoCount[sr] = (servicoCount[sr] || 0) + 1;
   });
 
-  // Gráfico de Status (Doughnut)
+  // Chart Status (Doughnut)
   const elStatus = document.getElementById("graficoStatus");
   if (elStatus && window.Chart) {
     const ctxStatus = elStatus.getContext("2d");
@@ -205,21 +229,21 @@ function atualizarGraficos() {
         labels: Object.keys(statusCount),
         datasets: [{
           data: Object.values(statusCount),
-          backgroundColor: ["#18BC9C", "#3498db", "#f1c40f", "#e74c3c", "#9b59b6", "#34495e"]
+          backgroundColor: ["#0d9488", "#2563eb", "#d97706", "#dc2626", "#7c3aed", "#475569"]
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'bottom' },
-          title: { display: true, text: 'Distribuição por Status', font: { size: 14 } }
+          legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } },
+          title: { display: true, text: 'Status dos Pedidos', font: { size: 13, weight: '600' }, color: '#0f172a' }
         }
       }
     });
   }
 
-  // Gráfico de Serviços (Bar)
+  // Chart Serviços (Bar)
   const elServico = document.getElementById("graficoServico");
   if (elServico && window.Chart) {
     const ctxServico = elServico.getContext("2d");
@@ -231,17 +255,20 @@ function atualizarGraficos() {
         datasets: [{
           label: "Pedidos",
           data: Object.values(servicoCount),
-          backgroundColor: "#34495e",
-          borderRadius: 6
+          backgroundColor: "#334155",
+          borderRadius: 4
         }],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+        scales: { 
+          y: { beginAtZero: true, ticks: { precision: 0 } },
+          x: { grid: { display: false } }
+        },
         plugins: {
           legend: { display: false },
-          title: { display: true, text: 'Ordens por Serviço', font: { size: 14 } }
+          title: { display: true, text: 'Volume por Serviço', font: { size: 13, weight: '600' }, color: '#0f172a' }
         }
       }
     });
@@ -249,7 +276,7 @@ function atualizarGraficos() {
 }
 
 // ===============================
-// Eventos e Inicialização
+// Inicialização
 // ===============================
 (async () => {
   usuarioLogado = await realizarLogin();
@@ -261,7 +288,6 @@ function atualizarGraficos() {
     btnFiltrar.addEventListener("click", carregarPedidos);
   }
 
-  // Filtragem dinâmica ao digitar na busca
   if (pesquisaOS) {
     pesquisaOS.addEventListener("input", () => {
       carregarPedidos();
@@ -269,7 +295,5 @@ function atualizarGraficos() {
   }
   
   carregarPedidos();
-  
-  // Atualização em tempo real a cada 15s
   setInterval(carregarPedidos, 15000);
 })();

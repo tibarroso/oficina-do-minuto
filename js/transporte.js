@@ -1,6 +1,6 @@
 import { supabase } from "./supabase.js";
 
-// Variável para armazenar o filtro de loja
+// Variável para armazenar o filtro de loja ativo
 let filtroAtivo = "Todas";
 
 // =====================
@@ -9,8 +9,8 @@ let filtroAtivo = "Todas";
 export async function carregarPedidos(filtroLoja = "Todas") {
   filtroAtivo = filtroLoja;
 
-  await carregarAguardando(filtroLoja);     // Ida
-  await carregarEmTransporte(filtroLoja);   // Ida e Volta
+  await carregarAguardando(filtroLoja);      // Ida
+  await carregarEmTransporte(filtroLoja);   // Ida, Volta e Retrabalho
   await carregarRetorno(filtroLoja);        // Volta e Retrabalho
 }
 
@@ -52,7 +52,7 @@ async function carregarAguardando(filtroLoja) {
 }
 
 // =====================
-// EM TRANSPORTE (IDA OU VOLTA)
+// EM TRANSPORTE (IDA, VOLTA OU RETRABALHO)
 // =====================
 async function carregarEmTransporte(filtroLoja) {
   const div = document.getElementById("transporte");
@@ -62,7 +62,11 @@ async function carregarEmTransporte(filtroLoja) {
   let query = supabase
     .from("pedidos")
     .select("*")
-    .in("status", ["Em transporte para Loja 5", "Em transporte para loja de origem"])
+    .in("status", [
+      "Em transporte para Loja 5",
+      "Em transporte para loja de origem",
+      "Em transporte para loja de Destino para retrabalho"
+    ])
     .order("criado_em", { ascending: false });
 
   if (filtroLoja !== "Todas") {
@@ -89,7 +93,7 @@ async function carregarEmTransporte(filtroLoja) {
 }
 
 // =====================
-// AGUARDANDO RETORNO / RETRABALHO / COLETA ORIGEM
+// AGUARDANDO RETORNO / RETRABALHO
 // =====================
 async function carregarRetorno(filtroLoja) {
   const div = document.getElementById("retorno");
@@ -137,7 +141,9 @@ async function criarCard(pedido, tipo) {
   const card = document.createElement("div");
   card.classList.add("card");
 
-  // Carrega o histórico de eventos do pedido
+  const statusComparacao = pedido.status ? pedido.status.trim() : "";
+
+  // Carrega o histórico de eventos do pedido do banco de dados
   const { data: eventos } = await supabase
     .from("pedido_eventos")
     .select("*")
@@ -148,7 +154,8 @@ async function criarCard(pedido, tipo) {
   if (eventos && eventos.length > 0) {
     HTMLeventos = eventos.map(ev => {
       const dataFormatada = new Date(ev.criado_em).toLocaleString('pt-BR');
-      return `<li style="margin-bottom: 4px; padding-bottom: 2px; border-bottom: 1px dashed #f1f5f9;">• ${ev.evento} <span style="color: #64748b; font-size: 10px;">(${dataFormatada})</span></li>`;
+      const obsTexto = ev.observacao ? ` - <em style="color: #475569;">${ev.observacao}</em>` : "";
+      return `<li style="margin-bottom: 4px; padding-bottom: 2px; border-bottom: 1px dashed #f1f5f9;">• <strong>${ev.evento}</strong>${obsTexto} <span style="color: #64748b; font-size: 10px;">(${dataFormatada})</span></li>`;
     }).join('');
   } else {
     HTMLeventos = `<li><em style="color: #94a3b8; font-size: 11px;">Nenhum evento registrado.</em></li>`;
@@ -156,16 +163,17 @@ async function criarCard(pedido, tipo) {
 
   let obs = pedido.obs_loja_origem ? `<p style="margin: 3px 0;"><strong>Obs Origem:</strong> ${pedido.obs_loja_origem}</p>` : "";
   let obsLoja5 = pedido.obs_loja5 ? `<p style="margin: 3px 0;"><strong>Obs Central:</strong> ${pedido.obs_loja5}</p>` : "";
+  let lojaDestino = pedido.loja_destino ? `<p style="margin: 0 0 4px 0;"><strong>Loja de Destino:</strong> ${pedido.loja_destino}</p>` : "";
 
   card.innerHTML = `
     <div style="font-size: 13px; line-height: 1.4; color: #334155;">
       <p style="margin: 0 0 4px 0;"><strong>Loja de Origem:</strong> ${pedido.loja_origem || 'Não informada'}</p>
-      <p style="margin: 0 0 4px 0;"><strong>Loja de Destino:</strong> ${pedido.loja_destino || 'Não informada'}</p>
+      ${lojaDestino}
       <p style="margin: 0 0 4px 0;"><strong>OS:</strong> <span style="font-size: 11px;">${pedido.id}</span></p>
       <p style="margin: 0 0 4px 0;"><strong>Serviço:</strong> ${pedido.tipo_servico || 'Geral'}</p>
 
       <div style="margin: 6px 0;">
-        <span class="status-badge status-${statusClasse(pedido.status)}">${pedido.status}</span>
+        <span class="status-badge status-${statusClasse(statusComparacao)}">${pedido.status}</span>
       </div>
 
       <p style="margin: 0 0 4px 0;"><strong>Orçamento:</strong> ${pedido.orcamento ? 'Sim' : 'Não'}</p>
@@ -174,7 +182,7 @@ async function criarCard(pedido, tipo) {
       ${obsLoja5}
 
       <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid #e2e8f0;">
-        <strong style="font-size: 11px; color: #0f172a;">Eventos:</strong>
+        <strong style="font-size: 11px; color: #0f172a;">Histórico de Eventos:</strong>
         <ul style="list-style: none; padding-left: 0; margin-top: 4px; font-size: 11px; max-height: 110px; overflow-y: auto;">
           ${HTMLeventos}
         </ul>
@@ -182,7 +190,7 @@ async function criarCard(pedido, tipo) {
     </div>
   `;
 
-  // Botões de Ação
+  // Botões de Ação com base no tipo e status rigoroso
   const acaoContainer = document.createElement("div");
   acaoContainer.style.marginTop = "10px";
 
@@ -191,25 +199,42 @@ async function criarCard(pedido, tipo) {
   btn.style.height = "36px";
   btn.style.fontSize = "12px";
   btn.style.width = "100%";
+  btn.style.cursor = "pointer";
+
+  const observacaoAtualDoPedido = pedido.obs_loja_origem || "";
 
   if (tipo === "ida") {
     btn.textContent = "Iniciar Transporte (Ida)";
-    btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para Loja 5", "Transporte iniciado (ida)");
+    btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para Loja 5", observacaoAtualDoPedido);
     acaoContainer.appendChild(btn);
   } else if (tipo === "emTransporte") {
-    if (pedido.status === "Em transporte para Loja 5") {
-      btn.textContent = "Entregar na Loja Central";
-      btn.onclick = () => atualizarStatus(pedido.id, "Entregue na Loja 5", "Entregue na Loja 5");
+    if (statusComparacao === "Em transporte para Loja 5") {
+      btn.textContent = "Entregar na Loja Central (Loja 5)";
+      btn.onclick = () => atualizarStatus(pedido.id, "Entregue na Loja 5", observacaoAtualDoPedido);
       acaoContainer.appendChild(btn);
-    } else if (pedido.status === "Em transporte para loja de origem") {
+    } else if (statusComparacao === "Em transporte para loja de origem") {
       btn.textContent = "Entregar na Loja de Origem";
-      btn.onclick = () => atualizarStatus(pedido.id, "Recebido na loja de origem", "Entregue na loja de origem");
+      btn.onclick = () => atualizarStatus(pedido.id, "Recebido na loja de origem", observacaoAtualDoPedido);
+      acaoContainer.appendChild(btn);
+    } else if (statusComparacao === "Em transporte para loja de Destino para retrabalho") {
+      btn.textContent = "Entregar na Loja de Destino";
+      btn.onclick = () => atualizarStatus(pedido.id, "Entregue na Loja de Destino para retrabalho", observacaoAtualDoPedido);
       acaoContainer.appendChild(btn);
     }
   } else if (tipo === "volta") {
-    btn.textContent = "Iniciar Transporte de Retorno";
-    btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para loja de origem", "Transporte iniciado (volta)");
-    acaoContainer.appendChild(btn);
+    if (statusComparacao === "Retrabalho") {
+      btn.textContent = "Iniciar Transporte de Retrabalho";
+      btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para loja de Destino para retrabalho", observacaoAtualDoPedido);
+      acaoContainer.appendChild(btn);
+    } else if (statusComparacao === "Aguardando coleta para loja de Origem" || statusComparacao === "Aguardando coleta para loja de origem") {
+      btn.textContent = "Iniciar Transporte de Retorno (Retrabalho)";
+      btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para loja de origem", observacaoAtualDoPedido);
+      acaoContainer.appendChild(btn);
+    } else if (statusComparacao === "Aguardando retorno do transporte") {
+      btn.textContent = "Iniciar Transporte de Retorno";
+      btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para loja de origem", observacaoAtualDoPedido);
+      acaoContainer.appendChild(btn);
+    }
   }
 
   if (acaoContainer.hasChildNodes()) {
@@ -222,31 +247,36 @@ async function criarCard(pedido, tipo) {
 // =====================
 // Atualizar status e registrar evento
 // =====================
-async function atualizarStatus(id, status, evento) {
-  const { error } = await supabase.from("pedidos").update({ status }).eq("id", id);
+async function atualizarStatus(id, novoStatus, observacaoDoPedido = "") {
+  const { error } = await supabase.from("pedidos").update({ status: novoStatus }).eq("id", id);
   if (error) {
     console.error(error);
     alert("Erro ao atualizar status.");
     return;
   }
 
-  await registrarEvento(id, evento);
+  await registrarEvento(id, novoStatus, observacaoDoPedido);
   carregarPedidos(filtroAtivo);
 }
 
 // =====================
-// Registrar evento
+// Registrar Logs na Tabela de Eventos
 // =====================
-async function registrarEvento(pedidoId, evento) {
-  const { data } = await supabase.auth.getUser();
-  if (!data?.user) return;
+async function registrarEvento(pedidoId, statusComoEvento, observacaoTabelaPedidos = "") {
+  try {
+    const { data } = await supabase.auth.getUser();
+    const operador = data?.user?.email || "Motorista / Logística";
 
-  await supabase.from("pedido_eventos").insert([{
-    pedido_id: pedidoId,
-    evento,
-    criado_por: data.user.email,
-    criado_em: new Date().toISOString()
-  }]);
+    await supabase.from("pedido_eventos").insert([{
+      pedido_id: pedidoId,
+      evento: statusComoEvento,
+      observacao: observacaoTabelaPedidos,
+      criado_por: operador,
+      criado_em: new Date().toISOString()
+    }]);
+  } catch (err) {
+    console.error("Erro ao registrar evento de logística:", err);
+  }
 }
 
 // =====================
@@ -254,14 +284,23 @@ async function registrarEvento(pedidoId, evento) {
 // =====================
 function statusClasse(status) {
   if (!status) return "Aguardando";
-  if (status.includes("Aguardando")) return "Aguardando";
-  if (status.includes("transporte")) return "Transporte";
+  if (status.includes("Aguardando") || status.includes("coleta")) return "Aguardando";
+  if (status.includes("transporte") || status.includes("Transporte")) return "Transporte";
   if (status.includes("Loja 5") || status.includes("Entregue") || status.includes("Recebido")) return "Loja5";
   if (status.includes("Finalizado")) return "Finalizado";
   if (status.includes("Retrabalho")) return "Retrabalho";
   return "Aguardando";
 }
 
-// Exposição global das funções para uso nos escopos do window
-window.carregarPedidos = carregarPedidos;
-window.atualizarStatus = atualizarStatus;
+// =====================
+// Inicialização Global Automatizada
+// =====================
+(async () => {
+  window.carregarPedidos = carregarPedidos;
+  window.atualizarStatus = atualizarStatus;
+
+  carregarPedidos(filtroAtivo);
+
+  // Atualização automática a cada 5 minutos
+  setInterval(() => carregarPedidos(filtroAtivo), 300000);
+})();

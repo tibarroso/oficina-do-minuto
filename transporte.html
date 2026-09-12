@@ -75,7 +75,7 @@
     &copy; 2026 Oficina do Minuto. Todos os direitos reservados.
   </footer>
 
-  <!-- Script de Inicialização -->
+  <!-- Script de Inicialização Único e Blindado -->
   <script type="module">
     import { supabase } from "./js/supabase.js";
     import { carregarPedidos } from "./js/transporte.js";
@@ -92,7 +92,7 @@
     btnFiltrar.addEventListener("click", aplicarFiltro);
     selectLoja.addEventListener("change", aplicarFiltro);
 
-    // Autenticação e Carregamento Único
+    // Autenticação e Ponto Único de Inicialização
     (async () => {
       const { data: { user }, error } = await supabase.auth.getUser();
 
@@ -102,10 +102,10 @@
         return;
       }
 
-      // Primeiro carregamento
+      // Carga inicial única controlada pelo HTML
       aplicarFiltro();
 
-      // Recarregamento automático continuo (5 min)
+      // Recarregamento automático contínuo (5 minutos)
       setInterval(() => {
         aplicarFiltro();
       }, 300000);

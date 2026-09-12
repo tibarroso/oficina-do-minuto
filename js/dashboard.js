@@ -13,7 +13,7 @@ let chartStatus = null;
 let chartServico = null;
 
 // ===============================
-// Validação de sessão simplificada
+// Validação de Sessão
 // ===============================
 async function realizarLogin() {
   try {
@@ -28,7 +28,7 @@ async function realizarLogin() {
 }
 
 // ===============================
-// Criar botão Criar Pedido (caso seja perfil loja)
+// Botão de Criar Pedido (Apenas Perfil Loja)
 // ===============================
 function criarBotaoPedido() {
   if (usuarioTipo === "loja" && btnCriarPedidoContainer) {
@@ -43,7 +43,7 @@ function criarBotaoPedido() {
 }
 
 // ===============================
-// Carregar pedidos com filtros e segurança
+// Carregar Pedidos com Supabase
 // ===============================
 async function carregarPedidos() {
   try {
@@ -53,6 +53,7 @@ async function carregarPedidos() {
 
     let query = supabase.from("pedidos").select("*");
 
+    // Ordenação segura
     try {
       query = query.order("criado_em", { ascending: false });
     } catch (e) {
@@ -70,7 +71,7 @@ async function carregarPedidos() {
 
     const pesquisa = pesquisaOS?.value.trim();
     if (pesquisa) {
-      if (!isNaN(pesquisa)) {
+      if (!isNaN(pesquisa) && pesquisa.length < 8) {
         query = query.eq("id", parseInt(pesquisa));
       } else {
         query = query.or(
@@ -101,7 +102,7 @@ async function carregarPedidos() {
 }
 
 // ===============================
-// Renderizar os pedidos em Tabela (Com Observação Formatada)
+// Renderizar Tabela
 // ===============================
 function renderizarPedidosTabela(pedidos) {
   if (!container) return;
@@ -138,13 +139,12 @@ function renderizarPedidosTabela(pedidos) {
     tr.style.borderBottom = "1px solid #f1f5f9";
     tr.style.backgroundColor = idx % 2 === 0 ? "#ffffff" : "#f8fafc";
 
-    const osId = p.id ?? "N/A";
+    const osId = p.id ? String(p.id).substring(0, 8) : "N/A";
     const loja = p.loja_origem ?? "Não informada";
     const servico = p.tipo_servico ?? "Geral";
     const status = p.status ?? "Sem status";
     
-    // Tratativa do campo Observação baseada no seu padrão
-    // Certifique-se de que no banco existam colunas correspondentes ou use fallbacks seguros
+    // Formatação de observações
     const ticket = p.ticket || p.numero_ticket || "---";
     const cliente = p.cliente || p.nome_cliente || "Não informado";
     const saco = p.saco || p.numero_saco || "---";
@@ -159,12 +159,19 @@ function renderizarPedidosTabela(pedidos) {
       dataFormatada = new Date(dataRegistro).toLocaleDateString("pt-BR");
     }
 
+    // Definir classe CSS da tag de status
+    let statusClass = "status-default";
+    if (status.includes("Finalizado")) statusClass = "status-finalizado";
+    else if (status.includes("Aguardando")) statusClass = "status-aguardando";
+    else if (status.includes("transporte")) statusClass = "status-transporte";
+    else if (status.includes("serviço")) statusClass = "status-servico";
+
     tr.innerHTML = `
       <td style="padding: 12px 15px; font-weight: 600; color: #2c3e50;">#${osId}</td>
       <td style="padding: 12px 15px; color: #334155;">${loja}</td>
       <td style="padding: 12px 15px;"><span style="background: #e2e8f0; padding: 3px 8px; border-radius: 4px; font-size: 12px; color: #475569;">${servico}</span></td>
-      <td style="padding: 12px 15px;"><span style="background: #e8f8f5; color: #18BC9C; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; display: inline-block;">${status}</span></td>
-      <td style="padding: 12px 15px; color: #475569; font-size: 13px; font-family: monospace;">${observacaoFormatada}</td>
+      <td style="padding: 12px 15px;"><span class="status-badge ${statusClass}">${status}</span></td>
+      <td style="padding: 12px 15px; color: #475569; font-size: 13px;">${observacaoFormatada}</td>
       <td style="padding: 12px 15px; color: #64748b; font-size: 13px;">${dataFormatada}</td>
     `;
     corpoTabela.appendChild(tr);
@@ -174,7 +181,7 @@ function renderizarPedidosTabela(pedidos) {
 }
 
 // ===============================
-// Atualizar gráficos de produtividade
+// Renderizar Gráficos (Chart.js)
 // ===============================
 function atualizarGraficos() {
   const statusCount = {};
@@ -187,6 +194,7 @@ function atualizarGraficos() {
     servicoCount[sr] = (servicoCount[sr] || 0) + 1;
   });
 
+  // Gráfico de Status (Doughnut)
   const elStatus = document.getElementById("graficoStatus");
   if (elStatus && window.Chart) {
     const ctxStatus = elStatus.getContext("2d");
@@ -202,13 +210,16 @@ function atualizarGraficos() {
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'bottom' }
+          legend: { position: 'bottom' },
+          title: { display: true, text: 'Distribuição por Status', font: { size: 14 } }
         }
       }
     });
   }
 
+  // Gráfico de Serviços (Bar)
   const elServico = document.getElementById("graficoServico");
   if (elServico && window.Chart) {
     const ctxServico = elServico.getContext("2d");
@@ -218,7 +229,7 @@ function atualizarGraficos() {
       data: {
         labels: Object.keys(servicoCount),
         datasets: [{
-          label: "Quantidade",
+          label: "Pedidos",
           data: Object.values(servicoCount),
           backgroundColor: "#34495e",
           borderRadius: 6
@@ -226,9 +237,11 @@ function atualizarGraficos() {
       },
       options: {
         responsive: true,
-        scales: { y: { beginAtZero: true } },
+        maintainAspectRatio: false,
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
         plugins: {
-          legend: { display: false }
+          legend: { display: false },
+          title: { display: true, text: 'Ordens por Serviço', font: { size: 14 } }
         }
       }
     });
@@ -236,7 +249,7 @@ function atualizarGraficos() {
 }
 
 // ===============================
-// Inicialização Assíncrona
+// Eventos e Inicialização
 // ===============================
 (async () => {
   usuarioLogado = await realizarLogin();
@@ -247,8 +260,16 @@ function atualizarGraficos() {
   if (btnFiltrar) {
     btnFiltrar.addEventListener("click", carregarPedidos);
   }
+
+  // Filtragem dinâmica ao digitar na busca
+  if (pesquisaOS) {
+    pesquisaOS.addEventListener("input", () => {
+      carregarPedidos();
+    });
+  }
   
   carregarPedidos();
   
+  // Atualização em tempo real a cada 15s
   setInterval(carregarPedidos, 15000);
 })();

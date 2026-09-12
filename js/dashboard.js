@@ -24,7 +24,6 @@ async function realizarLogin() {
   } catch (err) {
     console.warn("Aviso na sessão, usando perfil padrão.", err);
   }
-  // Retorna sempre um usuário válido para nunca travar o dashboard
   return { email: "ti@ebarroso.com.br" };
 }
 
@@ -52,15 +51,12 @@ async function carregarPedidos() {
       container.innerHTML = "<p class='loading'>Carregando dados do painel...</p>";
     }
 
-    // CORREÇÃO: Removido o .order("criado_em") caso a coluna não exista. 
-    // Se a sua coluna de data for 'created_at' ou 'criado_em', altere abaixo se necessário.
     let query = supabase.from("pedidos").select("*");
 
-    // Tenta ordenar por criado_em, se falhar na base, o Supabase ignora ou traz normal
     try {
       query = query.order("criado_em", { ascending: false });
     } catch (e) {
-      console.warn("Coluna criado_em não encontrada para ordenação, exibindo padrão.");
+      console.warn("Coluna criado_em não encontrada para ordenação.");
     }
 
     if (usuarioTipo === "loja" && usuarioLogado?.email) {
@@ -105,7 +101,7 @@ async function carregarPedidos() {
 }
 
 // ===============================
-// Renderizar os pedidos em Tabela
+// Renderizar os pedidos em Tabela (Com Observação Formatada)
 // ===============================
 function renderizarPedidosTabela(pedidos) {
   if (!container) return;
@@ -128,7 +124,7 @@ function renderizarPedidosTabela(pedidos) {
         <th style="padding: 12px 15px; color: #64748b; font-weight: 600;">Loja Origem</th>
         <th style="padding: 12px 15px; color: #64748b; font-weight: 600;">Serviço</th>
         <th style="padding: 12px 15px; color: #64748b; font-weight: 600;">Status</th>
-        <th style="padding: 12px 15px; color: #64748b; font-weight: 600;">Orçamento</th>
+        <th style="padding: 12px 15px; color: #64748b; font-weight: 600;">Detalhes / Observação</th>
         <th style="padding: 12px 15px; color: #64748b; font-weight: 600;">Data</th>
       </tr>
     </thead>
@@ -146,8 +142,17 @@ function renderizarPedidosTabela(pedidos) {
     const loja = p.loja_origem ?? "Não informada";
     const servico = p.tipo_servico ?? "Geral";
     const status = p.status ?? "Sem status";
-    const orcamento = p.orcamento ? "<span style='color: #e74c3c; font-weight: 600;'>⚠️ Sim</span>" : "Não";
     
+    // Tratativa do campo Observação baseada no seu padrão
+    // Certifique-se de que no banco existam colunas correspondentes ou use fallbacks seguros
+    const ticket = p.ticket || p.numero_ticket || "---";
+    const cliente = p.cliente || p.nome_cliente || "Não informado";
+    const saco = p.saco || p.numero_saco || "---";
+    const pecas = p.pecas || p.quantidade_pecas || "0";
+    const valor = p.valor || p.preco || "0";
+
+    const observacaoFormatada = `Ticket: ${ticket} | Cliente: ${cliente} | Saco: ${saco} | Peças: ${pecas} | Valor: R$ ${valor}`;
+
     let dataFormatada = "---";
     const dataRegistro = p.criado_em || p.created_at;
     if (dataRegistro) {
@@ -159,7 +164,7 @@ function renderizarPedidosTabela(pedidos) {
       <td style="padding: 12px 15px; color: #334155;">${loja}</td>
       <td style="padding: 12px 15px;"><span style="background: #e2e8f0; padding: 3px 8px; border-radius: 4px; font-size: 12px; color: #475569;">${servico}</span></td>
       <td style="padding: 12px 15px;"><span style="background: #e8f8f5; color: #18BC9C; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; display: inline-block;">${status}</span></td>
-      <td style="padding: 12px 15px; color: #334155;">${orcamento}</td>
+      <td style="padding: 12px 15px; color: #475569; font-size: 13px; font-family: monospace;">${observacaoFormatada}</td>
       <td style="padding: 12px 15px; color: #64748b; font-size: 13px;">${dataFormatada}</td>
     `;
     corpoTabela.appendChild(tr);
@@ -243,9 +248,7 @@ function atualizarGraficos() {
     btnFiltrar.addEventListener("click", carregarPedidos);
   }
   
-  // Carga inicial dos dados
   carregarPedidos();
   
-  // Atualização automática a cada 15 segundos
   setInterval(carregarPedidos, 15000);
 })();

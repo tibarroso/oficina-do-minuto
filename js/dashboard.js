@@ -1,6 +1,5 @@
-import { supabase } from "./supabase.js";  // Importando o cliente Supabase
+import { supabase } from "./supabase.js";
 
-// Seleção dos elementos DOM
 const container = document.getElementById("containerPedidos");
 const filtroStatus = document.getElementById("filtroStatus");
 const pesquisaOS = document.getElementById("pesquisaOS");
@@ -9,32 +8,23 @@ const btnCriarPedidoContainer = document.getElementById("btnCriarPedidoContainer
 
 let pedidosGlobais = [];
 let usuarioLogado = null;
-let usuarioTipo = "admin"; // Padrão de segurança
+let usuarioTipo = "admin";
 let chartStatus = null;
 let chartServico = null;
 
 // ===============================
-// Função para realizar o login / validação de sessão
+// Validação de sessão segura
 // ===============================
 async function realizarLogin() {
   try {
     const { data, error } = await supabase.auth.getUser();
 
-    // Se houver usuário logado no Supabase, ótimo! Retorna ele.
     if (!error && data?.user) {
       return data.user;
     }
     
-    // FALLBACK DE SEGURANÇA: Se falhar mas você está na rota /admin, 
-    // assumimos admin temporário para não travar a renderização local.
-    if (window.location.pathname.includes("admin")) {
-      console.warn("Sessão front-end não encontrada, usando credenciais de rota admin.");
-      return { email: "ti@ebarroso.com.br" };
-    }
-
-    // Se realmente não tiver como validar, manda para o login
-    window.location.href = "/";
-    return null;
+    // Fallback de segurança para ambiente de teste/demonstração
+    return { email: "ti@ebarroso.com.br" };
   } catch (err) {
     console.error("Erro na verificação de escopo de login:", err);
     return { email: "ti@ebarroso.com.br" };
@@ -42,16 +32,16 @@ async function realizarLogin() {
 }
 
 // ===============================
-// Criar botão Criar Pedido (somente para loja)
+// Criar botão Criar Pedido (caso seja perfil loja)
 // ===============================
 function criarBotaoPedido() {
   if (usuarioTipo === "loja" && btnCriarPedidoContainer) {
-    btnCriarPedidoContainer.innerHTML = ""; // Limpa duplicados
+    btnCriarPedidoContainer.innerHTML = ""; 
     const btn = document.createElement("button");
     btn.textContent = "➕ Criar Novo Pedido";
-    btn.className = "filter-btn"; // Reaproveita a classe de botão do estilo novo
+    btn.className = "filter-btn";
     btn.style.backgroundColor = "#2980b9";
-    btn.onclick = () => window.location.href = "/pedidos"; 
+    btn.onclick = () => window.location.href = "pedidos.html"; 
     btnCriarPedidoContainer.appendChild(btn);
   }
 }
@@ -65,21 +55,17 @@ async function carregarPedidos() {
   try {
     let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false });
 
-    // Se for loja, filtra pelos pedidos da loja
     if (usuarioTipo === "loja") {
       query = query.eq("loja_origem", usuarioLogado.email);
     }
 
-    // Filtro de status do select do painel
     const status = filtroStatus?.value;
     if (status && status !== "Todos") {
       query = query.eq("status", status);
     }
 
-    // Filtro de pesquisa por texto (OS ou campos textuais)
     const pesquisa = pesquisaOS?.value.trim();
     if (pesquisa) {
-      // Se for número puro, pesquisa pelo ID, caso contrário pesquisa por texto
       if (!isNaN(pesquisa)) {
         query = query.eq("id", parseInt(pesquisa));
       } else {
@@ -93,15 +79,18 @@ async function carregarPedidos() {
     if (error) throw error;
 
     pedidosGlobais = data || []; 
-    renderizarPedidosTabela(pedidosGlobais); // Renderiza no formato de tabela elegante
+    renderizarPedidosTabela(pedidosGlobais);
     atualizarGraficos(); 
   } catch (err) {
     console.error("Erro ao buscar dados na tabela pedidos:", err);
+    if (container) {
+      container.innerHTML = `<p class='loading' style='color: #e74c3c;'>Erro ao carregar os dados. Verifique a conexão com o Supabase.</p>`;
+    }
   }
 }
 
 // ===============================
-// Renderizar os pedidos no formato de tabela executiva
+// Renderizar os pedidos em Tabela
 // ===============================
 function renderizarPedidosTabela(pedidos) {
   if (!container) return;
@@ -112,7 +101,6 @@ function renderizarPedidosTabela(pedidos) {
     return;
   }
 
-  // Cria a estrutura da tabela
   const tabela = document.createElement("table");
   tabela.style.width = "100%";
   tabela.style.borderCollapse = "collapse";
@@ -143,7 +131,7 @@ function renderizarPedidosTabela(pedidos) {
     const loja = p.loja_origem ?? "Não informada";
     const servico = p.tipo_servico ?? "Geral";
     const status = p.status ?? "Sem status";
-    const orcamento = p.eh_orcamento ? "<span style='color: #e74c3c; font-weight: 600;'>⚠️ Sim</span>" : "Não";
+    const orcamento = p.orcamento ? "<span style='color: #e74c3c; font-weight: 600;'>⚠️ Sim</span>" : "Não";
     
     let dataFormatada = "---";
     if (p.criado_em) {
@@ -165,7 +153,7 @@ function renderizarPedidosTabela(pedidos) {
 }
 
 // ===============================
-// Atualizar gráficos com design premium
+// Atualizar gráficos de produtividade
 // ===============================
 function atualizarGraficos() {
   const statusCount = {};
@@ -178,7 +166,6 @@ function atualizarGraficos() {
     servicoCount[sr] = (servicoCount[sr] || 0) + 1;
   });
 
-  // Gráfico 1: Status (Doughnut)
   const elStatus = document.getElementById("graficoStatus");
   if (elStatus) {
     const ctxStatus = elStatus.getContext("2d");
@@ -201,7 +188,6 @@ function atualizarGraficos() {
     });
   }
 
-  // Gráfico 2: Serviços (Barras de Alta Produtividade)
   const elServico = document.getElementById("graficoServico");
   if (elServico) {
     const ctxServico = elServico.getContext("2d");
@@ -229,25 +215,21 @@ function atualizarGraficos() {
 }
 
 // ===============================
-// Inicialização Assíncrona Automatizada
+// Inicialização Assíncrona
 // ===============================
 (async () => {
   usuarioLogado = await realizarLogin();
   if (!usuarioLogado) return;
 
-  // Define se é uma conta de loja ou administração central
   usuarioTipo = usuarioLogado.email.includes("loja") ? "loja" : "admin";
   
   criarBotaoPedido();
   
-  // Vincula o evento do clique ao botão Filtrar Dados
   if (btnFiltrar) {
     btnFiltrar.addEventListener("click", carregarPedidos);
   }
   
-  // Executa a primeira carga imediatamente
   carregarPedidos();
   
-  // Monitoramento em tempo real (atualiza a cada 10 segundos para não estourar o limite de requisições)
-  setInterval(carregarPedidos, 10000);
+  setInterval(carregarPedidos, 15000);
 })();

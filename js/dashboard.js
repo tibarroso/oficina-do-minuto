@@ -46,7 +46,24 @@ function criarBotaoPedido() {
 }
 
 // ===============================
-// Extração de Dados da Observação (Melhorada)
+// Verificação de Presença de Chaves
+// ===============================
+function possuiInformacoes(texto) {
+  if (!texto || typeof texto !== "string") return false;
+  const textoLower = texto.toLowerCase();
+  
+  return (
+    textoLower.includes("ticket") ||
+    textoLower.includes("cliente") ||
+    textoLower.includes("saco") ||
+    textoLower.includes("peça") ||
+    textoLower.includes("peca") ||
+    textoLower.includes("valor")
+  );
+}
+
+// ===============================
+// Extração de Dados da Observação
 // ===============================
 function extrairDadosObs(obsText) {
   const dados = {
@@ -59,7 +76,7 @@ function extrairDadosObs(obsText) {
 
   if (!obsText) return dados;
 
-  // Se a observação veio como Objeto JSON do Supabase
+  // Trata objetos JSON que venham diretamente do banco
   if (typeof obsText === "object") {
     return {
       ticket: obsText.ticket || obsText.cod || "---",
@@ -72,7 +89,7 @@ function extrairDadosObs(obsText) {
 
   if (typeof obsText !== "string") return dados;
 
-  // Aceita separadores: "|", quebra de linha "\n", ou hífens
+  // Aceita separadores por |, quebra de linha \n, ou hífens
   const partes = obsText.split(/[|\n]/);
 
   partes.forEach((parte) => {
@@ -109,7 +126,7 @@ async function carregarPedidos() {
       container.innerHTML = "<p class='loading'>Carregando dados do painel...</p>";
     }
 
-    // Traz todos os campos de pedidos + a relação com pedido_eventos
+    // Consulta pedidos e traz a relação pedido_eventos
     let query = supabase.from("pedidos").select(`
       *,
       pedido_eventos (
@@ -226,26 +243,32 @@ function renderizarPedidosTabela(pedidos) {
     const servico = p.tipo_servico ?? "Geral";
     const status = p.status ?? "Sem status";
     
-    // Procura o texto de observação no relacionamento pedido_eventos
     let obsTexto = "";
 
-    if (p.pedido_eventos && Array.isArray(p.pedido_eventos) && p.pedido_eventos.length > 0) {
-      // Tenta encontrar algum evento que possua observação válida
-      const eventoValido = p.pedido_eventos.find((ev) => ev && ev.observacao);
-      if (eventoValido) {
-        obsTexto = eventoValido.observacao;
-      } else {
-        obsTexto = p.pedido_eventos[p.pedido_eventos.length - 1]?.observacao || "";
+    // 1. Verifica se 'obs_loja_origem' possui as palavras-chave necessárias
+    if (possuiInformacoes(p.obs_loja_origem)) {
+      obsTexto = p.obs_loja_origem;
+    } 
+    // 2. Caso contrário, procura em 'pedido_eventos'
+    else {
+      if (p.pedido_eventos && Array.isArray(p.pedido_eventos) && p.pedido_eventos.length > 0) {
+        const eventoComInfo = p.pedido_eventos.find((ev) => possuiInformacoes(ev?.observacao));
+        if (eventoComInfo) {
+          obsTexto = eventoComInfo.observacao;
+        } else {
+          obsTexto = p.pedido_eventos[p.pedido_eventos.length - 1]?.observacao || "";
+        }
+      } else if (typeof p.pedido_eventos === "object" && p.pedido_eventos?.observacao) {
+        obsTexto = p.pedido_eventos.observacao;
       }
-    } else if (typeof p.pedido_eventos === "object" && p.pedido_eventos?.observacao) {
-      obsTexto = p.pedido_eventos.observacao;
+
+      // 3. Fallback: Se ainda não encontrou as chaves, pega o campo 'observacao' direta ou 'obs_loja_origem'
+      if (!possuiInformacoes(obsTexto)) {
+        obsTexto = p.observacao || p.obs_loja_origem || "";
+      }
     }
 
-    // Fallback: Se não encontrou em pedido_eventos, busca direto na tabela do pedido
-    if (!obsTexto) {
-      obsTexto = p.obs_loja_origem || p.observacao || "";
-    }
-
+    // Extrai Ticket, Cliente, Saco, Peças e Valor
     const parsedObs = extrairDadosObs(obsTexto);
 
     const ticket = p.ticket || parsedObs.ticket;
@@ -264,7 +287,7 @@ function renderizarPedidosTabela(pedidos) {
       }
     }
 
-    // Badge de status
+    // Classe visual do badge
     let statusClass = "status-default";
     const stLower = status.toLowerCase();
     if (stLower.includes("finalizado")) statusClass = "status-finalizado";

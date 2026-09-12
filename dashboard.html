@@ -86,7 +86,7 @@
     main {
       max-width: 1280px;
       width: 100%;
-      margin: 90px auto 40px auto;
+      margin: 110px auto 40px auto;
       padding: 0 24px;
       flex: 1;
     }
@@ -109,7 +109,7 @@
     /* Cards KPI / Resumo Operacional */
     .kpi-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 16px;
       margin-bottom: 24px;
     }
@@ -318,7 +318,7 @@
         gap: 12px;
       }
       main {
-        margin-top: 130px;
+        margin-top: 150px;
       }
       .filtros-dashboard {
         flex-direction: column;
@@ -349,11 +349,11 @@
 
   <main>
     <div class="header-page-block">
-      <p class="page-title">Dashboard Operacional</p>
+      <h1 class="page-title">Dashboard Operacional</h1>
       <p class="page-subtitle">Acompanhamento das ordens de serviço e indicadores operacionais em tempo real.</p>
     </div>
 
-    <!-- Cards de KPIs Rápidos -->
+    <!-- Cards de KPIs Rápidos (Com Transporte e Serviço separados) -->
     <div class="kpi-container">
       <div class="kpi-card">
         <div class="kpi-title">Total de Pedidos</div>
@@ -364,8 +364,12 @@
         <div class="kpi-value" id="kpiColeta" style="color: #d97706;">0</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-title">Em Transporte / Serviço</div>
-        <div class="kpi-value" id="kpiEmAndamento" style="color: #2563eb;">0</div>
+        <div class="kpi-title">Em Transporte</div>
+        <div class="kpi-value" id="kpiEmTransporte" style="color: #2563eb;">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Em Serviço</div>
+        <div class="kpi-value" id="kpiEmServico" style="color: #7c3aed;">0</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-title">Finalizados</div>

@@ -181,16 +181,18 @@
 
     .charts-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
       gap: 25px;
       margin-bottom: 40px;
     }
 
     .chart-box {
       background: white;
-      padding: 25px;
+      padding: 20px;
       border-radius: 12px;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+      position: relative;
+      height: 320px;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -210,6 +212,20 @@
       color: #7f8c8d;
       padding: 20px;
     }
+
+    /* Badges de Status Personalizados */
+    .status-badge {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-block;
+    }
+    .status-finalizado { background-color: #d1fae5; color: #065f46; }
+    .status-aguardando { background-color: #fef3c7; color: #92400e; }
+    .status-transporte { background-color: #dbeafe; color: #1e40af; }
+    .status-servico { background-color: #e0e7ff; color: #3730a3; }
+    .status-default { background-color: #f1f5f9; color: #475569; }
 
     footer {
       text-align: center;
@@ -282,7 +298,7 @@
 
       <div class="filtro-item" style="flex: 1;">
         <label for="pesquisaOS">Pesquisar:</label>
-        <input type="text" id="pesquisaOS" placeholder="Digite o número da OS ou nome da loja...">
+        <input type="text" id="pesquisaOS" placeholder="Digite a OS, cliente ou loja...">
       </div>
       
       <button id="btnFiltrar" class="filter-btn">Filtrar Dados</button>

@@ -25,7 +25,7 @@ let chartServico = null;
 // ===============================
 async function realizarLogin() {
   try {
-    const { data, error } = await supabase.auth.getUser();
+    const { data } = await supabase.auth.getUser();
     if (data?.user) return data.user;
   } catch (err) {
     console.warn("Sessão não identificada, usando perfil padrão.", err);
@@ -82,13 +82,17 @@ function extrairDadosObs(obsText) {
 // ===============================
 async function carregarPedidos() {
   try {
-    // Exibe o feedback de carregamento apenas na primeira carga
     if (container && pedidosGlobais.length === 0) {
       container.innerHTML = "<p class='loading'>Carregando dados do painel...</p>";
     }
 
-    // Montagem segura da Query
-    let query = supabase.from("pedidos").select("*");
+    // Traz todos os campos de pedidos + a coluna observacao de pedido_eventos
+    let query = supabase.from("pedidos").select(`
+      *,
+      pedido_eventos (
+        observacao
+      )
+    `);
 
     if (usuarioTipo === "loja" && usuarioLogado?.email) {
       query = query.eq("loja_origem", usuarioLogado.email);
@@ -105,12 +109,11 @@ async function carregarPedidos() {
         query = query.eq("id", parseInt(pesquisa));
       } else {
         query = query.or(
-          `loja_origem.ilike.%${pesquisa}%,tipo_servico.ilike.%${pesquisa}%,status.ilike.%${pesquisa}%,obs_loja_origem.ilike.%${pesquisa}%`
+          `loja_origem.ilike.%${pesquisa}%,tipo_servico.ilike.%${pesquisa}%,status.ilike.%${pesquisa}%`
         );
       }
     }
 
-    // Executa a busca ordenando pelo ID de forma decrescente para garantir os mais recentes primeiro
     const { data, error } = await query.order("id", { ascending: false });
     
     if (error) {
@@ -200,8 +203,16 @@ function renderizarPedidosTabela(pedidos) {
     const servico = p.tipo_servico ?? "Geral";
     const status = p.status ?? "Sem status";
     
-    // Processa a string de observação
-    const obsTexto = p.obs_loja_origem || p.observacao || "";
+    // Puxa a observação do pedido_eventos
+    let obsTexto = "";
+    if (p.pedido_eventos && Array.isArray(p.pedido_eventos) && p.pedido_eventos.length > 0) {
+      obsTexto = p.pedido_eventos[p.pedido_eventos.length - 1]?.observacao || "";
+    } else if (typeof p.pedido_eventos === "object" && p.pedido_eventos?.observacao) {
+      obsTexto = p.pedido_eventos.observacao;
+    } else {
+      obsTexto = p.obs_loja_origem || p.observacao || "";
+    }
+
     const parsedObs = extrairDadosObs(obsTexto);
 
     const ticket = p.ticket || parsedObs.ticket;
@@ -247,7 +258,6 @@ function renderizarPedidosTabela(pedidos) {
     corpoTabela.appendChild(tr);
   });
 
-  // Atualiza o DOM apenas de uma vez
   container.innerHTML = "";
   container.appendChild(tabela);
 }
@@ -266,7 +276,7 @@ function atualizarGraficos() {
     servicoCount[sr] = (servicoCount[sr] || 0) + 1;
   });
 
-  // Chart Status (Doughnut)
+  // Chart Status
   const elStatus = document.getElementById("graficoStatus");
   if (elStatus && window.Chart) {
     try {
@@ -295,7 +305,7 @@ function atualizarGraficos() {
     }
   }
 
-  // Chart Serviços (Bar)
+  // Chart Serviços
   const elServico = document.getElementById("graficoServico");
   if (elServico && window.Chart) {
     try {

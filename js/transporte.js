@@ -3,7 +3,7 @@ import { supabase } from "./supabase.js";
 // Variável para armazenar o filtro de loja ativo
 let filtroAtivo = "Todas";
 
-// TRAVA DE SEGURANÇA: Evita que execuções simultâneas dupliquem os cards ao apertar F5
+// TRAVA DE SEGURANÇA: Evita execuções simultâneas e duplicações ao apertar F5
 let carregandoEmAndamento = false;
 
 // =====================
@@ -20,7 +20,6 @@ export async function carregarPedidos(filtroLoja = "Todas") {
     await carregarEmTransporte(filtroLoja);   // Ida, Volta e Retrabalho
     await carregarRetorno(filtroLoja);        // Volta e Retrabalho
   } finally {
-    // Libera a trava após concluir todas as requisições
     carregandoEmAndamento = false;
   }
 }
@@ -313,14 +312,6 @@ function statusClasse(status) {
   return "Aguardando";
 }
 
-// =====================
-// Inicialização Global Automatizada
-// =====================
-(async () => {
-  window.carregarPedidos = carregarPedidos;
-  window.atualizarStatus = atualizarStatus;
-
-  carregarPedidos(filtroAtivo);
-
-  setInterval(() => carregarPedidos(filtroAtivo), 300000);
-})();
+// Exposição global opcional para escopos window
+window.carregarPedidos = carregarPedidos;
+window.atualizarStatus = atualizarStatus;

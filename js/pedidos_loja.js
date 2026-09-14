@@ -127,6 +127,7 @@ async function cancelarRetrabalho(pedidoId) {
       .from("pedido_eventos")
       .select("evento")
       .eq("pedido_id", pedidoId)
+      .order("criado_em", { ascending: false })
       .order("id", { ascending: false });
 
     if (errorEventos) throw errorEventos;
@@ -221,12 +222,11 @@ async function atualizarStatus(novoStatus, pedidoId) {
 window.atualizarStatus = atualizarStatus;
 
 // =========================
-// CARREGAR TIMELINE (CORRIGIDO ORDENAÇÃO DE EVENTOS)
+// CARREGAR TIMELINE (CORRIGIDO PARA EXIBIR TODOS OS EVENTOS EM ORDEM)
 // =========================
 async function carregarTimeline(pedidoId, lojaOrigem) {
   try {
-    // Ordena por data de criação de forma crescente (do evento mais antigo para o mais recente)
-    // Se a data for igual, usa o ID como critério de desempate.
+    // Busca os eventos garantindo a ordenação sequencial exata de criação
     const { data: eventos, error } = await supabase
       .from("pedido_eventos")
       .select("*")
@@ -274,7 +274,7 @@ async function carregarTimeline(pedidoId, lojaOrigem) {
       if (textoExibicao.includes("Entregue na loja de origem") || textoExibicao.includes("Recebido na loja de origem")) {
         detalhesObs = `<br><span style="color:#000; font-weight: 500; padding-left: 5px;">↳ Serviço já pode ser avaliado pela gerência da ${nomeLoja}. Caso esteja tudo certo, entre em contato com o cliente.</span>`;
       } else {
-        detalhesObs = evento.observacao ? `<br><span style="color:#000;">↳ ${evento.observacao}</span>` : "";
+        detalhesObs = evento.observacao ? `<br><span style="color:#000; padding-left: 5px;">↳ ${evento.observacao}</span>` : "";
       }
 
       item.innerHTML = `• ${textoExibicao} (${dataFormatada})${detalhesObs}`;
@@ -286,7 +286,7 @@ async function carregarTimeline(pedidoId, lojaOrigem) {
 }
 
 // =========================
-// MAPEAMENTO DE CLASSES STATUS (CORRIGIDO PARA O CSS)
+// MAPEAMENTO DE CLASSES STATUS (CORRIGIDO PARA CSS)
 // =========================
 function getStatusClass(status) {
   if (!status) return "status-aguardando";
@@ -294,7 +294,7 @@ function getStatusClass(status) {
 
   if (st.includes("retrabalho")) return "status-retrabalho";
   if (st.includes("finalizado")) return "status-finalizado";
-  if (st.includes("entregue")) return "status-entregue"; // <- Nova classe mapeada!
+  if (st.includes("entregue")) return "status-entregue";
   if (st.includes("transporte")) return "status-transporte";
   if (st.includes("recebido") || st.includes("serviço") || st.includes("servico")) return "status-servico";
   if (st.includes("aguardando") || st.includes("coleta")) return "status-coleta";

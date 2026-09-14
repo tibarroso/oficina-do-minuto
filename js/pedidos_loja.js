@@ -291,6 +291,7 @@ function getStatusClass(status) {
 
   if (st.includes("retrabalho")) return "status-retrabalho";
   if (st.includes("finalizado")) return "status-finalizado";
+  if (st.includes("entregue")) return "status-entregue"; // <- Nova classe mapeada!
   if (st.includes("transporte")) return "status-transporte";
   if (st.includes("recebido") || st.includes("serviço") || st.includes("servico")) return "status-servico";
   if (st.includes("aguardando") || st.includes("coleta")) return "status-coleta";

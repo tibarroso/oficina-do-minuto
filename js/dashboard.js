@@ -11,6 +11,7 @@ const btnCriarPedidoContainer = document.getElementById("btnCriarPedidoContainer
 const kpiTotal = document.getElementById("kpiTotal");
 const kpiColeta = document.getElementById("kpiColeta");
 const kpiEmTransporte = document.getElementById("kpiEmTransporte");
+const kpiEntregueLoja = document.getElementById("kpiEntregueLoja"); // Elemento do KPI Entregue na Loja
 const kpiEmServico = document.getElementById("kpiEmServico");
 const kpiFinalizados = document.getElementById("kpiFinalizados");
 const kpiLojasOrigem = document.getElementById("kpiLojasOrigem"); // Exibe a contagem de "Recebido na loja de origem"
@@ -195,35 +196,36 @@ function renderizarKPIs(pedidos) {
   let total = pedidos.length;
   let coleta = 0;
   let emTransporte = 0;
+  let entregueLoja = 0;
   let emServico = 0;
   let finalizados = 0;
-  let recebidoLojaOrigem = 0; // Contagem para o status "Recebido na loja de origem"
+  let recebidoLojaOrigem = 0;
 
   pedidos.forEach((p) => {
-    const st = (p.status || "").toLowerCase();
-
-    // Contagem de pedidos com status "Recebido na loja de origem"
-    if (st.includes("recebido na loja de origem")) {
-      recebidoLojaOrigem++;
-    }
+    const st = (p.status || "").toLowerCase().trim();
 
     if (st.includes("coleta") || st.includes("aguardando coleta")) {
       coleta++;
     } else if (st.includes("transporte") || st.includes("retorno")) {
       emTransporte++;
-    } else if (st.includes("serviço") || st.includes("servico") || st.includes("entregue")) {
-      emServico++;
+    } else if (st.includes("entregue na loja 5")) {
+      entregueLoja++; // Alimentação exclusiva de "Entregue na Loja"
+    } else if (st.includes("serviço") || st.includes("servico")) {
+      emServico++; // Alimentação exclusiva de "Em Serviço"
     } else if (st.includes("finalizado")) {
       finalizados++;
+    } else if (st.includes("recebido na loja de origem")) {
+      recebidoLojaOrigem++;
     }
   });
 
   if (kpiTotal) kpiTotal.textContent = total;
   if (kpiColeta) kpiColeta.textContent = coleta;
   if (kpiEmTransporte) kpiEmTransporte.textContent = emTransporte;
+  if (kpiEntregueLoja) kpiEntregueLoja.textContent = entregueLoja;
   if (kpiEmServico) kpiEmServico.textContent = emServico;
   if (kpiFinalizados) kpiFinalizados.textContent = finalizados;
-  if (kpiLojasOrigem) kpiLojasOrigem.textContent = recebidoLojaOrigem; // Exibe a quantidade calculada
+  if (kpiLojasOrigem) kpiLojasOrigem.textContent = recebidoLojaOrigem;
 }
 
 // ===============================

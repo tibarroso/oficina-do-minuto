@@ -36,7 +36,7 @@ async function carregarAguardando(filtroLoja) {
   let query = supabase
     .from("pedidos")
     .select("*")
-    .eq("status", "Aguardando coleta")
+    .in("status", ["Aguardando coleta", "Aguardando coleta para Retrabalho"]) // Inclui ambos os status
     .order("criado_em", { ascending: false });
 
   if (filtroLoja !== "Todas") {

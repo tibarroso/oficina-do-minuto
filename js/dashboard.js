@@ -13,6 +13,7 @@ const kpiColeta = document.getElementById("kpiColeta");
 const kpiEmTransporte = document.getElementById("kpiEmTransporte");
 const kpiEmServico = document.getElementById("kpiEmServico");
 const kpiFinalizados = document.getElementById("kpiFinalizados");
+const kpiLojasOrigem = document.getElementById("kpiLojasOrigem"); // <--- Novo elemento recuperado
 
 let pedidosGlobais = [];
 let usuarioLogado = null;
@@ -76,7 +77,6 @@ function extrairDadosObs(obsText) {
 
   if (!obsText) return dados;
 
-  // Trata objetos JSON que venham diretamente do banco
   if (typeof obsText === "object") {
     return {
       ticket: obsText.ticket || obsText.cod || "---",
@@ -89,7 +89,6 @@ function extrairDadosObs(obsText) {
 
   if (typeof obsText !== "string") return dados;
 
-  // Aceita separadores por |, quebra de linha \n, ou hífens
   const partes = obsText.split(/[|\n]/);
 
   partes.forEach((parte) => {
@@ -122,13 +121,13 @@ function extrairDadosObs(obsText) {
 // ===============================
 function obterCorPorStatus(status) {
   const stLower = (status || "").toLowerCase().trim();
-  if (stLower.includes("retrabalho")) return "#ef4444"; // Vermelho
-  if (stLower.includes("finalizado")) return "#10b981"; // Verde
-  if (stLower.includes("entregue")) return "#06b6d4";   // Azul Claro / Ciano
-  if (stLower.includes("transporte") || stLower.includes("retorno")) return "#8b5cf6"; // Roxo
-  if (stLower.includes("serviço") || stLower.includes("servico") || stLower.includes("recebido")) return "#2563eb"; // Azul
-  if (stLower.includes("coleta") || stLower.includes("aguardando")) return "#f59e0b"; // Laranja
-  return "#64748b"; // Cinza Padrão
+  if (stLower.includes("retrabalho")) return "#ef4444"; 
+  if (stLower.includes("finalizado")) return "#10b981"; 
+  if (stLower.includes("entregue")) return "#06b6d4";   
+  if (stLower.includes("transporte") || stLower.includes("retorno")) return "#8b5cf6"; 
+  if (stLower.includes("serviço") || stLower.includes("servico") || stLower.includes("recebido")) return "#2563eb"; 
+  if (stLower.includes("coleta") || stLower.includes("aguardando")) return "#f59e0b"; 
+  return "#64748b"; 
 }
 
 // ===============================
@@ -140,7 +139,6 @@ async function carregarPedidos() {
       container.innerHTML = "<p class='loading'>Carregando dados do painel...</p>";
     }
 
-    // Consulta pedidos e traz a relação pedido_eventos
     let query = supabase.from("pedidos").select(`
       *,
       pedido_eventos (
@@ -199,10 +197,18 @@ function renderizarKPIs(pedidos) {
   let emTransporte = 0;
   let emServico = 0;
   let finalizados = 0;
+  
+  // Set para armazenar apenas as lojas de origem únicas
+  const lojasUnicas = new Set();
 
   pedidos.forEach((p) => {
     const st = (p.status || "").toLowerCase();
     
+    // Contabiliza a loja de origem caso ela exista
+    if (p.loja_origem) {
+      lojasUnicas.add(p.loja_origem.trim().toLowerCase());
+    }
+
     if (st.includes("coleta") || st.includes("aguardando")) {
       coleta++;
     } else if (st.includes("transporte") || st.includes("retorno")) {
@@ -219,6 +225,7 @@ function renderizarKPIs(pedidos) {
   if (kpiEmTransporte) kpiEmTransporte.textContent = emTransporte;
   if (kpiEmServico) kpiEmServico.textContent = emServico;
   if (kpiFinalizados) kpiFinalizados.textContent = finalizados;
+  if (kpiLojasOrigem) kpiLojasOrigem.textContent = lojasUnicas.size; // <--- Atualiza o número de Lojas Origem
 }
 
 // ===============================
@@ -259,12 +266,9 @@ function renderizarPedidosTabela(pedidos) {
     
     let obsTexto = "";
 
-    // 1. Verifica se 'obs_loja_origem' possui as palavras-chave necessárias
     if (possuiInformacoes(p.obs_loja_origem)) {
       obsTexto = p.obs_loja_origem;
-    } 
-    // 2. Caso contrário, procura em 'pedido_eventos'
-    else {
+    } else {
       if (p.pedido_eventos && Array.isArray(p.pedido_eventos) && p.pedido_eventos.length > 0) {
         const eventoComInfo = p.pedido_eventos.find((ev) => possuiInformacoes(ev?.observacao));
         if (eventoComInfo) {
@@ -276,13 +280,11 @@ function renderizarPedidosTabela(pedidos) {
         obsTexto = p.pedido_eventos.observacao;
       }
 
-      // 3. Fallback: Se ainda não encontrou as chaves, pega o campo 'observacao' direta ou 'obs_loja_origem'
       if (!possuiInformacoes(obsTexto)) {
         obsTexto = p.observacao || p.obs_loja_origem || "";
       }
     }
 
-    // Extrai Ticket, Cliente, Saco, Peças e Valor
     const parsedObs = extrairDadosObs(obsTexto);
 
     const ticket = p.ticket || parsedObs.ticket;
@@ -301,7 +303,6 @@ function renderizarPedidosTabela(pedidos) {
       }
     }
 
-    // Classe visual do badge na tabela
     let statusClass = "status-default";
     const stLower = status.toLowerCase();
     if (stLower.includes("retrabalho")) statusClass = "status-retrabalho";
@@ -348,11 +349,9 @@ function atualizarGraficos() {
     servicoCount[sr] = (servicoCount[sr] || 0) + 1;
   });
 
-  // Mapear as cores exatas do gráfico de acordo com as legendas de Status
   const statusLabels = Object.keys(statusCount);
   const statusColors = statusLabels.map((st) => obterCorPorStatus(st));
 
-  // Chart Status (Doughnut)
   const elStatus = document.getElementById("graficoStatus");
   if (elStatus && window.Chart) {
     try {
@@ -381,7 +380,6 @@ function atualizarGraficos() {
     }
   }
 
-  // Chart Serviços (Bar Chart com azul refinado)
   const elServico = document.getElementById("graficoServico");
   if (elServico && window.Chart) {
     try {

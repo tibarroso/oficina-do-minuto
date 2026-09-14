@@ -5,9 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Oficina do Minuto – Painel Administrativo</title>
 
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Chart.js para Renderização dos Gráficos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     /* Identidade Visual Extraída da Fachada Real */
@@ -109,7 +113,7 @@
     /* Área de Conteúdo Centralizada */
     main {
       flex: 1;
-      padding-top: 110px; /* Garante que o conteúdo não fique oculto sob o header fixo */
+      padding-top: 110px;
       padding-bottom: 60px;
       max-width: 1440px;
       width: 100%;
@@ -217,6 +221,15 @@
       padding: 24px;
       box-shadow: var(--shadow-soft);
       min-height: 380px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-wrapper {
+      flex: 1;
+      position: relative;
+      width: 100%;
+      height: 300px;
     }
 
     .chart-container h3 {
@@ -228,8 +241,8 @@
       padding-bottom: 12px;
     }
 
-    /* Estilos dinâmicos injetados para tabelas geradas pelo script admin.js */
-    #relatorio table {
+    /* Estilos dinâmicos injetados para tabelas */
+    table {
       width: 100%;
       border-collapse: collapse;
       font-family: 'Inter', sans-serif;
@@ -238,7 +251,7 @@
       color: #1e293b;
     }
 
-    #relatorio th {
+    th {
       background-color: var(--primary-blue);
       color: #ffffff;
       font-weight: 600;
@@ -246,18 +259,41 @@
       letter-spacing: 0.5px;
     }
 
-    #relatorio td {
+    td {
       padding: 12px 16px;
       border-bottom: 1px solid #e2e8f0;
     }
 
-    #relatorio tr:nth-child(even) {
+    tr:nth-child(even) {
       background-color: #f8fafc;
     }
 
-    #relatorio tr:hover {
+    tr:hover {
       background-color: #f1f5f9;
       transition: background-color 0.2s ease;
+    }
+
+    /* Badges de Detalhes na Tabela */
+    .obs-pill-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .obs-pill {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+
+    footer {
+      background-color: #0f172a;
+      color: #94a3b8;
+      text-align: center;
+      padding: 20px;
+      font-size: 13px;
+      margin-top: auto;
     }
 
     /* Responsividade */
@@ -278,7 +314,7 @@
       }
       .filter-bar {
         flex-direction: column;
-        align-items: stroke;
+        align-items: stretch;
       }
       .filter-bar input {
         min-width: 100%;
@@ -294,10 +330,10 @@
   <header>
     <h1>Oficina do Minuto <span>Painel Admin</span></h1>
     <nav>
-      <a href="/admin" class="active">Dashboard</a>
-      <a href="/loja5">Central Loja 5</a>
-      <a href="/pedidos">Pedidos</a>
-      <a href="/" class="btn-sair">Sair</a>
+      <a href="admin.html" class="active">Dashboard</a>
+      <a href="loja5.html">Central Loja 5</a>
+      <a href="pedidos.html">Pedidos</a>
+      <a href="index.html" class="btn-sair">Sair</a>
     </nav>
   </header>
 
@@ -307,34 +343,44 @@
       <p>Indicadores gerenciais e monitoramento de ordens de serviço em tempo real.</p>
     </section>
 
+    <!-- Barra de Filtros Sincronizada com o JS -->
     <div class="filter-bar">
       <div class="filter-group">
-        <label for="statusSelect">Status:</label>
-        <select id="statusSelect">
-          <option value="todos">Todos</option>
-          <option value="aguardando">Aguardando</option>
-          <option value="finalizado">Finalizado</option>
-          <option value="retrabalho">Retrabalho</option>
+        <label for="filtroStatus">Status:</label>
+        <select id="filtroStatus">
+          <option value="Todos">Todos</option>
+          <option value="Aguardando coleta">Aguardando Coleta</option>
+          <option value="Em serviço">Em Serviço</option>
+          <option value="Finalizado">Finalizado</option>
+          <option value="Aguardando coleta para Retrabalho">Retrabalho</option>
         </select>
       </div>
 
       <div class="filter-group" style="flex: 1;">
-        <label for="searchInput">Pesquisar:</label>
-        <input type="text" id="searchInput" placeholder="Digite o número da OS ou o nome da loja...">
+        <label for="pesquisaOS">Pesquisar:</label>
+        <input type="text" id="pesquisaOS" placeholder="Digite o número da OS ou o nome da loja...">
       </div>
 
-      <button class="btn-filtrar">Filtrar Dados</button>
+      <button id="btnFiltrar" class="btn-filtrar" type="button">Filtrar Dados</button>
     </div>
 
+    <!-- Container dos Gráficos com Canvas -->
     <div class="dashboard-grid">
       <div class="chart-container">
-        <h3>Gráficos de Produtividade</h3>
+        <h3>Status dos Pedidos</h3>
+        <div class="chart-wrapper">
+          <canvas id="graficoStatus"></canvas>
+        </div>
       </div>
       <div class="chart-container">
         <h3>Pedidos por Serviço</h3>
+        <div class="chart-wrapper">
+          <canvas id="graficoServico"></canvas>
+        </div>
       </div>
     </div>
 
+    <!-- Tabela Gerencial Sincronizada -->
     <section class="secao-relatorios" style="padding: 32px; background: #ffffff; border-radius: 16px; box-shadow: var(--shadow-soft); margin-top: 32px; border: 1px solid #e2e8f0;">
       <h2 style="font-family: 'Poppins', sans-serif; font-size: 22px; color: #0b53a7; font-weight: 600; margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
         <span style="background: rgba(241, 196, 15, 0.15); padding: 6px 10px; border-radius: 8px;">📊</span> 
@@ -342,7 +388,7 @@
       </h2>
       
       <div style="overflow-x: auto; width: 100%; border-radius: 8px; border: 1px solid #e2e8f0;">
-        <div id="relatorio">
+        <div id="containerPedidos">
           <p style="text-align: center; color: #64748b; padding: 40px; font-family: 'Inter', sans-serif; font-size: 14px;">
             Buscando dados consolidados da Oficina...
           </p>
@@ -350,9 +396,12 @@
       </div>
     </section>
   </main>
-       </div> <footer>
-        &copy; 2026 Oficina do Minuto. Todos os direitos reservados.
-    </footer>
-  <script type="module" src="/js/admin.js"></script>
+
+  <footer>
+    &copy; 2026 Oficina do Minuto. Todos os direitos reservados.
+  </footer>
+
+  <!-- Carrega o módulo JS -->
+  <script type="module" src="./admin.js"></script>
 </body>
 </html>

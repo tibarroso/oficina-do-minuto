@@ -70,16 +70,20 @@ function criarCardPedido(pedido) {
     : "Não especificada";
 
   const statusNormalizado = (pedido.status || "").toLowerCase();
-  const podeFinalizar =
-    statusNormalizado.includes("loja 5") ||
-    statusNormalizado.includes("transporte") ||
-    statusNormalizado.includes("retrabalho") ||
-    statusNormalizado.includes("serviço");
+
+  // CONDIÇÕES DOS BOTÕES CONFORME SOLICITADO:
+  // 1. "Executar serviço": aparece quando estiver entregue/recebido na Loja 5 ou em retrabalho
+  const podeExecutarServico = 
+    statusNormalizado.includes("entregue na loja 5") || 
+    statusNormalizado.includes("loja de destino para retrabalho");
+
+  // 2. "Finalizar Pedido": só aparece quando o status for exatamente "Em serviço"
+  const podeFinalizar = statusNormalizado.includes("em serviço");
 
   card.innerHTML = `
     <div>
       <strong>Ordem de Serviço</strong>
-      <p style="font-size: 18px; font-weight: 800; color: var(--primary-blue);">#OS-${pedido.id}</p>
+      <p style="font-size: 18px; font-weight: 800; color: var(--primary-blue, #0b53a7);">#OS-${pedido.id}</p>
     </div>
 
     <div>
@@ -89,7 +93,7 @@ function criarCardPedido(pedido) {
 
     <div>
       <strong>Serviço</strong>
-      <p style="font-size: 14px; color: var(--text-main);">${pedido.tipo_servico || "Não especificado"}</p>
+      <p style="font-size: 14px; color: var(--text-main, #1e293b);">${pedido.tipo_servico || "Não especificado"}</p>
     </div>
 
     <div>
@@ -99,17 +103,17 @@ function criarCardPedido(pedido) {
 
     <div>
       <strong>Observação da Origem</strong>
-      <em>${pedido.obs_loja_origem || "Nenhuma observação registrada."}</em>
+      <br><em>${pedido.obs_loja_origem || "Nenhuma observação registrada."}</em>
     </div>
 
     <div>
       <strong>Observação Loja 5</strong>
-      <textarea id="obs_loja5_${pedido.id}" placeholder="Digite uma nota técnica antes de finalizar..." ${statusNormalizado.includes("finalizado") ? "disabled" : ""}>${pedido.obs_loja5 || ""}</textarea>
+      <textarea id="obs_loja5_${pedido.id}" placeholder="Digite uma nota técnica..." ${statusNormalizado.includes("finalizado") ? "disabled" : ""}>${pedido.obs_loja5 || ""}</textarea>
     </div>
 
-    ${statusNormalizado.includes("serviço") ? `<button class="btn-salvar" onclick="mudarStatusParaTransporte('${pedido.id}')">Mover para Transporte</button>` : ""}
+    ${podeExecutarServico ? `<button class="btn-principal" style="background-color: #f39c12; color: #fff; font-weight: 600; padding: 10px; border: none; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 8px;" onclick="executarServico('${pedido.id}')">Executar serviço</button>` : ""}
 
-    ${podeFinalizar && !statusNormalizado.includes("finalizado") ? `<button class="btn-principal" onclick="mudarStatusParaFinalizado('${pedido.id}', '${pedido.status}', '${lojaOrigemLimpa}')">Finalizar Pedido</button>` : ""}
+    ${podeFinalizar ? `<button class="btn-principal" style="background-color: #18BC9C; color: #fff; font-weight: 600; padding: 10px; border: none; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 8px;" onclick="mudarStatusParaFinalizado('${pedido.id}', '${pedido.status}', '${lojaOrigemLimpa}')">Finalizar Pedido</button>` : ""}
   `;
 
   return card;
@@ -137,7 +141,41 @@ async function registrarEvento(pedidoId, evento, observacao = "") {
 }
 
 // =========================
-// MUDAR STATUS PARA 'AGUARDANDO COLETA PARA LOJA DE ORIGEM'
+// MUDAR STATUS PARA 'EM SERVIÇO'
+// =========================
+window.executarServico = async function (pedidoId) {
+  try {
+    const elObs = document.getElementById(`obs_loja5_${pedidoId}`);
+    const obsLoja5 = elObs ? elObs.value : "";
+
+    const { error } = await supabase
+      .from("pedidos")
+      .update({
+        status: "Em serviço",
+        obs_loja5: obsLoja5
+      })
+      .eq("id", pedidoId);
+
+    if (error) {
+      console.error("Erro ao alterar para 'Em serviço':", error);
+      alert("Erro ao alterar o status no banco de dados.");
+      return;
+    }
+
+    await registrarEvento(
+      pedidoId,
+      "Serviço Iniciado na Central",
+      `O pedido entrou em execução na bancada da Loja 5.${obsLoja5 ? ' Nota técnica: ' + obsLoja5 : ''}`
+    );
+
+    carregarPedidos();
+  } catch (err) {
+    console.error("Erro inesperado ao iniciar serviço:", err);
+  }
+};
+
+// =========================
+// MUDAR STATUS PARA 'AGUARDANDO COLETA PARA LOJA DE ORIGEM' (FINALIZAR)
 // =========================
 window.mudarStatusParaFinalizado = async function (pedidoId, statusActual, lojaOrigem) {
   try {

@@ -118,6 +118,20 @@ function extrairDadosObs(obsText) {
 }
 
 // ===============================
+// Mapeamento Dinâmico de Cores por Status
+// ===============================
+function obterCorPorStatus(status) {
+  const stLower = (status || "").toLowerCase().trim();
+  if (stLower.includes("retrabalho")) return "#ef4444"; // Vermelho
+  if (stLower.includes("finalizado")) return "#10b981"; // Verde
+  if (stLower.includes("entregue")) return "#06b6d4";   // Azul Claro / Ciano
+  if (stLower.includes("transporte") || stLower.includes("retorno")) return "#8b5cf6"; // Roxo
+  if (stLower.includes("serviço") || stLower.includes("servico") || stLower.includes("recebido")) return "#2563eb"; // Azul
+  if (stLower.includes("coleta") || stLower.includes("aguardando")) return "#f59e0b"; // Laranja
+  return "#64748b"; // Cinza Padrão
+}
+
+// ===============================
 // Busca de Dados no Supabase
 // ===============================
 async function carregarPedidos() {
@@ -189,11 +203,11 @@ function renderizarKPIs(pedidos) {
   pedidos.forEach((p) => {
     const st = (p.status || "").toLowerCase();
     
-    if (st.includes("coleta")) {
+    if (st.includes("coleta") || st.includes("aguardando")) {
       coleta++;
     } else if (st.includes("transporte") || st.includes("retorno")) {
       emTransporte++;
-    } else if (st.includes("serviço") || st.includes("servico") || st.includes("entregue")) {
+    } else if (st.includes("serviço") || st.includes("servico") || st.includes("entregue") || st.includes("recebido")) {
       emServico++;
     } else if (st.includes("finalizado")) {
       finalizados++;
@@ -287,13 +301,15 @@ function renderizarPedidosTabela(pedidos) {
       }
     }
 
-    // Classe visual do badge
+    // Classe visual do badge na tabela
     let statusClass = "status-default";
     const stLower = status.toLowerCase();
-    if (stLower.includes("finalizado")) statusClass = "status-finalizado";
-    else if (stLower.includes("coleta")) statusClass = "status-coleta";
+    if (stLower.includes("retrabalho")) statusClass = "status-retrabalho";
+    else if (stLower.includes("finalizado")) statusClass = "status-finalizado";
+    else if (stLower.includes("entregue")) statusClass = "status-entregue";
     else if (stLower.includes("transporte") || stLower.includes("retorno")) statusClass = "status-transporte";
-    else if (stLower.includes("serviço") || stLower.includes("servico") || stLower.includes("entregue")) statusClass = "status-servico";
+    else if (stLower.includes("serviço") || stLower.includes("servico") || stLower.includes("recebido")) statusClass = "status-servico";
+    else if (stLower.includes("coleta") || stLower.includes("aguardando")) statusClass = "status-coleta";
 
     tr.innerHTML = `
       <td style="font-weight: 600; color: #0f172a;">#${osId}</td>
@@ -319,7 +335,7 @@ function renderizarPedidosTabela(pedidos) {
 }
 
 // ===============================
-// Chart.js - Gráficos
+// Chart.js - Gráficos Sincronizados
 // ===============================
 function atualizarGraficos() {
   const statusCount = {};
@@ -332,7 +348,11 @@ function atualizarGraficos() {
     servicoCount[sr] = (servicoCount[sr] || 0) + 1;
   });
 
-  // Chart Status
+  // Mapear as cores exatas do gráfico de acordo com as legendas de Status
+  const statusLabels = Object.keys(statusCount);
+  const statusColors = statusLabels.map((st) => obterCorPorStatus(st));
+
+  // Chart Status (Doughnut)
   const elStatus = document.getElementById("graficoStatus");
   if (elStatus && window.Chart) {
     try {
@@ -341,10 +361,10 @@ function atualizarGraficos() {
       chartStatus = new Chart(ctxStatus, {
         type: "doughnut",
         data: {
-          labels: Object.keys(statusCount),
+          labels: statusLabels,
           datasets: [{
             data: Object.values(statusCount),
-            backgroundColor: ["#0d9488", "#2563eb", "#d97706", "#dc2626", "#7c3aed", "#475569"]
+            backgroundColor: statusColors
           }]
         },
         options: {
@@ -361,7 +381,7 @@ function atualizarGraficos() {
     }
   }
 
-  // Chart Serviços
+  // Chart Serviços (Bar Chart com azul refinado)
   const elServico = document.getElementById("graficoServico");
   if (elServico && window.Chart) {
     try {
@@ -374,7 +394,7 @@ function atualizarGraficos() {
           datasets: [{
             label: "Pedidos",
             data: Object.values(servicoCount),
-            backgroundColor: "#334155",
+            backgroundColor: "#2563eb",
             borderRadius: 4
           }],
         },

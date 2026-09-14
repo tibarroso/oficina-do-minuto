@@ -255,7 +255,7 @@ async function criarCard(pedido, tipo) {
       btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para loja de Destino para retrabalho", observacaoAtualDoPedido);
       acaoContainer.appendChild(btn);
     } else if (statusComparacao === "Aguardando coleta para loja de Origem" || statusComparacao === "Aguardando coleta para loja de origem") {
-      btn.textContent = "Iniciar Transporte de Retorno (Retrabalho)";
+      btn.textContent = "Iniciar Transporte de Retorno ";
       btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para loja de origem", observacaoAtualDoPedido);
       acaoContainer.appendChild(btn);
     } else if (statusComparacao === "Aguardando retorno do transporte") {

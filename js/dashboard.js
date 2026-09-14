@@ -144,7 +144,9 @@ async function carregarPedidos() {
     let query = supabase.from("pedidos").select(`
       *,
       pedido_eventos (
-        observacao
+        observacao,
+        criado_em,
+        id
       )
     `);
 
@@ -154,12 +156,12 @@ async function carregarPedidos() {
 
     const status = filtroStatus?.value;
     if (status && status !== "" && status !== "Todos") {
-      query = query.eq("status", status);
+      query = query.eq("status", status.trim());
     }
 
     const pesquisa = pesquisaOS?.value?.trim();
     if (pesquisa) {
-      // Se for numérico simples, faz filtro por ID exato, caso contrário faz busca por texto no or
+      // Se for numérico simples, faz filtro por ID exato, caso contrário faz busca por texto no OR
       if (/^\d+$/.test(pesquisa) && pesquisa.length <= 10) {
         query = query.eq("id", Number(pesquisa));
       } else {
@@ -206,13 +208,13 @@ function renderizarKPIs(pedidos) {
   pedidos.forEach((p) => {
     const st = (p.status || "").toLowerCase().trim();
 
-    if (st === "aguardando coleta" || st === "aguardando coleta para retrabalho" || st === "Aguardando coleta para loja de Origem") {
+    if (st.includes("coleta") || st.includes("aguardando coleta")) {
       coleta++;
     } else if (st.includes("transporte") || st.includes("retorno")) {
       emTransporte++;
-    } else if (st.includes("entregue na loja 5")) {
+    } else if (st.includes("entregue na loja 5") || st.includes("entregue na loja de destino")) {
       entregueLoja++; 
-    } else if (st.includes("serviço") || st.includes("servico")) {
+    } else if (st.includes("serviço") || st.includes("servico") || st === "em serviço") {
       emServico++; 
     } else if (st.includes("finalizado")) {
       finalizados++;
@@ -272,11 +274,14 @@ function renderizarPedidosTabela(pedidos) {
       obsTexto = p.obs_loja_origem;
     } else {
       if (p.pedido_eventos && Array.isArray(p.pedido_eventos) && p.pedido_eventos.length > 0) {
-        const eventoComInfo = p.pedido_eventos.find((ev) => possuiInformacoes(ev?.observacao));
+        // Ordena eventos locais por id/data para garantir leitura correta do último evento
+        const eventosOrdenados = [...p.pedido_eventos].sort((a, b) => new Date(a.criado_em || 0) - new Date(b.criado_em || 0));
+        const eventoComInfo = eventosOrdenados.find((ev) => possuiInformacoes(ev?.observacao));
+        
         if (eventoComInfo) {
           obsTexto = eventoComInfo.observacao;
         } else {
-          obsTexto = p.pedido_eventos[p.pedido_eventos.length - 1]?.observacao || "";
+          obsTexto = eventosOrdenados[eventosOrdenados.length - 1]?.observacao || "";
         }
       } else if (typeof p.pedido_eventos === "object" && p.pedido_eventos?.observacao) {
         obsTexto = p.pedido_eventos.observacao;
@@ -306,7 +311,7 @@ function renderizarPedidosTabela(pedidos) {
     }
 
     let statusClass = "status-default";
-    const stLower = status.toLowerCase();
+    const stLower = status.toLowerCase().trim();
     if (stLower.includes("retrabalho")) statusClass = "status-retrabalho";
     else if (stLower.includes("finalizado")) statusClass = "status-finalizado";
     else if (stLower.includes("entregue")) statusClass = "status-entregue";

@@ -89,26 +89,30 @@
     }
 
     // Eventos do botão e do select
-    btnFiltrar.addEventListener("click", aplicarFiltro);
-    selectLoja.addEventListener("change", aplicarFiltro);
+    if (btnFiltrar) btnFiltrar.addEventListener("click", aplicarFiltro);
+    if (selectLoja) selectLoja.addEventListener("change", aplicarFiltro);
 
     // Autenticação e Ponto Único de Inicialização
     (async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
 
-      if (error || !user) {
-        alert("Sessão expirada ou usuário não conectado!");
-        window.location.href = "login.html";
-        return;
-      }
+        if (error || !user) {
+          alert("Sessão expirada ou usuário não conectado!");
+          window.location.href = "index.html"; // Alinhado com o botão Sair
+          return;
+        }
 
-      // Carga inicial única controlada pelo HTML
-      aplicarFiltro();
-
-      // Recarregamento automático contínuo (5 minutos)
-      setInterval(() => {
+        // Carga inicial única controlada pelo HTML
         aplicarFiltro();
-      }, 300000);
+
+        // Recarregamento automático contínuo (5 minutos)
+        setInterval(() => {
+          aplicarFiltro();
+        }, 300000);
+      } catch (err) {
+        console.error("Erro na verificação de autenticação:", err);
+      }
     })();
   </script>
 

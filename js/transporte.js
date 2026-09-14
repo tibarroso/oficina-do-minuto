@@ -224,8 +224,13 @@ async function criarCard(pedido, tipo) {
   const observacaoAtualDoPedido = pedido.obs_loja_origem || "";
 
   if (tipo === "ida") {
-    btn.textContent = "Iniciar Transporte (Ida)";
-    btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para Loja 5", observacaoAtualDoPedido);
+    if (statusComparacao === "Aguardando coleta para Retrabalho") {
+      btn.textContent = "Iniciar Transporte (Retrabalho)";
+      btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para loja de Destino para retrabalho", observacaoAtualDoPedido);
+    } else {
+      btn.textContent = "Iniciar Transporte (Ida)";
+      btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para Loja 5", observacaoAtualDoPedido);
+    }
     acaoContainer.appendChild(btn);
   } else if (tipo === "emTransporte") {
     if (statusComparacao === "Em transporte para Loja 5") {

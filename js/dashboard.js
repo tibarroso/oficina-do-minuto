@@ -13,7 +13,7 @@ const kpiColeta = document.getElementById("kpiColeta");
 const kpiEmTransporte = document.getElementById("kpiEmTransporte");
 const kpiEmServico = document.getElementById("kpiEmServico");
 const kpiFinalizados = document.getElementById("kpiFinalizados");
-const kpiLojasOrigem = document.getElementById("kpiLojasOrigem"); // <--- Novo elemento recuperado
+const kpiLojasOrigem = document.getElementById("kpiLojasOrigem"); // Exibe a contagem de "Recebido na loja de origem"
 
 let pedidosGlobais = [];
 let usuarioLogado = null;
@@ -197,23 +197,21 @@ function renderizarKPIs(pedidos) {
   let emTransporte = 0;
   let emServico = 0;
   let finalizados = 0;
-  
-  // Set para armazenar apenas as lojas de origem únicas
-  const lojasUnicas = new Set();
+  let recebidoLojaOrigem = 0; // Contagem para o status "Recebido na loja de origem"
 
   pedidos.forEach((p) => {
     const st = (p.status || "").toLowerCase();
-    
-    // Contabiliza a loja de origem caso ela exista
-    if (p.loja_origem) {
-      lojasUnicas.add(p.loja_origem.trim().toLowerCase());
+
+    // Contagem de pedidos com status "Recebido na loja de origem"
+    if (st.includes("recebido na loja de origem")) {
+      recebidoLojaOrigem++;
     }
 
-    if (st.includes("coleta") || st.includes("aguardando")) {
+    if (st.includes("coleta") || st.includes("aguardando coleta")) {
       coleta++;
     } else if (st.includes("transporte") || st.includes("retorno")) {
       emTransporte++;
-    } else if (st.includes("serviço") || st.includes("servico") || st.includes("entregue") || st.includes("recebido")) {
+    } else if (st.includes("serviço") || st.includes("servico") || st.includes("entregue")) {
       emServico++;
     } else if (st.includes("finalizado")) {
       finalizados++;
@@ -225,7 +223,7 @@ function renderizarKPIs(pedidos) {
   if (kpiEmTransporte) kpiEmTransporte.textContent = emTransporte;
   if (kpiEmServico) kpiEmServico.textContent = emServico;
   if (kpiFinalizados) kpiFinalizados.textContent = finalizados;
-  if (kpiLojasOrigem) kpiLojasOrigem.textContent = lojasUnicas.size; // <--- Atualiza o número de Lojas Origem
+  if (kpiLojasOrigem) kpiLojasOrigem.textContent = recebidoLojaOrigem; // Exibe a quantidade calculada
 }
 
 // ===============================

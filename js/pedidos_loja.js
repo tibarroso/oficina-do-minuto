@@ -8,17 +8,14 @@ const API_URL = 'http://localhost:3000';
 // =========================
 async function carregarPedidos(filtroStatus = "", filtroLoja = "") {
   try {
-    // CORRIGIDO: Ordenação por data de criação decrescente (mais recentes primeiro)
     let query = supabase.from("pedidos").select("*").order("criado_em", { ascending: false });
 
-    // REGRA DE OURO DO FILTRO:
     if (filtroStatus && filtroStatus !== "Todos") {
       query = query.eq("status", filtroStatus.trim());
     } else {
       query = query.neq("status", "Finalizado");
     }
 
-    // Aplicando filtro de loja (uso de aspas duplas para tratar nomes com espaços)
     if (filtroLoja && filtroLoja !== "Todas") {
       const lojaLimpa = filtroLoja.trim();
       query = query.or(`loja_origem.eq."${lojaLimpa}",loja_destino.eq."${lojaLimpa}"`);
@@ -74,7 +71,7 @@ function criarCardPedido(pedido) {
     <strong>Loja de Destino:</strong> ${pedido.loja_destino || "Não especificada"}<br>
     <strong>OS:</strong> ${pedido.id}<br>
     <strong>Serviço:</strong> ${pedido.tipo_servico}<br>
-    <strong>Status:</strong> <span class="status-badge ${classeStatus}" style="font-weight:600;">${pedido.status}</span><br>
+    <strong>Status:</strong> <span class="status-badge ${classeStatus}">${pedido.status}</span><br>
     <strong>Orçamento:</strong> ${pedido.orcamento ? "Sim" : "Não"}<br>
     <strong>Observação:</strong><br>${pedido.obs_loja_origem || "Nenhuma"}<br>
     
@@ -85,11 +82,11 @@ function criarCardPedido(pedido) {
     
     ${podeInteragir ? `
     <div class="acoes-pedido" style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
-      <button class="btn-finalizar" onclick="window.gerenciarCliqueFinalizar('${statusComparacao}', '${pedido.id}')" style="background-color: #18BC9C; color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: 500;">Finalizado</button>
-      <button class="btn-retrabalho" onclick="window.gerenciarCliqueRetrabalho('${statusComparacao}', '${pedido.id}')" style="background-color: #e74c3c; color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: 500;">Retrabalho</button>
+      <button class="btn-finalizar" onclick="window.gerenciarCliqueFinalizar('${statusComparacao}', '${pedido.id}')" style="background-color: #10b981; color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: 500;">Finalizado</button>
+      <button class="btn-retrabalho" onclick="window.gerenciarCliqueRetrabalho('${statusComparacao}', '${pedido.id}')" style="background-color: #ef4444; color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: 500;">Retrabalho</button>
       
       ${statusComparacao === "Retrabalho" ? `
-        <button class="btn-cancelar-retrabalho" onclick="window.cancelarRetrabalho('${pedido.id}')" style="background-color: #34495e; color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: 500;">Cancelar Retrabalho</button>
+        <button class="btn-cancelar-retrabalho" onclick="window.cancelarRetrabalho('${pedido.id}')" style="background-color: #334155; color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: 500;">Cancelar Retrabalho</button>
       ` : ""}
     </div>` : ""}
   `;
@@ -286,17 +283,19 @@ async function carregarTimeline(pedidoId, lojaOrigem) {
 }
 
 // =========================
-// MAPEAMENTO DE CLASSES STATUS
+// MAPEAMENTO DE CLASSES STATUS (CORRIGIDO PARA O CSS)
 // =========================
 function getStatusClass(status) {
-  if (!status) return "status-Aguardando";
-  const st = status.trim();
-  if (st.includes("Loja 5") || st.includes("Central")) return "status-Loja5";
-  if (st.includes("transporte") || st.includes("Transporte") || st.includes("serviço")) return "status-Transporte";
-  if (st === "Finalizado") return "status-Finalizado";
-  if (st === "Retrabalho") return "status-Retrabalho";
-  if (st.includes("Aguardando") || st.includes("coleta")) return "status-Aguardando";
-  return "status-Aguardando";
+  if (!status) return "status-aguardando";
+  const st = status.trim().toLowerCase();
+
+  if (st.includes("retrabalho")) return "status-retrabalho";
+  if (st.includes("finalizado")) return "status-finalizado";
+  if (st.includes("transporte")) return "status-transporte";
+  if (st.includes("recebido") || st.includes("serviço") || st.includes("servico")) return "status-servico";
+  if (st.includes("aguardando") || st.includes("coleta")) return "status-coleta";
+
+  return "status-default";
 }
 
 // =========================

@@ -36,7 +36,11 @@ async function carregarAguardando(filtroLoja) {
   let query = supabase
     .from("pedidos")
     .select("*")
-    .in("status", ["Aguardando coleta", "Aguardando coleta para Retrabalho"]) // Inclui ambos os status
+    // Busca pedidos com qualquer um dos dois status abaixo:
+    .in("status", [
+      "Aguardando coleta", 
+      "Aguardando coleta para Retrabalho"
+    ])
     .order("criado_em", { ascending: false });
 
   if (filtroLoja !== "Todas") {
@@ -62,7 +66,6 @@ async function carregarAguardando(filtroLoja) {
     div.appendChild(cardNode);
   }
 }
-
 // =====================
 // EM TRANSPORTE (IDA, VOLTA OU RETRABALHO)
 // =====================

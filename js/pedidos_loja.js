@@ -221,14 +221,17 @@ async function atualizarStatus(novoStatus, pedidoId) {
 window.atualizarStatus = atualizarStatus;
 
 // =========================
-// CARREGAR TIMELINE
+// CARREGAR TIMELINE (CORRIGIDO ORDENAÇÃO DE EVENTOS)
 // =========================
 async function carregarTimeline(pedidoId, lojaOrigem) {
   try {
+    // Ordena por data de criação de forma crescente (do evento mais antigo para o mais recente)
+    // Se a data for igual, usa o ID como critério de desempate.
     const { data: eventos, error } = await supabase
       .from("pedido_eventos")
       .select("*")
       .eq("pedido_id", pedidoId)
+      .order("criado_em", { ascending: true })
       .order("id", { ascending: true });
 
     if (error) throw error;

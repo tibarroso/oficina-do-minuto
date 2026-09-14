@@ -11,16 +11,17 @@ const btnCriarPedidoContainer = document.getElementById("btnCriarPedidoContainer
 const kpiTotal = document.getElementById("kpiTotal");
 const kpiColeta = document.getElementById("kpiColeta");
 const kpiEmTransporte = document.getElementById("kpiEmTransporte");
-const kpiEntregueLoja = document.getElementById("kpiEntregueLoja"); // Elemento do KPI Entregue na Loja
+const kpiEntregueLoja = document.getElementById("kpiEntregueLoja"); 
 const kpiEmServico = document.getElementById("kpiEmServico");
 const kpiFinalizados = document.getElementById("kpiFinalizados");
-const kpiLojasOrigem = document.getElementById("kpiLojasOrigem"); // Exibe a contagem de "Recebido na loja de origem"
+const kpiLojasOrigem = document.getElementById("kpiLojasOrigem");
 
 let pedidosGlobais = [];
 let usuarioLogado = null;
 let usuarioTipo = "admin";
 let chartStatus = null;
 let chartServico = null;
+let debounceTimer = null;
 
 // ===============================
 // Sessão do Usuário
@@ -158,8 +159,9 @@ async function carregarPedidos() {
 
     const pesquisa = pesquisaOS?.value?.trim();
     if (pesquisa) {
-      if (!isNaN(pesquisa) && pesquisa.length < 8) {
-        query = query.eq("id", parseInt(pesquisa));
+      // Se for numérico simples, faz filtro por ID exato, caso contrário faz busca por texto no or
+      if (/^\d+$/.test(pesquisa) && pesquisa.length <= 10) {
+        query = query.eq("id", Number(pesquisa));
       } else {
         query = query.or(
           `loja_origem.ilike.%${pesquisa}%,tipo_servico.ilike.%${pesquisa}%,status.ilike.%${pesquisa}%`
@@ -167,7 +169,7 @@ async function carregarPedidos() {
       }
     }
 
-    const { data, error } = await query.order("id", { ascending: false });
+    const { data, error } = await query.order("criado_em", { ascending: false });
     
     if (error) {
       console.error("Erro Supabase ao consultar pedidos:", error);
@@ -204,14 +206,14 @@ function renderizarKPIs(pedidos) {
   pedidos.forEach((p) => {
     const st = (p.status || "").toLowerCase().trim();
 
-    if (st.includes("coleta") || st.includes("aguardando coleta")) {
+    if (st === "aguardando coleta" || st === "aguardando coleta para retrabalho") {
       coleta++;
     } else if (st.includes("transporte") || st.includes("retorno")) {
       emTransporte++;
     } else if (st.includes("entregue na loja 5")) {
-      entregueLoja++; // Alimentação exclusiva de "Entregue na Loja"
+      entregueLoja++; 
     } else if (st.includes("serviço") || st.includes("servico")) {
-      emServico++; // Alimentação exclusiva de "Em Serviço"
+      emServico++; 
     } else if (st.includes("finalizado")) {
       finalizados++;
     } else if (st.includes("recebido na loja de origem")) {
@@ -429,9 +431,16 @@ function atualizarGraficos() {
       btnFiltrar.addEventListener("click", carregarPedidos);
     }
 
+    if (filtroStatus) {
+      filtroStatus.addEventListener("change", carregarPedidos);
+    }
+
     if (pesquisaOS) {
       pesquisaOS.addEventListener("input", () => {
-        carregarPedidos();
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          carregarPedidos();
+        }, 300);
       });
     }
     

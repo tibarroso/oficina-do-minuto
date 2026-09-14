@@ -206,7 +206,7 @@ function renderizarKPIs(pedidos) {
   pedidos.forEach((p) => {
     const st = (p.status || "").toLowerCase().trim();
 
-    if (st === "aguardando coleta" || st === "aguardando coleta para retrabalho") {
+    if (st === "aguardando coleta" || st === "aguardando coleta para retrabalho" || st === "Aguardando coleta para loja de Origem") {
       coleta++;
     } else if (st.includes("transporte") || st.includes("retorno")) {
       emTransporte++;

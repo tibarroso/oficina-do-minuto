@@ -5,324 +5,123 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Oficina do Minuto – Painel Administrativo</title>
 
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
-
-  <!-- Chart.js para Renderização dos Gráficos -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-    /* Identidade Visual Extraída da Fachada Real */
     :root {
-      --primary-blue: #0b53a7;       /* Azul Royal da Fachada */
-      --primary-yellow: #f1c40f;     /* Amarelo Ouro dos Detalhes */
-      --bg-light: #f4f6f9;           /* Fundo Cinza Claro Corporativo */
-      --surface: #ffffff;            /* Fundo dos Containers */
-      --text-dark: #1e293b;          /* Texto Principal */
-      --text-muted: #64748b;         /* Texto Secundário */
-      --border-color: #e2e8f0;       /* Divisórias */
+      --primary-blue: #0b53a7;
+      --primary-yellow: #f1c40f;
+      --bg-light: #f4f6f9;
+      --surface: #ffffff;
+      --text-dark: #1e293b;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
       --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background-color: var(--bg-light); color: var(--text-dark); min-height: 100vh; display: flex; flex-direction: column; }
+    h1, h2, h3 { font-family: 'Poppins', sans-serif; }
 
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: var(--bg-light);
-      color: var(--text-dark);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    h1, h2, h3 {
-      font-family: 'Poppins', sans-serif;
-    }
-
-    /* Barra de Navegação Premium (Azul Corporativo) */
     header {
       background-color: var(--primary-blue);
       color: white;
       padding: 16px 48px;
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      z-index: 1000;
+      top: 0; left: 0; width: 100%; z-index: 1000;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    header h1 { font-size: 20px; font-weight: 700; }
+    header h1 span { color: var(--primary-yellow); font-weight: 500; font-size: 13px; margin-left: 6px; border-left: 2px solid rgba(255,255,255,0.3); padding-left: 8px; }
+    header nav { display: flex; align-items: center; gap: 6px; }
+    header nav a { color: rgba(255, 255, 255, 0.85); text-decoration: none; font-size: 14px; font-weight: 500; padding: 8px 16px; border-radius: 6px; }
+    header nav a:hover { color: white; background-color: rgba(255, 255, 255, 0.1); }
+    header nav a.active { color: var(--text-dark); background-color: var(--primary-yellow); font-weight: 600; }
+    header nav a.btn-sair { color: #ff8a8a; }
+
+    main { flex: 1; padding: 100px 48px 60px; max-width: 1440px; width: 100%; margin: 0 auto; }
+    
+    .section-intro { margin-bottom: 20px; }
+    .section-intro h2 { font-size: 24px; font-weight: 600; color: var(--text-dark); }
+    .section-intro p { font-size: 14px; color: var(--text-muted); }
+
+    /* Cards de KPI */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px 20px;
+      box-shadow: var(--shadow-soft);
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      flex-direction: column;
+      gap: 4px;
+      border-left: 4px solid var(--primary-blue);
     }
+    .kpi-card.warning { border-left-color: #f39c12; }
+    .kpi-card.danger { border-left-color: #e74c3c; }
+    .kpi-card.success { border-left-color: #18BC9C; }
+    .kpi-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .kpi-value { font-size: 24px; font-weight: 700; color: var(--text-dark); }
 
-    header h1 {
-      font-size: 22px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-    }
-
-    header h1 span {
-      color: var(--primary-yellow);
-      font-weight: 500;
-      font-size: 14px;
-      margin-left: 6px;
-      border-left: 2px solid rgba(255,255,255,0.3);
-      padding-left: 8px;
-    }
-
-    header nav {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    header nav a {
-      color: rgba(255, 255, 255, 0.85);
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 500;
-      padding: 8px 16px;
-      border-radius: 6px;
-      transition: all 0.2s ease;
-    }
-
-    header nav a:hover {
-      color: white;
-      background-color: rgba(255, 255, 255, 0.1);
-    }
-
-    header nav a.active {
-      color: var(--text-dark);
-      background-color: var(--primary-yellow);
-      font-weight: 600;
-    }
-
-    header nav a.btn-sair {
-      color: #ff8a8a;
-    }
-    header nav a.btn-sair:hover {
-      background-color: rgba(255, 138, 138, 0.1);
-    }
-
-    /* Área de Conteúdo Centralizada */
-    main {
-      flex: 1;
-      padding-top: 110px;
-      padding-bottom: 60px;
-      max-width: 1440px;
-      width: 100%;
-      margin: 0 auto;
-      padding-left: 48px;
-      padding-right: 48px;
-    }
-
-    .section-intro {
-      margin-bottom: 28px;
-      text-align: left;
-    }
-
-    .section-intro h2 {
-      font-size: 26px;
-      font-weight: 600;
-      color: var(--text-dark);
-    }
-
-    .section-intro p {
-      font-size: 14px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    /* Barra de Filtros Alinhada e Clean */
+    /* Filtros */
     .filter-bar {
       background-color: var(--surface);
       border: 1px solid var(--border-color);
       border-radius: 12px;
-      padding: 16px 24px;
+      padding: 16px 20px;
       display: flex;
       align-items: center;
       gap: 16px;
       box-shadow: var(--shadow-soft);
-      margin-bottom: 32px;
+      margin-bottom: 24px;
     }
-
-    .filter-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .filter-group { display: flex; align-items: center; gap: 8px; }
+    .filter-group label { font-size: 14px; font-weight: 600; color: var(--text-muted); }
+    .filter-bar select, .filter-bar input {
+      padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color);
+      font-size: 14px; color: var(--text-dark); background-color: #f8fafc;
     }
-
-    .filter-group label {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-muted);
-    }
-
-    .filter-bar select, 
-    .filter-bar input {
-      padding: 10px 14px;
-      border-radius: 8px;
-      border: 1px solid var(--border-color);
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      color: var(--text-dark);
-      background-color: #f8fafc;
-      transition: all 0.2s;
-    }
-
-    .filter-bar input {
-      flex: 1;
-      min-width: 300px;
-    }
-
-    .filter-bar select:focus,
-    .filter-bar input:focus {
-      outline: none;
-      border-color: var(--primary-blue);
-      background-color: white;
-      box-shadow: 0 0 0 3px rgba(11, 83, 167, 0.15);
-    }
-
-    /* Botão Filtrar Ajustado com a Identidade da Marca */
+    .filter-bar input { flex: 1; min-width: 250px; }
     .btn-filtrar {
-      background-color: var(--primary-blue);
-      color: white;
-      border: none;
-      padding: 10px 24px;
-      border-radius: 8px;
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
+      background-color: var(--primary-blue); color: white; border: none;
+      padding: 9px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
     }
+    .btn-filtrar:hover { background-color: #083d7a; }
 
-    .btn-filtrar:hover {
-      background-color: #083d7a;
-    }
-
-    /* Grid de Gráficos Operacionais */
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-    }
-
+    /* Gráficos */
+    .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
     .chart-container {
-      background-color: var(--surface);
-      border: 1px solid var(--border-color);
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: var(--shadow-soft);
-      min-height: 380px;
-      display: flex;
-      flex-direction: column;
+      background-color: var(--surface); border: 1px solid var(--border-color);
+      border-radius: 16px; padding: 20px; box-shadow: var(--shadow-soft);
     }
+    .chart-container h3 { font-size: 15px; font-weight: 600; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+    .chart-wrapper { position: relative; height: 260px; width: 100%; }
 
-    .chart-wrapper {
-      flex: 1;
-      position: relative;
-      width: 100%;
-      height: 300px;
-    }
+    /* Tabela de Dados */
+    .secao-relatorios { background: var(--surface); border-radius: 16px; padding: 24px; border: 1px solid var(--border-color); box-shadow: var(--shadow-soft); }
+    .secao-relatorios h2 { font-size: 18px; color: var(--primary-blue); font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
 
-    .chart-container h3 {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text-dark);
-      margin-bottom: 20px;
-      border-bottom: 1px solid var(--border-color);
-      padding-bottom: 12px;
-    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+    th { background-color: var(--primary-blue); color: #ffffff; font-weight: 600; padding: 12px 14px; }
+    td { padding: 10px 14px; border-bottom: 1px solid var(--border-color); }
+    tr:nth-child(even) { background-color: #f8fafc; }
+    tr:hover { background-color: #f1f5f9; }
 
-    /* Estilos dinâmicos injetados para tabelas */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      text-align: left;
-      color: #1e293b;
-    }
+    .badge-status { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; display: inline-block; }
+    .obs-pill-group { display: flex; flex-wrap: wrap; gap: 4px; }
+    .obs-pill { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
 
-    th {
-      background-color: var(--primary-blue);
-      color: #ffffff;
-      font-weight: 600;
-      padding: 14px 16px;
-      letter-spacing: 0.5px;
-    }
-
-    td {
-      padding: 12px 16px;
-      border-bottom: 1px solid #e2e8f0;
-    }
-
-    tr:nth-child(even) {
-      background-color: #f8fafc;
-    }
-
-    tr:hover {
-      background-color: #f1f5f9;
-      transition: background-color 0.2s ease;
-    }
-
-    /* Badges de Detalhes na Tabela */
-    .obs-pill-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-    }
-    .obs-pill {
-      background: #f1f5f9;
-      border: 1px solid #cbd5e1;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 11px;
-    }
-
-    footer {
-      background-color: #0f172a;
-      color: #94a3b8;
-      text-align: center;
-      padding: 20px;
-      font-size: 13px;
-      margin-top: auto;
-    }
-
-    /* Responsividade */
-    @media (max-width: 968px) {
-      header {
-        padding: 16px 24px;
-        flex-direction: column;
-        gap: 12px;
-        position: static;
-      }
-      header nav {
-        width: 100%;
-        justify-content: center;
-      }
-      main {
-        padding: 24px;
-        padding-top: 24px;
-      }
-      .filter-bar {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      .filter-bar input {
-        min-width: 100%;
-      }
-      .dashboard-grid {
-        grid-template-columns: 1fr;
-      }
-    }
+    footer { background-color: #0f172a; color: #94a3b8; text-align: center; padding: 16px; font-size: 13px; margin-top: auto; }
   </style>
 </head>
 <body>
@@ -330,8 +129,8 @@
   <header>
     <h1>Oficina do Minuto <span>Painel Admin</span></h1>
     <nav>
-      <a href="admin.html" class="active">Inicio</a>
-      <a href="dashboard.html" class="active">Dashboard</a>
+      <a href="admin.html" class="active">Início</a>
+      <a href="dashboard.html">Dashboard</a>
       <a href="loja5.html">Central Loja 5</a>
       <a href="pedidos.html">Pedidos</a>
       <a href="index.html" class="btn-sair">Sair</a>
@@ -344,7 +143,27 @@
       <p>Indicadores gerenciais e monitoramento de ordens de serviço em tempo real.</p>
     </section>
 
-    <!-- Barra de Filtros Sincronizada com o JS -->
+    <!-- Indicadores Chave (KPIs) -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <span class="kpi-label">Total de OS</span>
+        <strong class="kpi-value" id="kpiTotal">0</strong>
+      </div>
+      <div class="kpi-card warning">
+        <span class="kpi-label">Pendentes / Coleta</span>
+        <strong class="kpi-value" id="kpiPendentes">0</strong>
+      </div>
+      <div class="kpi-card danger">
+        <span class="kpi-label">Retrabalho</span>
+        <strong class="kpi-value" id="kpiRetrabalho">0</strong>
+      </div>
+      <div class="kpi-card success">
+        <span class="kpi-label">Volume de Peças</span>
+        <strong class="kpi-value" id="kpiPecas">0</strong>
+      </div>
+    </div>
+
+    <!-- Barra de Filtros -->
     <div class="filter-bar">
       <div class="filter-group">
         <label for="filtroStatus">Status:</label>
@@ -359,40 +178,30 @@
 
       <div class="filter-group" style="flex: 1;">
         <label for="pesquisaOS">Pesquisar:</label>
-        <input type="text" id="pesquisaOS" placeholder="Digite o número da OS ou o nome da loja...">
+        <input type="text" id="pesquisaOS" placeholder="Pesquisar por OS, Loja ou Serviço...">
       </div>
 
-      <button id="btnFiltrar" class="btn-filtrar" type="button">Filtrar Dados</button>
+      <button id="btnFiltrar" class="btn-filtrar" type="button">Filtrar</button>
     </div>
 
-    <!-- Container dos Gráficos com Canvas -->
+    <!-- Gráficos -->
     <div class="dashboard-grid">
       <div class="chart-container">
         <h3>Status dos Pedidos</h3>
-        <div class="chart-wrapper">
-          <canvas id="graficoStatus"></canvas>
-        </div>
+        <div class="chart-wrapper"><canvas id="graficoStatus"></canvas></div>
       </div>
       <div class="chart-container">
         <h3>Pedidos por Serviço</h3>
-        <div class="chart-wrapper">
-          <canvas id="graficoServico"></canvas>
-        </div>
+        <div class="chart-wrapper"><canvas id="graficoServico"></canvas></div>
       </div>
     </div>
 
-    <!-- Tabela Gerencial Sincronizada -->
-    <section class="secao-relatorios" style="padding: 32px; background: #ffffff; border-radius: 16px; box-shadow: var(--shadow-soft); margin-top: 32px; border: 1px solid #e2e8f0;">
-      <h2 style="font-family: 'Poppins', sans-serif; font-size: 22px; color: #0b53a7; font-weight: 600; margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
-        <span style="background: rgba(241, 196, 15, 0.15); padding: 6px 10px; border-radius: 8px;">📊</span> 
-        Relatórios Gerenciais e Volumetria
-      </h2>
-      
-      <div style="overflow-x: auto; width: 100%; border-radius: 8px; border: 1px solid #e2e8f0;">
+    <!-- Tabela -->
+    <section class="secao-relatorios">
+      <h2>📊 Relatórios Gerenciais e Volumetria</h2>
+      <div style="overflow-x: auto;">
         <div id="containerPedidos">
-          <p style="text-align: center; color: #64748b; padding: 40px; font-family: 'Inter', sans-serif; font-size: 14px;">
-            Buscando dados consolidados da Oficina...
-          </p>
+          <p style="text-align: center; color: #64748b; padding: 20px;">Carregando pedidos...</p>
         </div>
       </div>
     </section>
@@ -402,7 +211,6 @@
     &copy; 2026 Oficina do Minuto. Todos os direitos reservados.
   </footer>
 
-  <!-- Carrega o módulo JS -->
   <script type="module" src="./admin.js"></script>
 </body>
 </html>

@@ -100,6 +100,13 @@ window.gerenciarCliqueFinalizar = function(statusAtual, id) {
     alert("O pedido está em espera de transporte para retrabalho, não podendo ser finalizado!");
     return;
   }
+
+  // Validação de segurança para evitar finalização prematura antes da entrega na origem
+  if (!statusAtual.includes("Recebido na loja de origem") && !statusAtual.includes("Entregue na loja de origem")) {
+    const confirmar = confirm("O transporte deste pedido ainda não foi concluído até a loja de origem. Deseja realmente finalizar a OS agora?");
+    if (!confirmar) return;
+  }
+
   atualizarStatus("Finalizado", id);
 };
 
@@ -271,10 +278,10 @@ async function carregarTimeline(pedidoId, lojaOrigem) {
       }
 
       let detalhesObs = "";
-      if (textoExibicao.includes("Entregue na loja de origem") || textoExibicao.includes("Recebido na loja de origem")) {
+      if (evento.observacao) {
+        detalhesObs = `<br><span style="color:#000; padding-left: 5px;">↳ ${evento.observacao}</span>`;
+      } else if (textoExibicao.includes("Entregue na loja de origem") || textoExibicao.includes("Recebido na loja de origem")) {
         detalhesObs = `<br><span style="color:#000; font-weight: 500; padding-left: 5px;">↳ Serviço já pode ser avaliado pela gerência da ${nomeLoja}. Caso esteja tudo certo, entre em contato com o cliente.</span>`;
-      } else {
-        detalhesObs = evento.observacao ? `<br><span style="color:#000; padding-left: 5px;">↳ ${evento.observacao}</span>` : "";
       }
 
       item.innerHTML = `• ${textoExibicao} (${dataFormatada})${detalhesObs}`;

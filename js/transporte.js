@@ -36,7 +36,6 @@ async function carregarAguardando(filtroLoja) {
   let query = supabase
     .from("pedidos")
     .select("*")
-    // Busca pedidos com qualquer um dos dois status abaixo:
     .in("status", [
       "Aguardando coleta", 
       "Aguardando coleta para Retrabalho"
@@ -66,6 +65,7 @@ async function carregarAguardando(filtroLoja) {
     div.appendChild(cardNode);
   }
 }
+
 // =====================
 // EM TRANSPORTE (IDA, VOLTA OU RETRABALHO)
 // =====================
@@ -224,43 +224,42 @@ async function criarCard(pedido, tipo) {
   btn.style.width = "100%";
   btn.style.cursor = "pointer";
 
-  const observacaoAtualDoPedido = pedido.obs_loja_origem || "";
-
+  // MENSAGENS ESPECÍFICAS DE EVENTO PARA CADA AÇÃO DE TRANSPORTE
   if (tipo === "ida") {
     if (statusComparacao === "Aguardando coleta para Retrabalho") {
       btn.textContent = "Iniciar Transporte (Retrabalho)";
-      btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para loja de Destino para retrabalho", observacaoAtualDoPedido);
+      btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para loja de Destino para retrabalho", "Coleta de retrabalho realizada.");
     } else {
       btn.textContent = "Iniciar Transporte (Ida)";
-      btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para Loja 5", observacaoAtualDoPedido);
+      btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para Loja 5", "Coleta realizada na loja de origem.");
     }
     acaoContainer.appendChild(btn);
   } else if (tipo === "emTransporte") {
     if (statusComparacao === "Em transporte para Loja 5") {
       btn.textContent = "Entregar na Loja Central (Loja 5)";
-      btn.onclick = () => atualizarStatus(pedido.id, "Entregue na Loja 5", observacaoAtualDoPedido);
+      btn.onclick = () => atualizarStatus(pedido.id, "Entregue na Loja 5", "Pedido entregue na Central para execução.");
       acaoContainer.appendChild(btn);
     } else if (statusComparacao === "Em transporte para loja de origem") {
       btn.textContent = "Entregar na Loja de Origem";
-      btn.onclick = () => atualizarStatus(pedido.id, "Recebido na loja de origem", observacaoAtualDoPedido);
+      btn.onclick = () => atualizarStatus(pedido.id, "Recebido na loja de origem", "Pedido entregue com sucesso na loja de origem.");
       acaoContainer.appendChild(btn);
     } else if (statusComparacao === "Em transporte para loja de Destino para retrabalho") {
       btn.textContent = "Entregar na Loja de Destino";
-      btn.onclick = () => atualizarStatus(pedido.id, "Entregue na Loja de Destino para retrabalho", observacaoAtualDoPedido);
+      btn.onclick = () => atualizarStatus(pedido.id, "Entregue na Loja de Destino para retrabalho", "Pedido de retrabalho entregue no destino.");
       acaoContainer.appendChild(btn);
     }
   } else if (tipo === "volta") {
     if (statusComparacao === "Retrabalho") {
       btn.textContent = "Iniciar Transporte de Retrabalho";
-      btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para loja de Destino para retrabalho", observacaoAtualDoPedido);
+      btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para loja de Destino para retrabalho", "Transporte de retrabalho iniciado.");
       acaoContainer.appendChild(btn);
     } else if (statusComparacao === "Aguardando coleta para loja de Origem" || statusComparacao === "Aguardando coleta para loja de origem") {
-      btn.textContent = "Iniciar Transporte de Retorno ";
-      btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para loja de origem", observacaoAtualDoPedido);
+      btn.textContent = "Iniciar Transporte de Retorno";
+      btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para loja de origem", "Coleta realizada na Central. Retorno iniciado.");
       acaoContainer.appendChild(btn);
     } else if (statusComparacao === "Aguardando retorno do transporte") {
       btn.textContent = "Iniciar Transporte de Retorno";
-      btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para loja de origem", observacaoAtualDoPedido);
+      btn.onclick = () => atualizarStatus(pedido.id, "Em transporte para loja de origem", "Retorno iniciado pelo transporte.");
       acaoContainer.appendChild(btn);
     }
   }
@@ -275,7 +274,7 @@ async function criarCard(pedido, tipo) {
 // =====================
 // Atualizar status e registrar evento
 // =====================
-async function atualizarStatus(id, novoStatus, observacaoDoPedido = "") {
+async function atualizarStatus(id, novoStatus, observacaoDoEvento = "") {
   const { error } = await supabase.from("pedidos").update({ status: novoStatus }).eq("id", id);
   if (error) {
     console.error(error);
@@ -283,7 +282,7 @@ async function atualizarStatus(id, novoStatus, observacaoDoPedido = "") {
     return;
   }
 
-  await registrarEvento(id, novoStatus, observacaoDoPedido);
+  await registrarEvento(id, novoStatus, observacaoDoEvento);
   carregarPedidos(filtroAtivo);
 }
 

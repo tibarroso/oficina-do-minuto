@@ -321,13 +321,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const orcamento = document.getElementById("orcamento")?.checked || false;
     const observacao = document.getElementById("observacao")?.value.trim() || "";
 
-    const { data: userData } = await supabase.auth.getUser();
-    const operador = userData?.user?.email || "Sistema / Loja";
-
     if (!tipoServico || !lojaOrigem || !lojaDestino) {
       alert("Preencha todos os campos obrigatórios!");
       return;
     }
+
+    if (lojaOrigem.trim().toLowerCase() === lojaDestino.trim().toLowerCase()) {
+      alert("A Loja de Origem não pode ser igual à Loja de Destino!");
+      return;
+    }
+
+    const { data: userData } = await supabase.auth.getUser();
+    const operador = userData?.user?.email || "Sistema / Loja";
 
     try {
       const statusInicial = "Aguardando coleta";
@@ -388,13 +393,18 @@ document.addEventListener("DOMContentLoaded", () => {
       const orcamento = document.getElementById("orcamentoTicket")?.checked || false;
       const observacaoTicket = document.getElementById("observacaoTicket")?.value.trim() || "";
 
-      const { data: userData } = await supabase.auth.getUser();
-      const operador = userData?.user?.email || "Sistema / Loja";
-
       if (!tipoServico || !lojaOrigem || !lojaDestino) {
         alert("Preencha todos os campos obrigatórios!");
         return;
       }
+
+      if (lojaOrigem.trim().toLowerCase() === lojaDestino.trim().toLowerCase()) {
+        alert("A Loja de Origem não pode ser igual à Loja de Destino!");
+        return;
+      }
+
+      const { data: userData } = await supabase.auth.getUser();
+      const operador = userData?.user?.email || "Sistema / Loja";
 
       try {
         const statusInicial = "Aguardando coleta";

@@ -162,11 +162,13 @@ async function criarCard(pedido, tipo) {
 
   const statusComparacao = pedido.status ? pedido.status.trim() : "";
 
+  // Ordenação precisa por criado_em e id
   const { data: eventos } = await supabase
     .from("pedido_eventos")
     .select("*")
     .eq("pedido_id", pedido.id)
-    .order("criado_em", { ascending: true });
+    .order("criado_em", { ascending: true })
+    .order("id", { ascending: true });
 
   let HTMLeventos = "";
   if (eventos && eventos.length > 0) {
@@ -275,6 +277,19 @@ async function criarCard(pedido, tipo) {
 // Atualizar status e registrar evento
 // =====================
 async function atualizarStatus(id, novoStatus, observacaoDoEvento = "") {
+  // Trava para verificar se o pedido já não foi finalizado no sistema
+  const { data: pedidoAtual } = await supabase
+    .from("pedidos")
+    .select("status")
+    .eq("id", id)
+    .single();
+
+  if (pedidoAtual && pedidoAtual.status === "Finalizado") {
+    alert("Este pedido já foi finalizado e encerrado. Ações de transporte não são mais permitidas.");
+    carregarPedidos(filtroAtivo);
+    return;
+  }
+
   const { error } = await supabase.from("pedidos").update({ status: novoStatus }).eq("id", id);
   if (error) {
     console.error(error);

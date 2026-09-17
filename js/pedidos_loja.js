@@ -148,6 +148,7 @@ async function cancelarRetrabalho(pedidoId) {
     }
 
     const obsCancelamento = "Retrabalho cancelado. Retornado ao status anterior.";
+    const agoraIso = new Date().toISOString();
 
     const { error: errorPedido } = await supabase
       .from("pedidos")
@@ -163,7 +164,8 @@ async function cancelarRetrabalho(pedidoId) {
       pedido_id: pedidoId,
       evento: statusAnterior,
       observacao: "Cancelamento de Retrabalho pelo operador.",
-      criado_por: operador
+      criado_por: operador,
+      criado_em: agoraIso // <<---- ADICIONADO AQUI
     }]);
 
     if (errorLog) throw errorLog;
@@ -195,6 +197,8 @@ async function atualizarStatus(novoStatus, pedidoId) {
       ? "Serviço para ser refeito (Retrabalho)"
       : "OS concluída e finalizada.";
 
+    const agoraIso = new Date().toISOString();
+
     const { error: errorPedido } = await supabase
       .from("pedidos")
       .update({ status: statusLimpo, obs_loja_origem: novaObservacao })
@@ -209,7 +213,8 @@ async function atualizarStatus(novoStatus, pedidoId) {
       pedido_id: pedidoId,
       evento: statusLimpo,
       observacao: novaObservacao,
-      criado_por: operador
+      criado_por: operador,
+      criado_em: agoraIso // <<---- ADICIONADO AQUI
     }]);
 
     if (errorEvento) throw errorEvento;
@@ -348,6 +353,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const statusInicial = "Aguardando coleta";
       const obsInicial = observacao || "OS inicial aberta no sistema da loja.";
+      const agoraIso = new Date().toISOString();
 
       const { data, error } = await supabase.from("pedidos").insert([{
         tipo_servico: tipoServico,
@@ -365,7 +371,8 @@ document.addEventListener("DOMContentLoaded", () => {
           pedido_id: data[0].id,
           evento: statusInicial,
           observacao: obsInicial,
-          criado_por: operador
+          criado_por: operador,
+          criado_em: agoraIso // <<---- ADICIONADO AQUI
         }]);
       }
 
@@ -420,6 +427,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         const statusInicial = "Aguardando coleta";
         const obsInicial = observacaoTicket || "Pedido criado através do Ticket.";
+        const agoraIso = new Date().toISOString();
 
         const { data, error } = await supabase.from("pedidos").insert([{
           tipo_servico: tipoServico,
@@ -437,7 +445,8 @@ document.addEventListener("DOMContentLoaded", () => {
             pedido_id: data[0].id,
             evento: statusInicial,
             observacao: obsInicial,
-            criado_por: operador
+            criado_por: operador,
+            criado_em: agoraIso // <<---- ADICIONADO AQUI
           }]);
         }
 

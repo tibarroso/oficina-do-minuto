@@ -1,4 +1,3 @@
-// Importação do cliente Supabase
 import { supabase } from "./supabase.js";
 
 // Referências aos elementos do DOM
@@ -69,10 +68,8 @@ function criarCardPedido(pedido) {
     ? pedido.loja_origem.trim()
     : "Não especificada";
 
-  // Prioriza a loja de destino se houver preenchida; caso contrário, usa a de origem
-  const lojaDestinoFinal = (pedido.loja_destino && pedido.loja_destino.trim() !== "")
-    ? pedido.loja_destino.trim()
-    : lojaOrigemLimpa;
+  // Define a loja de origem para onde o pedido retornará
+  const lojaOrigemFinal = lojaOrigemLimpa;
 
   const statusNormalizado = (pedido.status || "").toLowerCase();
 
@@ -118,7 +115,7 @@ function criarCardPedido(pedido) {
 
     ${podeExecutarServico ? `<button class="btn-principal" style="background-color: #f39c12; color: #fff; font-weight: 600; padding: 10px; border: none; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 8px;" onclick="executarServico('${pedido.id}')">Executar serviço</button>` : ""}
 
-    ${podeFinalizar ? `<button class="btn-principal" style="background-color: #18BC9C; color: #fff; font-weight: 600; padding: 10px; border: none; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 8px;" onclick="mudarStatusParaFinalizado('${pedido.id}', '${pedido.status}', '${lojaDestinoFinal}')">Finalizar Pedido</button>` : ""}
+    ${podeFinalizar ? `<button class="btn-principal" style="background-color: #18BC9C; color: #fff; font-weight: 600; padding: 10px; border: none; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 8px;" onclick="mudarStatusParaFinalizado('${pedido.id}', '${pedido.status}', '${lojaOrigemFinal}')">Finalizar Pedido</button>` : ""}
   `;
 
   return card;
@@ -183,7 +180,7 @@ window.executarServico = async function (pedidoId) {
 // =========================
 // MUDAR STATUS PARA 'AGUARDANDO COLETA PARA LOJA DE ORIGEM' (FINALIZAR)
 // =========================
-window.mudarStatusParaFinalizado = async function (pedidoId, statusActual, lojaDestino) {
+window.mudarStatusParaFinalizado = async function (pedidoId, statusActual, lojaOrigem) {
   try {
     const proximoStatus = "Aguardando coleta para loja de Origem";
     const elObs = document.getElementById(`obs_loja5_${pedidoId}`);
@@ -204,8 +201,8 @@ window.mudarStatusParaFinalizado = async function (pedidoId, statusActual, lojaD
       return;
     }
 
-    // Ajustado para referenciar a Loja de Destino correta
-    const textoEvento = `Serviço Pronto na Central. Aguardando coleta para: ${lojaDestino}`;
+    // Registra a mensagem referenciando a Loja de Origem
+    const textoEvento = `Serviço Pronto na Central. Aguardando coleta para: ${lojaOrigem}`;
 
     let detalheEvento = (statusActual || "").toLowerCase().includes("retrabalho")
       ? "Serviço de retrabalho concluído pela Central."

@@ -1,11 +1,11 @@
-// Ajuste o caminho caso o supabase.js esteja na raiz (ex: "../supabase.js")
+// Importação do cliente Supabase
 import { supabase } from "./supabase.js";
 
 // Referências aos elementos do DOM
 const containerPedidos = document.getElementById("containerPedidos");
 const successMessage = document.getElementById("successMessage");
 
-// Indicator de carregamento
+// Indicador de carregamento
 const loadingMessage = document.createElement("div");
 loadingMessage.classList.add("loading");
 loadingMessage.innerHTML = "Buscando ordens de serviço ativas na central...";
@@ -71,7 +71,7 @@ function criarCardPedido(pedido) {
 
   const statusNormalizado = (pedido.status || "").toLowerCase();
 
-  // CONDIÇÕES DOS BOTÕES CONFORME SOLICITADO:
+  // CONDIÇÕES DOS BOTÕES:
   // 1. "Executar serviço": aparece quando estiver entregue/recebido na Loja 5 ou em retrabalho
   const podeExecutarServico = 
     statusNormalizado.includes("entregue na loja 5") || 
@@ -183,11 +183,11 @@ window.mudarStatusParaFinalizado = async function (pedidoId, statusActual, lojaO
     const elObs = document.getElementById(`obs_loja5_${pedidoId}`);
     const obsLoja5 = elObs ? elObs.value : "";
 
+    // Preserva o campo obs_loja_origem original da loja sem sobrescrever com textos de sistema
     const { error } = await supabase
       .from("pedidos")
       .update({
         status: proximoStatus,
-        obs_loja_origem: "Serviço Pronto na Central. Aguardando retirada.",
         obs_loja5: obsLoja5
       })
       .eq("id", pedidoId);
@@ -198,7 +198,7 @@ window.mudarStatusParaFinalizado = async function (pedidoId, statusActual, lojaO
       return;
     }
 
-    const textoEvento = `Serviço feito aguardando coleta para: ${lojaOrigem}`;
+    const textoEvento = `Serviço Pronto na Central. Aguardando coleta para: ${lojaOrigem}`;
 
     let detalheEvento = (statusActual || "").toLowerCase().includes("retrabalho")
       ? "Serviço de retrabalho concluído pela Central."

@@ -228,7 +228,7 @@ async function atualizarStatus(novoStatus, pedidoId) {
 window.atualizarStatus = atualizarStatus;
 
 // =========================
-// CARREGAR TIMELINE
+// CARREGAR TIMELINE (CORRIGIDO)
 // =========================
 async function carregarTimeline(pedidoId, lojaOrigem) {
   try {
@@ -251,6 +251,16 @@ async function carregarTimeline(pedidoId, lojaOrigem) {
       return;
     }
 
+    // Ordenação garantida via código JS (evita posições erradas devido a milissegundos ou fuso horário)
+    eventos.sort((a, b) => {
+      const dataA = new Date(a.criado_em || a.created_at).getTime();
+      const dataB = new Date(b.criado_em || b.created_at).getTime();
+      if (dataA === dataB) {
+        return (a.id || 0) - (b.id || 0);
+      }
+      return dataA - dataB;
+    });
+
     const nomeLoja = lojaOrigem ? lojaOrigem.trim() : "loja de origem";
 
     eventos.forEach(evento => {
@@ -264,7 +274,8 @@ async function carregarTimeline(pedidoId, lojaOrigem) {
       let dataFormatada = "Data pendente";
 
       if (timestamp) {
-        const dataUtc = timestamp.endsWith("Z") ? timestamp : `${timestamp}Z`;
+        const timestampStr = String(timestamp);
+        const dataUtc = timestampStr.endsWith("Z") ? timestampStr : `${timestampStr}Z`;
         dataFormatada = new Date(dataUtc).toLocaleString("pt-BR", {
           timeZone: "America/Sao_Paulo"
         });

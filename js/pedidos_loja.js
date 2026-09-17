@@ -1,6 +1,6 @@
 import { supabase } from "./supabase.js";
 
-// Configuração da URL da API (usando localhost para ambiente de desenvolvimento local)
+// Configuração da URL da API (ambiente local)
 const API_URL = 'http://localhost:3000';
 
 // =========================
@@ -27,7 +27,7 @@ async function carregarPedidos(filtroStatus = "", filtroLoja = "") {
     const pedidos = data || [];
     const container = document.getElementById("containerPedidos");
     if (!container) return;
-    
+
     container.innerHTML = "";
 
     if (!pedidos.length) {
@@ -58,11 +58,11 @@ function criarCardPedido(pedido) {
   card.id = `card-pedido-${pedido.id}`;
 
   const statusComparacao = pedido.status ? pedido.status.trim() : "";
-  
+
   const podeInteragir = (
-    statusComparacao === "Entregue na loja de origem" || 
-    statusComparacao === "Recebido na loja de origem" || 
-    statusComparacao === "Retrabalho" 
+    statusComparacao === "Entregue na loja de origem" ||
+    statusComparacao === "Recebido na loja de origem" ||
+    statusComparacao === "Retrabalho"
   );
   const classeStatus = getStatusClass(statusComparacao);
 
@@ -101,7 +101,6 @@ window.gerenciarCliqueFinalizar = function(statusAtual, id) {
     return;
   }
 
-  // Validação de segurança para evitar finalização prematura antes da entrega na origem
   if (!statusAtual.includes("Recebido na loja de origem") && !statusAtual.includes("Entregue na loja de origem")) {
     const confirmar = confirm("O transporte deste pedido ainda não foi concluído até a loja de origem. Deseja realmente finalizar a OS agora?");
     if (!confirmar) return;
@@ -139,8 +138,8 @@ async function cancelarRetrabalho(pedidoId) {
 
     if (errorEventos) throw errorEventos;
 
-    let statusAnterior = "Entregue na loja de origem"; 
-    
+    let statusAnterior = "Entregue na loja de origem";
+
     if (eventos && eventos.length > 0) {
       const eventoValido = eventos.find(ev => ev.evento !== "Retrabalho");
       if (eventoValido) {
@@ -162,7 +161,7 @@ async function cancelarRetrabalho(pedidoId) {
 
     const { error: errorLog } = await supabase.from("pedido_eventos").insert([{
       pedido_id: pedidoId,
-      evento: statusAnterior, 
+      evento: statusAnterior,
       observacao: "Cancelamento de Retrabalho pelo operador.",
       criado_por: operador
     }]);
@@ -173,13 +172,13 @@ async function cancelarRetrabalho(pedidoId) {
 
     const filtroStatus = document.getElementById("filtroStatus")?.value || "";
     const filtroLoja = document.getElementById("filtroLoja")?.value || "";
-    
+
     carregarPedidos(filtroStatus, filtroLoja);
 
   } catch (err) {
     console.error("Erro ao cancelar retrabalho:", err);
     alert("Erro ao tentar cancelar o retrabalho. Verifique o console.");
-    
+
     const cardElement = document.getElementById(`card-pedido-${pedidoId}`);
     if (cardElement) cardElement.style.opacity = "1";
   }
@@ -192,8 +191,8 @@ window.cancelarRetrabalho = cancelarRetrabalho;
 async function atualizarStatus(novoStatus, pedidoId) {
   try {
     const statusLimpo = novoStatus.trim();
-    let novaObservacao = statusLimpo === "Retrabalho" 
-      ? "Serviço para ser refeito (Retrabalho)" 
+    let novaObservacao = statusLimpo === "Retrabalho"
+      ? "Serviço para ser refeito (Retrabalho)"
       : "OS concluída e finalizada.";
 
     const { error: errorPedido } = await supabase
@@ -208,9 +207,9 @@ async function atualizarStatus(novoStatus, pedidoId) {
 
     const { error: errorEvento } = await supabase.from("pedido_eventos").insert([{
       pedido_id: pedidoId,
-      evento: statusLimpo,                 
-      observacao: novaObservacao,        
-      criado_por: operador                
+      evento: statusLimpo,
+      observacao: novaObservacao,
+      criado_por: operador
     }]);
 
     if (errorEvento) throw errorEvento;
@@ -229,11 +228,10 @@ async function atualizarStatus(novoStatus, pedidoId) {
 window.atualizarStatus = atualizarStatus;
 
 // =========================
-// CARREGAR TIMELINE (CORRIGIDO PARA EXIBIR TODOS OS EVENTOS EM ORDEM)
+// CARREGAR TIMELINE
 // =========================
 async function carregarTimeline(pedidoId, lojaOrigem) {
   try {
-    // Busca os eventos garantindo a ordenação sequencial exata de criação
     const { data: eventos, error } = await supabase
       .from("pedido_eventos")
       .select("*")
@@ -246,7 +244,7 @@ async function carregarTimeline(pedidoId, lojaOrigem) {
     const contentDiv = document.getElementById(`timeline-content-${pedidoId}`);
     if (!contentDiv) return;
 
-    contentDiv.innerHTML = ""; 
+    contentDiv.innerHTML = "";
 
     if (!eventos || eventos.length === 0) {
       contentDiv.innerHTML = `<span style="color: #7f8c8d; font-style: italic; font-size: 13px;">Nenhum evento registrado.</span>`;
@@ -261,7 +259,7 @@ async function carregarTimeline(pedidoId, lojaOrigem) {
       item.style.fontSize = "13px";
       item.style.color = "#000";
       item.style.marginTop = "4px";
-      
+
       const timestamp = evento.criado_em || evento.created_at;
       let dataFormatada = "Data pendente";
 
@@ -271,7 +269,7 @@ async function carregarTimeline(pedidoId, lojaOrigem) {
           timeZone: "America/Sao_Paulo"
         });
       }
-      
+
       let textoExibicao = evento.evento ? evento.evento.trim() : "";
       if (!textoExibicao.startsWith("Status alterado para")) {
         textoExibicao = `Status alterado para ${textoExibicao}`;
@@ -293,7 +291,7 @@ async function carregarTimeline(pedidoId, lojaOrigem) {
 }
 
 // =========================
-// MAPEAMENTO DE CLASSES STATUS (CORRIGIDO PARA CSS)
+// MAPEAMENTO DE CLASSES STATUS
 // =========================
 function getStatusClass(status) {
   if (!status) return "status-aguardando";
@@ -349,19 +347,19 @@ document.addEventListener("DOMContentLoaded", () => {
       if (data && data.length > 0) {
         await supabase.from("pedido_eventos").insert([{
           pedido_id: data[0].id,
-          evento: statusInicial,            
-          observacao: obsInicial,            
-          criado_por: operador              
+          evento: statusInicial,
+          observacao: obsInicial,
+          criado_por: operador
         }]);
       }
 
       alert("Pedido criado com sucesso!");
       document.getElementById("formCriarPedidoModal")?.reset();
-      
+
       if (typeof window.fecharModal === "function") {
         window.fecharModal();
       }
-      
+
       carregarPedidos();
     } catch (err) {
       console.error("Erro ao criar pedido:", err);
@@ -406,7 +404,7 @@ document.addEventListener("DOMContentLoaded", () => {
           tipo_servico: tipoServico,
           loja_origem: lojaOrigem,
           loja_destino: lojaDestino,
-          orcamento: orcamento,
+          orcamento,
           obs_loja_origem: obsInicial,
           status: statusInicial
         }]).select();
@@ -424,7 +422,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         alert("Pedido por Ticket criado e salvo com sucesso!");
         formCriarPedidoTicketModal.reset();
-        
+
         if (typeof window.fecharModalTicket === "function") {
           window.fecharModalTicket();
         }
@@ -444,14 +442,14 @@ document.addEventListener("DOMContentLoaded", () => {
     carregarPedidos(filtroStatus, filtroLoja);
   });
 
-  // Atualização automática em 30 segundos
+  // Atualização automática a cada 30 segundos
   setInterval(() => {
     const elStatus = document.getElementById("filtroStatus");
     const elLoja = document.getElementById("filtroLoja");
-    
+
     const filtroStatus = elStatus ? elStatus.value : "";
     const filtroLoja = elLoja ? elLoja.value : "";
-    
+
     carregarPedidos(filtroStatus, filtroLoja);
-  }, 30000); 
+  }, 30000);
 });

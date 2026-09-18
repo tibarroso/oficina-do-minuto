@@ -9,15 +9,22 @@ let pedidosGlobais = [];
 let chartStatus = null;
 let chartServico = null;
 let debounceTimer = null;
+let realtimeChannel = null;
 
+/**
+ * Retorna as cores estilizadas com base no status do pedido.
+ */
 function obterEstiloStatus(status) {
-  const s = (status || "").toLowerCase();
+  const s = String(status || "").toLowerCase();
   if (s.includes("finalizado") || s.includes("entregue")) return { bg: "#e8f8f5", texto: "#18BC9C" };
   if (s.includes("transporte") || s.includes("coleta") || s.includes("retorno")) return { bg: "#eef2f7", texto: "#2980b9" };
   if (s.includes("retrabalho") || s.includes("orçamento")) return { bg: "#fdedec", texto: "#e74c3c" };
   return { bg: "#fef9e7", texto: "#f39c12" };
 }
 
+/**
+ * Extrai campos organizados de textos estruturados em chave-valor ou objetos JSON.
+ */
 function extrairDadosObs(obsText) {
   const dados = { ticket: "---", cliente: "Não informado", saco: "---", pecas: "0", valor: "0,00" };
   if (!obsText) return dados;
@@ -27,8 +34,8 @@ function extrairDadosObs(obsText) {
       ticket: obsText.ticket || obsText.cod || "---",
       cliente: obsText.cliente || obsText.nome || "Não informado",
       saco: obsText.saco || obsText.bag || "---",
-      pecas: obsText.pecas || obsText.qtd || "0",
-      valor: obsText.valor || obsText.total || "0,00"
+      pecas: String(obsText.pecas || obsText.qtd || "0"),
+      valor: String(obsText.valor || obsText.total || "0,00")
     };
   }
 
@@ -45,34 +52,46 @@ function extrairDadosObs(obsText) {
     else if (chaveLower.includes("cliente") || chaveLower.includes("cli")) dados.cliente = valor;
     else if (chaveLower.includes("saco")) dados.saco = valor;
     else if (chaveLower.includes("peça") || chaveLower.includes("peca")) dados.pecas = valor;
-    else if (chaveLower.includes("valor") || chaveLower.includes("total")) dados.valor = valor.replace("R$", "").trim();
+    else if (chaveLower.includes("valor") || chaveLower.includes("total")) dados.valor = valor.replace(/R\$\s?/, "").trim();
   });
 
   return dados;
 }
 
-// Atualização Dinâmica de KPIs
+/**
+ * Atualiza os contadores em tela.
+ */
 function atualizarKPIs(pedidos) {
   let pendentes = 0;
   let retrabalho = 0;
   let totalPecas = 0;
 
-  pedidos.forEach(p => {
-    const st = (p.status || "").toLowerCase();
+  pedidos.forEach((p) => {
+    const st = String(p.status || "").toLowerCase();
     if (st.includes("coleta") || st.includes("aguardando")) pendentes++;
     if (st.includes("retrabalho")) retrabalho++;
 
     const parsed = extrairDadosObs(p.obs_loja_origem || p.observacao);
-    const qtdPecas = parseInt(p.pecas || parsed.pecas, 10);
+    const valPecas = p.pecas ?? parsed.pecas;
+    const qtdPecas = parseInt(String(valPecas).replace(/\D/g, ""), 10);
+    
     if (!isNaN(qtdPecas)) totalPecas += qtdPecas;
   });
 
-  document.getElementById("kpiTotal").textContent = pedidos.length;
-  document.getElementById("kpiPendentes").textContent = pendentes;
-  document.getElementById("kpiRetrabalho").textContent = retrabalho;
-  document.getElementById("kpiPecas").textContent = totalPecas;
+  const elTotal = document.getElementById("kpiTotal");
+  const elPendentes = document.getElementById("kpiPendentes");
+  const elRetrabalho = document.getElementById("kpiRetrabalho");
+  const elPecas = document.getElementById("kpiPecas");
+
+  if (elTotal) elTotal.textContent = pedidos.length;
+  if (elPendentes) elPendentes.textContent = pendentes;
+  if (elRetrabalho) elRetrabalho.textContent = retrabalho;
+  if (elPecas) elPecas.textContent = totalPecas;
 }
 
+/**
+ * Consulta o Supabase e dispara renderizações.
+ */
 async function gerarRelatorio() {
   try {
     let query = supabase.from("pedidos").select(`
@@ -111,6 +130,9 @@ async function gerarRelatorio() {
   }
 }
 
+/**
+ * Renderiza os itens na tabela principal.
+ */
 function renderizarTabelaRelatorio(pedidos) {
   if (!containerPedidos) return;
   containerPedidos.innerHTML = "";
@@ -153,7 +175,9 @@ function renderizarTabelaRelatorio(pedidos) {
     const dataRef = p.criado_em || p.created_at;
     if (dataRef) {
       const d = new Date(dataRef);
-      dataFormatada = d.toLocaleDateString("pt-BR") + " " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+      if (!isNaN(d.getTime())) {
+        dataFormatada = d.toLocaleDateString("pt-BR") + " " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+      }
     }
 
     tr.innerHTML = `
@@ -183,8 +207,11 @@ function renderizarTabelaRelatorio(pedidos) {
   containerPedidos.appendChild(tabela);
 }
 
+/**
+ * Desenha e atualiza os gráficos Chart.js.
+ */
 function atualizarGraficos(pedidos) {
-  if (!window.Chart) return;
+  if (typeof window.Chart === "undefined") return;
 
   const statusCount = {};
   const servicoCount = {};
@@ -196,9 +223,13 @@ function atualizarGraficos(pedidos) {
     servicoCount[sr] = (servicoCount[sr] || 0) + 1;
   });
 
+  // Gráfico Status
   const elStatus = document.getElementById("graficoStatus");
   if (elStatus) {
-    if (chartStatus) chartStatus.destroy();
+    if (chartStatus) {
+      chartStatus.destroy();
+      chartStatus = null;
+    }
     chartStatus = new Chart(elStatus.getContext("2d"), {
       type: "doughnut",
       data: {
@@ -212,9 +243,13 @@ function atualizarGraficos(pedidos) {
     });
   }
 
+  // Gráfico Serviço
   const elServico = document.getElementById("graficoServico");
   if (elServico) {
-    if (chartServico) chartServico.destroy();
+    if (chartServico) {
+      chartServico.destroy();
+      chartServico = null;
+    }
     chartServico = new Chart(elServico.getContext("2d"), {
       type: "bar",
       data: {
@@ -231,8 +266,26 @@ function atualizarGraficos(pedidos) {
   }
 }
 
+/**
+ * Inscrição em tempo real.
+ */
+function escutarRealtime() {
+  if (realtimeChannel) {
+    supabase.removeChannel(realtimeChannel);
+  }
+
+  realtimeChannel = supabase
+    .channel("pedidos-alteracoes")
+    .on("postgres_changes", { event: "*", schema: "public", table: "pedidos" }, () => {
+      gerarRelatorio();
+    })
+    .subscribe();
+}
+
+// Inicialização de Eventos
 document.addEventListener("DOMContentLoaded", () => {
   gerarRelatorio();
+  escutarRealtime();
 
   btnFiltrar?.addEventListener("click", gerarRelatorio);
   filtroStatus?.addEventListener("change", gerarRelatorio);
@@ -241,12 +294,4 @@ document.addEventListener("DOMContentLoaded", () => {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(gerarRelatorio, 300);
   });
-
-  // Supabase Realtime para evitar chamadas de timer constante
-  supabase
-    .channel('pedidos-alteracoes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, () => {
-      gerarRelatorio();
-    })
-    .subscribe();
 });

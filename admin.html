@@ -5,9 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Oficina do Minuto – Painel Administrativo</title>
 
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
@@ -38,7 +41,7 @@
     header h1 { font-size: 20px; font-weight: 700; }
     header h1 span { color: var(--primary-yellow); font-weight: 500; font-size: 13px; margin-left: 6px; border-left: 2px solid rgba(255,255,255,0.3); padding-left: 8px; }
     header nav { display: flex; align-items: center; gap: 6px; }
-    header nav a { color: rgba(255, 255, 255, 0.85); text-decoration: none; font-size: 14px; font-weight: 500; padding: 8px 16px; border-radius: 6px; }
+    header nav a { color: rgba(255, 255, 255, 0.85); text-decoration: none; font-size: 14px; font-weight: 500; padding: 8px 16px; border-radius: 6px; transition: background-color 0.2s; }
     header nav a:hover { color: white; background-color: rgba(255, 255, 255, 0.1); }
     header nav a.active { color: var(--text-dark); background-color: var(--primary-yellow); font-weight: 600; }
     header nav a.btn-sair { color: #ff8a8a; }
@@ -90,16 +93,21 @@
     .filter-bar select, .filter-bar input {
       padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color);
       font-size: 14px; color: var(--text-dark); background-color: #f8fafc;
+      outline: none;
+    }
+    .filter-bar select:focus, .filter-bar input:focus {
+      border-color: var(--primary-blue);
     }
     .filter-bar input { flex: 1; min-width: 250px; }
     .btn-filtrar {
       background-color: var(--primary-blue); color: white; border: none;
       padding: 9px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+      transition: background-color 0.2s;
     }
     .btn-filtrar:hover { background-color: #083d7a; }
 
     /* Gráficos */
-    .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+    .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px; margin-bottom: 24px; }
     .chart-container {
       background-color: var(--surface); border: 1px solid var(--border-color);
       border-radius: 16px; padding: 20px; box-shadow: var(--shadow-soft);

@@ -90,12 +90,13 @@ function extrairDadosObs(obsText) {
 }
 
 /**
- * Atualiza os contadores em tela.
+ * Atualiza os contadores em tela (incluindo o Faturamento Total).
  */
 function atualizarKPIs(pedidos) {
   let pendentes = 0;
   let retrabalho = 0;
   let totalPecas = 0;
+  let faturamentoTotal = 0;
 
   pedidos.forEach((p) => {
     const st = String(p.status || "").toLowerCase();
@@ -103,17 +104,27 @@ function atualizarKPIs(pedidos) {
     if (st.includes("retrabalho")) retrabalho++;
 
     const parsed = extrairDadosObs(p.obs_loja_origem || p.observacao);
+
+    // Cálculo das peças
     const valPecas = p.pecas ?? parsed.pecas;
     const qtdPecas = parseInt(String(valPecas).replace(/\D/g, ""), 10);
-
     if (!isNaN(qtdPecas)) totalPecas += qtdPecas;
+
+    // Cálculo do Faturamento Total
+    const valValor = p.valor ?? parsed.valor;
+    const numValor = parseFloat(String(valValor).replace(/[^\d,-]/g, "").replace(",", "."));
+    if (!isNaN(numValor)) faturamentoTotal += numValor;
   });
 
+  const elFaturamento = document.getElementById("kpiFaturamento");
   const elTotal = document.getElementById("kpiTotal");
   const elPendentes = document.getElementById("kpiPendentes");
   const elRetrabalho = document.getElementById("kpiRetrabalho");
   const elPecas = document.getElementById("kpiPecas");
 
+  if (elFaturamento) {
+    elFaturamento.textContent = faturamentoTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  }
   if (elTotal) elTotal.textContent = pedidos.length;
   if (elPendentes) elPendentes.textContent = pendentes;
   if (elRetrabalho) elRetrabalho.textContent = retrabalho;

@@ -52,10 +52,10 @@
     .section-intro h2 { font-size: 24px; font-weight: 600; color: var(--text-dark); }
     .section-intro p { font-size: 14px; color: var(--text-muted); }
 
-    /* Cards de KPI */
+    /* Cards de KPI ajustados para 5 métricas principais */
     .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 16px;
       margin-bottom: 24px;
     }
@@ -73,8 +73,9 @@
     .kpi-card.warning { border-left-color: #f39c12; }
     .kpi-card.danger { border-left-color: #e74c3c; }
     .kpi-card.success { border-left-color: #18BC9C; }
+    .kpi-card.money { border-left-color: #27ae60; }
     .kpi-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-    .kpi-value { font-size: 24px; font-weight: 700; color: var(--text-dark); }
+    .kpi-value { font-size: 22px; font-weight: 700; color: var(--text-dark); }
 
     /* Filtros */
     .filter-bar {
@@ -147,12 +148,16 @@
 
   <main>
     <section class="section-intro">
-      <h2>Dashboard Operacional</h2>
-      <p>Indicadores gerenciais e monitoramento de ordens de serviço em tempo real.</p>
+      <h2>Dashboard Operacional e Vendas</h2>
+      <p>Indicadores gerenciais, faturamento acumulado e monitoramento em tempo real.</p>
     </section>
 
-    <!-- Indicadores Chave (KPIs) -->
+    <!-- Indicadores Chave (KPIs) com Faturamento -->
     <div class="kpi-grid">
+      <div class="kpi-card money">
+        <span class="kpi-label">Faturamento Total</span>
+        <strong class="kpi-value" id="kpiFaturamento">R$ 0,00</strong>
+      </div>
       <div class="kpi-card">
         <span class="kpi-label">Total de OS</span>
         <strong class="kpi-value" id="kpiTotal">0</strong>
@@ -199,7 +204,7 @@
         <div class="chart-wrapper"><canvas id="graficoStatus"></canvas></div>
       </div>
       <div class="chart-container">
-        <h3>Pedidos por Serviço</h3>
+        <h3>Volume de Pedidos por Serviço</h3>
         <div class="chart-wrapper"><canvas id="graficoServico"></canvas></div>
       </div>
     </div>

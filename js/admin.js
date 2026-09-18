@@ -1,10 +1,12 @@
 import { supabase } from "./supabase.js";
 
+// Elementos do DOM
 const containerPedidos = document.getElementById("containerPedidos");
 const filtroStatus = document.getElementById("filtroStatus");
 const pesquisaOS = document.getElementById("pesquisaOS");
 const btnFiltrar = document.getElementById("btnFiltrar");
 
+// Estado da Aplicação
 let pedidosGlobais = [];
 let chartStatus = null;
 let chartServico = null;
@@ -16,9 +18,15 @@ let realtimeChannel = null;
  */
 function obterEstiloStatus(status) {
   const s = String(status || "").toLowerCase();
-  if (s.includes("finalizado") || s.includes("entregue")) return { bg: "#e8f8f5", texto: "#18BC9C" };
-  if (s.includes("transporte") || s.includes("coleta") || s.includes("retorno")) return { bg: "#eef2f7", texto: "#2980b9" };
-  if (s.includes("retrabalho") || s.includes("orçamento")) return { bg: "#fdedec", texto: "#e74c3c" };
+  if (s.includes("finalizado") || s.includes("entregue")) {
+    return { bg: "#e8f8f5", texto: "#18BC9C" };
+  }
+  if (s.includes("transporte") || s.includes("coleta") || s.includes("retorno")) {
+    return { bg: "#eef2f7", texto: "#2980b9" };
+  }
+  if (s.includes("retrabalho") || s.includes("orçamento")) {
+    return { bg: "#fdedec", texto: "#e74c3c" };
+  }
   return { bg: "#fef9e7", texto: "#f39c12" };
 }
 
@@ -26,33 +34,56 @@ function obterEstiloStatus(status) {
  * Extrai campos organizados de textos estruturados em chave-valor ou objetos JSON.
  */
 function extrairDadosObs(obsText) {
-  const dados = { ticket: "---", cliente: "Não informado", saco: "---", pecas: "0", valor: "0,00" };
-  if (!obsText) return dados;
+  const dadosPadrao = {
+    ticket: "---",
+    cliente: "Não informado",
+    saco: "---",
+    pecas: "0",
+    valor: "0,00"
+  };
 
-  if (typeof obsText === "object") {
+  if (!obsText) return dadosPadrao;
+
+  // Trata caso a observação venha como objeto JSON ou string JSON
+  let obsObj = obsText;
+  if (typeof obsText === "string" && (obsText.startsWith("{") || obsText.startsWith("["))) {
+    try {
+      obsObj = JSON.parse(obsText);
+    } catch {
+      // Caso falhe o parse, continua como string comum
+    }
+  }
+
+  if (typeof obsObj === "object" && obsObj !== null) {
     return {
-      ticket: obsText.ticket || obsText.cod || "---",
-      cliente: obsText.cliente || obsText.nome || "Não informado",
-      saco: obsText.saco || obsText.bag || "---",
-      pecas: String(obsText.pecas || obsText.qtd || "0"),
-      valor: String(obsText.valor || obsText.total || "0,00")
+      ticket: obsObj.ticket || obsObj.cod || dadosPadrao.ticket,
+      cliente: obsObj.cliente || obsObj.nome || dadosPadrao.cliente,
+      saco: obsObj.saco || obsObj.bag || dadosPadrao.saco,
+      pecas: String(obsObj.pecas || obsObj.qtd || dadosPadrao.pecas),
+      valor: String(obsObj.valor || obsObj.total || dadosPadrao.valor)
     };
   }
 
-  if (typeof obsText !== "string") return dados;
+  const dados = { ...dadosPadrao };
+  const partes = String(obsText).split(/[|\n]/);
 
-  const partes = obsText.split(/[|\n]/);
   partes.forEach((parte) => {
     if (!parte.includes(":")) return;
     const [chave, ...valorArr] = parte.split(":");
     const valor = valorArr.join(":").trim();
     const chaveLower = chave.trim().toLowerCase();
 
-    if (chaveLower.includes("ticket") || chaveLower.includes("cod")) dados.ticket = valor;
-    else if (chaveLower.includes("cliente") || chaveLower.includes("cli")) dados.cliente = valor;
-    else if (chaveLower.includes("saco")) dados.saco = valor;
-    else if (chaveLower.includes("peça") || chaveLower.includes("peca")) dados.pecas = valor;
-    else if (chaveLower.includes("valor") || chaveLower.includes("total")) dados.valor = valor.replace(/R\$\s?/, "").trim();
+    if (chaveLower.includes("ticket") || chaveLower.includes("cod")) {
+      dados.ticket = valor;
+    } else if (chaveLower.includes("cliente") || chaveLower.includes("cli")) {
+      dados.cliente = valor;
+    } else if (chaveLower.includes("saco")) {
+      dados.saco = valor;
+    } else if (chaveLower.includes("peça") || chaveLower.includes("peca")) {
+      dados.pecas = valor;
+    } else if (chaveLower.includes("valor") || chaveLower.includes("total")) {
+      dados.valor = valor.replace(/R\$\s?/, "").trim();
+    }
   });
 
   return dados;
@@ -74,7 +105,7 @@ function atualizarKPIs(pedidos) {
     const parsed = extrairDadosObs(p.obs_loja_origem || p.observacao);
     const valPecas = p.pecas ?? parsed.pecas;
     const qtdPecas = parseInt(String(valPecas).replace(/\D/g, ""), 10);
-    
+
     if (!isNaN(qtdPecas)) totalPecas += qtdPecas;
   });
 
@@ -94,6 +125,10 @@ function atualizarKPIs(pedidos) {
  */
 async function gerarRelatorio() {
   try {
+    if (containerPedidos && containerPedidos.children.length === 0) {
+      containerPedidos.innerHTML = `<p style="text-align: center; color: #64748b; padding: 20px;">Carregando pedidos...</p>`;
+    }
+
     let query = supabase.from("pedidos").select(`
       *,
       pedido_eventos ( observacao )
@@ -109,7 +144,11 @@ async function gerarRelatorio() {
       if (/^\d+$/.test(termo) && termo.length <= 10) {
         query = query.eq("id", Number(termo));
       } else {
-        query = query.or(`loja_origem.ilike.%${termo}%,tipo_servico.ilike.%${termo}%,status.ilike.%${termo}%`);
+        // Sanitiza termo para evitar quebras em buscas dinâmicas com .or()
+        const termoSanitizado = termo.replace(/[%_,]/g, "");
+        query = query.or(
+          `loja_origem.ilike.%${termoSanitizado}%,tipo_servico.ilike.%${termoSanitizado}%,status.ilike.%${termoSanitizado}%`
+        );
       }
     }
 
@@ -125,7 +164,7 @@ async function gerarRelatorio() {
   } catch (err) {
     console.error("Erro ao gerar relatório:", err);
     if (containerPedidos) {
-      containerPedidos.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 20px;">Erro ao carregar dados: ${err.message}</p>`;
+      containerPedidos.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 20px;">Erro ao carregar dados: ${err.message || err}</p>`;
     }
   }
 }
@@ -158,6 +197,7 @@ function renderizarTabelaRelatorio(pedidos) {
   `;
 
   const corpoTabela = tabela.querySelector("#corpoTabela");
+  const fragmento = document.createDocumentFragment();
 
   pedidos.forEach((p) => {
     const tr = document.createElement("tr");
@@ -201,14 +241,15 @@ function renderizarTabelaRelatorio(pedidos) {
       <td style="color: #64748b;">${dataFormatada}</td>
     `;
 
-    corpoTabela.appendChild(tr);
+    fragmento.appendChild(tr);
   });
 
+  corpoTabela.appendChild(fragmento);
   containerPedidos.appendChild(tabela);
 }
 
 /**
- * Desenha e atualiza os gráficos Chart.js.
+ * Desenha e atualiza os gráficos Chart.js com atualização reativa segura.
  */
 function atualizarGraficos(pedidos) {
   if (typeof window.Chart === "undefined") return;
@@ -226,48 +267,58 @@ function atualizarGraficos(pedidos) {
   // Gráfico Status
   const elStatus = document.getElementById("graficoStatus");
   if (elStatus) {
+    const labelsStatus = Object.keys(statusCount);
+    const dataStatus = Object.values(statusCount);
+
     if (chartStatus) {
-      chartStatus.destroy();
-      chartStatus = null;
+      chartStatus.data.labels = labelsStatus;
+      chartStatus.data.datasets[0].data = dataStatus;
+      chartStatus.update();
+    } else {
+      chartStatus = new Chart(elStatus.getContext("2d"), {
+        type: "doughnut",
+        data: {
+          labels: labelsStatus,
+          datasets: [{
+            data: dataStatus,
+            backgroundColor: ["#f39c12", "#18BC9C", "#e74c3c", "#2980b9", "#8e44ad", "#34495e"]
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+      });
     }
-    chartStatus = new Chart(elStatus.getContext("2d"), {
-      type: "doughnut",
-      data: {
-        labels: Object.keys(statusCount),
-        datasets: [{
-          data: Object.values(statusCount),
-          backgroundColor: ["#f39c12", "#18BC9C", "#e74c3c", "#2980b9", "#8e44ad", "#34495e"]
-        }]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
-    });
   }
 
   // Gráfico Serviço
   const elServico = document.getElementById("graficoServico");
   if (elServico) {
+    const labelsServico = Object.keys(servicoCount);
+    const dataServico = Object.values(servicoCount);
+
     if (chartServico) {
-      chartServico.destroy();
-      chartServico = null;
+      chartServico.data.labels = labelsServico;
+      chartServico.data.datasets[0].data = dataServico;
+      chartServico.update();
+    } else {
+      chartServico = new Chart(elServico.getContext("2d"), {
+        type: "bar",
+        data: {
+          labels: labelsServico,
+          datasets: [{
+            label: "Volume de Pedidos",
+            data: dataServico,
+            backgroundColor: "#0b53a7",
+            borderRadius: 4
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+      });
     }
-    chartServico = new Chart(elServico.getContext("2d"), {
-      type: "bar",
-      data: {
-        labels: Object.keys(servicoCount),
-        datasets: [{
-          label: "Volume de Pedidos",
-          data: Object.values(servicoCount),
-          backgroundColor: "#0b53a7",
-          borderRadius: 4
-        }]
-      },
-      options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
-    });
   }
 }
 
 /**
- * Inscrição em tempo real.
+ * Inscrição em tempo real com reutilização de canal.
  */
 function escutarRealtime() {
   if (realtimeChannel) {
@@ -294,4 +345,11 @@ document.addEventListener("DOMContentLoaded", () => {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(gerarRelatorio, 300);
   });
+});
+
+// Limpeza de conexão ao fechar a janela
+window.addEventListener("beforeunload", () => {
+  if (realtimeChannel) {
+    supabase.removeChannel(realtimeChannel);
+  }
 });

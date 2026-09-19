@@ -25,7 +25,6 @@ export async function carregarPedidos() {
       .select("*")
       .or(
         "status.ilike.%Entregue na Loja 5%," +
-        "status.ilike.%Loja de Destino para retrabalho%," +
         "status.ilike.%Em serviço%"
       )
       .order("id", { ascending: false });
@@ -74,10 +73,8 @@ function criarCardPedido(pedido) {
   const statusNormalizado = (pedido.status || "").toLowerCase();
 
   // CONDIÇÕES DOS BOTÕES:
-  // 1. "Executar serviço": aparece quando estiver entregue/recebido na Loja 5 ou em retrabalho
-  const podeExecutarServico = 
-    statusNormalizado.includes("entregue na loja 5") || 
-    statusNormalizado.includes("loja de destino para retrabalho");
+  // 1. "Executar serviço": aparece quando estiver entregue/recebido na Loja 5
+  const podeExecutarServico = statusNormalizado.includes("entregue na loja 5");
 
   // 2. "Finalizar Pedido": só aparece quando o status for exatamente "Em serviço"
   const podeFinalizar = statusNormalizado.includes("em serviço");

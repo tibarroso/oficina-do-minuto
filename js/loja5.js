@@ -19,12 +19,13 @@ export async function carregarPedidos() {
     containerPedidos.innerHTML = "";
     containerPedidos.appendChild(loadingMessage);
 
-    // Consulta flexível com ILIKE para evitar erros de maiúsculas/minúsculas no banco
+    // Consulta flexível com ILIKE incluindo entregas para retrabalho
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
       .or(
         "status.ilike.%Entregue na Loja 5%," +
+        "status.ilike.%Entregue na Loja de Destino para retrabalho%," +
         "status.ilike.%Em serviço%"
       )
       .order("id", { ascending: false });
@@ -73,8 +74,11 @@ function criarCardPedido(pedido) {
   const statusNormalizado = (pedido.status || "").toLowerCase();
 
   // CONDIÇÕES DOS BOTÕES:
-  // 1. "Executar serviço": aparece quando estiver entregue/recebido na Loja 5
-  const podeExecutarServico = statusNormalizado.includes("entregue na loja 5");
+  // 1. "Executar serviço": aparece quando estiver entregue na Loja 5 ou entregue na Loja de Destino para retrabalho
+  const podeExecutarServico = 
+    statusNormalizado.includes("entregue na loja 5") || 
+    statusNormalizado.includes("entregue na loja de destino para retrabalho") ||
+    statusNormalizado.includes("retrabalho");
 
   // 2. "Finalizar Pedido": só aparece quando o status for exatamente "Em serviço"
   const podeFinalizar = statusNormalizado.includes("em serviço");

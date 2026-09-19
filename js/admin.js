@@ -1,13 +1,23 @@
 import { supabase } from "./supabase.js";
 
 // =========================================================================
-// 1. MAPEAMENTO E ELEMENTOS DO DOM (com verificação de integridade)
+// 1. MAPEAMENTO E ELEMENTOS DO DOM
 // =========================================================================
 const DOM = {
   containerPedidos: document.getElementById("containerPedidos"),
   filtroStatus: document.getElementById("filtroStatus"),
   pesquisaOS: document.getElementById("pesquisaOS"),
   btnFiltrar: document.getElementById("btnFiltrar"),
+  dataExibicao: document.getElementById("data_exibicao"),
+  
+  // Cards Macro de Faturamento (Topo)
+  macro: {
+    totalFaturado: document.getElementById("total_faturado"),
+    totalProdutos: document.getElementById("total_produtos"),
+    totalServicos: document.getElementById("total_servicos"),
+  },
+  
+  // KPIs Operacionais
   kpis: {
     faturamento: document.getElementById("kpiFaturamento"),
     total: document.getElementById("kpiTotal"),
@@ -15,6 +25,8 @@ const DOM = {
     retrabalho: document.getElementById("kpiRetrabalho"),
     pecas: document.getElementById("kpiPecas"),
   },
+
+  // Telas de Gráficos
   graficos: {
     status: document.getElementById("graficoStatus"),
     servico: document.getElementById("graficoServico"),
@@ -35,12 +47,12 @@ const state = {
 
 // Configurações e Mapeamentos Visuais
 const PALETA_CORES = {
-  sucesso: { bg: "#e8f8f5", texto: "#18BC9C", hex: "#18BC9C" },
-  transporte: { bg: "#eef2f7", texto: "#2980b9", hex: "#2980b9" },
-  alerta: { bg: "#fdedec", texto: "#e74c3c", hex: "#e74c3c" },
-  pendente: { bg: "#fef9e7", texto: "#f39c12", hex: "#f39c12" },
-  roxo: { hex: "#8e44ad" },
-  escuro: { hex: "#34495e" }
+  sucesso: { bg: "#f0fdf4", texto: "#16a34a", hex: "#16a34a" },
+  transporte: { bg: "#eff6ff", texto: "#2563eb", hex: "#2563eb" },
+  alerta: { bg: "#fef2f2", texto: "#dc2626", hex: "#dc2626" },
+  pendente: { bg: "#fefce8", texto: "#ca8a04", hex: "#ca8a04" },
+  roxo: { hex: "#8b5cf6" },
+  escuro: { hex: "#475569" }
 };
 
 // Formato padrão Moeda BRL
@@ -107,7 +119,7 @@ function extrairDadosObs(obsText) {
       try {
         obsObj = JSON.parse(textoLimpo);
       } catch {
-        // Falha no parse JSON -> processará como texto estruturado por chave-valor
+        // Falha no parse JSON -> processará como texto estruturado
       }
     }
   }
@@ -159,7 +171,7 @@ function extrairDadosObs(obsText) {
 // =========================================================================
 
 /**
- * Atualiza os KPIs na tela.
+ * Atualiza os KPIs operacionais e macros na tela.
  */
 function atualizarKPIs(pedidos) {
   let pendentes = 0;
@@ -191,11 +203,17 @@ function atualizarKPIs(pedidos) {
     }
   });
 
+  // Atualiza Indicadores Rápidos
   if (DOM.kpis.faturamento) DOM.kpis.faturamento.textContent = fmtMoeda.format(faturamentoTotal);
   if (DOM.kpis.total) DOM.kpis.total.textContent = pedidos.length;
   if (DOM.kpis.pendentes) DOM.kpis.pendentes.textContent = pendentes;
   if (DOM.kpis.retrabalho) DOM.kpis.retrabalho.textContent = retrabalho;
   if (DOM.kpis.pecas) DOM.kpis.pecas.textContent = totalPecas.toLocaleString("pt-BR");
+
+  // Atualiza Cards Macros se presentes e vazios
+  if (DOM.macro.totalFaturado && DOM.macro.totalFaturado.textContent.includes("0,00")) {
+    DOM.macro.totalFaturado.textContent = fmtMoeda.format(faturamentoTotal);
+  }
 }
 
 /**
@@ -227,7 +245,6 @@ async function gerarRelatorio() {
       if (/^\d+$/.test(termo) && termo.length <= 10) {
         query = query.eq("id", Number(termo));
       } else {
-        // Sanitiza caracteres reservadas para ilike do PostgREST
         const termoSanitizado = termo.replace(/[%_,()]/g, "");
         if (termoSanitizado) {
           query = query.or(
@@ -252,7 +269,7 @@ async function gerarRelatorio() {
     console.error("❌ Erro ao gerar relatório:", err);
     if (DOM.containerPedidos) {
       DOM.containerPedidos.innerHTML = `
-        <div style="text-align: center; color: #e74c3c; padding: 24px;">
+        <div style="text-align: center; color: #dc2626; padding: 24px;">
           <p><strong>Não foi possível carregar os dados.</strong></p>
           <small>${escapeHTML(err.message || "Erro de conexão com o banco de dados")}</small>
         </div>`;
@@ -275,6 +292,7 @@ function renderizarTabelaRelatorio(pedidos) {
   }
 
   const tabela = document.createElement("table");
+  tabela.className = "table table-hover align-middle mb-0";
   tabela.innerHTML = `
     <thead>
       <tr>
@@ -323,22 +341,22 @@ function renderizarTabelaRelatorio(pedidos) {
     tr.innerHTML = `
       <td><strong>#${escapeHTML(String(p.id ?? "N/A"))}</strong></td>
       <td>${escapeHTML(p.loja_origem ?? "Não informada")}</td>
-      <td><span class="obs-pill">${escapeHTML(p.tipo_servico ?? "Geral")}</span></td>
+      <td><span class="badge bg-light text-dark border">${escapeHTML(p.tipo_servico ?? "Geral")}</span></td>
       <td>
-        <span class="badge-status" style="background-color: ${coresStatus.bg}; color: ${coresStatus.texto};">
+        <span class="badge" style="background-color: ${coresStatus.bg}; color: ${coresStatus.texto}; border: 1px solid ${coresStatus.texto}33;">
           ${escapeHTML(p.status ?? "Sem status")}
         </span>
       </td>
       <td>
-        <div class="obs-pill-group">
-          <span class="obs-pill">Ticket: <strong>${ticket}</strong></span>
-          <span class="obs-pill">Cliente: <strong>${cliente}</strong></span>
-          <span class="obs-pill">Saco: <strong>${saco}</strong></span>
-          <span class="obs-pill">Peças: <strong>${pecas}</strong></span>
-          <span class="obs-pill">Valor: <strong>${valorStr}</strong></span>
+        <div class="d-flex flex-wrap gap-1">
+          <span class="badge bg-light text-secondary border">Ticket: <strong>${ticket}</strong></span>
+          <span class="badge bg-light text-secondary border">Cliente: <strong>${cliente}</strong></span>
+          <span class="badge bg-light text-secondary border">Saco: <strong>${saco}</strong></span>
+          <span class="badge bg-light text-secondary border">Peças: <strong>${pecas}</strong></span>
+          <span class="badge bg-light text-secondary border">Valor: <strong>${valorStr}</strong></span>
         </div>
       </td>
-      <td style="color: #64748b;">${dataFormatada}</td>
+      <td style="color: #64748b; font-size: 0.85rem;">${dataFormatada}</td>
     `;
 
     fragmento.appendChild(tr);
@@ -372,7 +390,7 @@ function atualizarGraficos(pedidos) {
     if (state.chartStatus) {
       state.chartStatus.data.labels = labelsStatus;
       state.chartStatus.data.datasets[0].data = dataStatus;
-      state.chartStatus.update("none"); // Otimização para atualização fluida sem reset de animação
+      state.chartStatus.update("none");
     } else {
       state.chartStatus = new Chart(DOM.graficos.status.getContext("2d"), {
         type: "doughnut",
@@ -417,7 +435,7 @@ function atualizarGraficos(pedidos) {
             label: "Volume de Pedidos",
             data: dataServico,
             backgroundColor: "#0b53a7",
-            borderRadius: 4
+            borderRadius: 6
           }]
         },
         options: {
@@ -445,7 +463,6 @@ function escutarRealtime() {
   state.realtimeChannel = supabase
     .channel("admin-pedidos-changes")
     .on("postgres_changes", { event: "*", schema: "public", table: "pedidos" }, () => {
-      // Debounce para evitar múltiplas chamadas seguidas em surtos de escrita
       clearTimeout(state.debounceTimer);
       state.debounceTimer = setTimeout(gerarRelatorio, 400);
     })

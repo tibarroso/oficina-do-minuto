@@ -169,18 +169,50 @@ function extrairDadosObs(obsText) {
 }
 
 // =========================================================================
-// 4. OFICINAS DO DIA (CONSULTA DIRETA NO SUPABASE SEM FETCH LOCALHOST)
+// 4. OFICINAS DO DIA (INTEGRAÇÃO COM API LOCAL + FALLBACK SUPABASE)
 // =========================================================================
 
 /**
- * Consulta no Supabase os dados das lojas/oficinas consolidadas no dia.
+ * Consulta a rota /oficinas/hoje da API local ou faz fallback via Supabase.
  */
 async function carregarOficinasHoje() {
+  try {
+    const res = await fetch(`${API_URL}/oficinas/hoje`);
+    
+    if (!res.ok) {
+      throw new Error(`Erro na API REST: Status ${res.status}`);
+    }
+
+    const data = await res.json();
+
+    if (data && data.sucesso) {
+      state.oficinasHoje = data.oficinas || [];
+
+      // Atualiza os Cards Macros com base no retorno da API
+      if (DOM.macro.totalFaturado) DOM.macro.totalFaturado.textContent = fmtMoeda.format(data.total_geral || 0);
+      if (DOM.macro.totalProdutos) DOM.macro.totalProdutos.textContent = fmtMoeda.format(data.total_produtos || 0);
+      if (DOM.macro.totalServicos) DOM.macro.totalServicos.textContent = fmtMoeda.format(data.total_servicos || 0);
+
+      renderizarCardsOficinas(state.oficinasHoje);
+      return;
+    }
+    
+    throw new Error("Formato de resposta inválido da API.");
+
+  } catch (err) {
+    console.warn("⚠️ Falha ao consumir API local. Aplicando fallback de consulta ao Supabase...", err.message);
+    await carregarOficinasHojeFallbackSupabase();
+  }
+}
+
+/**
+ * Fallback via Supabase caso a API REST não responda.
+ */
+async function carregarOficinasHojeFallbackSupabase() {
   try {
     const hojeInicio = new Date();
     hojeInicio.setHours(0, 0, 0, 0);
 
-    // Consulta os pedidos criados a partir do início de hoje no Supabase
     const { data: pedidosHoje, error } = await supabase
       .from("pedidos")
       .select("*")
@@ -188,11 +220,8 @@ async function carregarOficinasHoje() {
 
     if (error) throw error;
 
-    // Agrupa totais e faturamento por loja
     const mapaOficinas = {};
     let faturamentoGeral = 0;
-    let totalProdutosGeral = 0;
-    let totalServicosGeral = 0;
 
     (pedidosHoje || []).forEach((p) => {
       const lojaNome = p.loja_origem || "Loja Não Identificada";
@@ -210,11 +239,10 @@ async function carregarOficinasHoje() {
       const pFinal = isNaN(pecasVal) ? 0 : pecasVal;
 
       faturamentoGeral += vFinal;
-      totalServicosGeral += vFinal; // Contabiliza serviços
 
       if (!mapaOficinas[lojaNome]) {
         mapaOficinas[lojaNome] = {
-          loja: p.loja_id || 100,
+          loja: p.loja_id || 1,
           nome_oficina: lojaNome,
           faturamento_total: 0,
           qtd_vendas: 0,
@@ -228,19 +256,16 @@ async function carregarOficinasHoje() {
       mapaOficinas[lojaNome].total_pecas += pFinal;
     });
 
-    const listaOficinas = Object.values(mapaOficinas);
-    state.oficinasHoje = listaOficinas;
+    state.oficinasHoje = Object.values(mapaOficinas);
 
-    // Atualiza Cards Macros do Topo
     if (DOM.macro.totalFaturado) DOM.macro.totalFaturado.textContent = fmtMoeda.format(faturamentoGeral);
-    if (DOM.macro.totalProdutos) DOM.macro.totalProdutos.textContent = fmtMoeda.format(totalProdutosGeral);
-    if (DOM.macro.totalServicos) DOM.macro.totalServicos.textContent = fmtMoeda.format(totalServicosGeral);
+    if (DOM.macro.totalProdutos) DOM.macro.totalProdutos.textContent = fmtMoeda.format(0);
+    if (DOM.macro.totalServicos) DOM.macro.totalServicos.textContent = fmtMoeda.format(faturamentoGeral);
 
-    // Renderiza a lista na tela
     renderizarCardsOficinas(state.oficinasHoje);
 
   } catch (err) {
-    console.error("❌ Erro ao consultar oficinas do dia no Supabase:", err);
+    console.error("❌ Erro no fallback do Supabase:", err);
     if (DOM.containerCardsOficinas) {
       DOM.containerCardsOficinas.innerHTML = `
         <div class="col-12 text-center py-4 text-muted">
@@ -267,17 +292,16 @@ function renderizarCardsOficinas(oficinas) {
   }
 
   DOM.containerCardsOficinas.innerHTML = oficinas.map((oficina) => {
-    const isOffline = oficina.status === "Offline";
+    // Trata 'null' ou 'Online' como ativo. Apenas 'Offline' bloqueia o card.
+    const isOffline = String(oficina.status).toLowerCase() === "offline";
     const faturamento = oficina.faturamento_total || 0;
 
     const nomeFormatado = oficina.nome_oficina.includes(' - ')
       ? oficina.nome_oficina.split(' - ')[1]
       : oficina.nome_oficina;
 
-    let ticketUrl = `/oficina/ticket/${oficina.loja}/1/1`;
-    if (oficina.loja === 100) ticketUrl = `/oficina/ticket/100/1/36171`;
-    else if (oficina.loja === 102) ticketUrl = `/oficina/ticket/102/1/1169`;
-    else if (oficina.loja === 103) ticketUrl = `/oficina/ticket/103/1/48085`;
+    // Constrói a URL do Ticket com base no código 'loja' da API
+    const ticketUrl = `/oficina/ticket/${oficina.loja}/1/1`;
 
     return `
       <div class="col-12 col-sm-6 col-md-4 col-lg-3">
@@ -375,10 +399,6 @@ function atualizarKPIs(pedidos) {
   if (DOM.kpis.pendentes) DOM.kpis.pendentes.textContent = pendentes;
   if (DOM.kpis.retrabalho) DOM.kpis.retrabalho.textContent = retrabalho;
   if (DOM.kpis.pecas) DOM.kpis.pecas.textContent = totalPecas.toLocaleString("pt-BR");
-
-  if (DOM.macro.totalFaturado && (!DOM.macro.totalFaturado.textContent || DOM.macro.totalFaturado.textContent.includes("0,00"))) {
-    DOM.macro.totalFaturado.textContent = fmtMoeda.format(faturamentoTotal);
-  }
 }
 
 /**

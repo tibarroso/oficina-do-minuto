@@ -1,5 +1,8 @@
 import { supabase } from "./supabase.js";
 
+// Configuração da URL da API (ambiente local)
+const API_URL = 'http://localhost:3000';
+
 // =========================================================================
 // 1. MAPEAMENTO E ELEMENTOS DO DOM
 // =========================================================================

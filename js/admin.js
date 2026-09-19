@@ -9,6 +9,7 @@ const DOM = {
   pesquisaOS: document.getElementById("pesquisaOS"),
   btnFiltrar: document.getElementById("btnFiltrar"),
   dataExibicao: document.getElementById("data_exibicao"),
+  containerCardsOficinas: document.getElementById("cards"),
   
   // Cards Macro de Faturamento (Topo)
   macro: {
@@ -38,6 +39,7 @@ const DOM = {
 // =========================================================================
 const state = {
   pedidosGlobais: [],
+  oficinasHoje: [],
   chartStatus: null,
   chartServico: null,
   debounceTimer: null,
@@ -167,7 +169,123 @@ function extrairDadosObs(obsText) {
 }
 
 // =========================================================================
-// 4. LÓGICA DE NEGÓCIO E RENDERIZAÇÃO
+// 4. LÓGICA DE NEGÓCIO: OFICINAS DO DIA (/oficinas/hoje)
+// =========================================================================
+
+/**
+ * Carrega a volumetria e faturamento consolidado das oficinas no dia atual.
+ */
+async function carregarOficinasHoje() {
+  try {
+    const response = await fetch('/oficinas/hoje');
+    const data = await response.json();
+
+    if (data && data.sucesso) {
+      state.oficinasHoje = data.oficinas || [];
+
+      // 1. Atualiza Cards Macros de Faturamento
+      if (DOM.macro.totalFaturado) DOM.macro.totalFaturado.textContent = fmtMoeda.format(data.total_geral || 0);
+      if (DOM.macro.totalProdutos) DOM.macro.totalProdutos.textContent = fmtMoeda.format(data.total_produtos || 0);
+      if (DOM.macro.totalServicos) DOM.macro.totalServicos.textContent = fmtMoeda.format(data.total_servicos || 0);
+
+      // 2. Renderiza Grid de Filiais/Lojas
+      renderizarCardsOficinas(state.oficinasHoje);
+    }
+  } catch (err) {
+    console.error("❌ Erro ao buscar dados de /oficinas/hoje:", err);
+    if (DOM.containerCardsOficinas) {
+      DOM.containerCardsOficinas.innerHTML = `
+        <div class="col-12 text-center py-4 text-danger">
+          Erro ao carregar dados das oficinas do dia.
+        </div>
+      `;
+    }
+  }
+}
+
+/**
+ * Renderiza os cards das oficinas/PDVs na interface.
+ */
+function renderizarCardsOficinas(oficinas) {
+  if (!DOM.containerCardsOficinas) return;
+
+  if (!oficinas || oficinas.length === 0) {
+    DOM.containerCardsOficinas.innerHTML = `
+      <div class="col-12 text-center py-4">
+        <p class="text-muted mb-0">Nenhuma oficina registrada para hoje.</p>
+      </div>
+    `;
+    return;
+  }
+
+  DOM.containerCardsOficinas.innerHTML = oficinas.map((oficina) => {
+    const isOffline = oficina.status !== null && oficina.status !== "" && oficina.status !== "Online";
+    const faturamento = oficina.faturamento_total || 0;
+
+    const nomeFormatado = oficina.nome_oficina.includes(' - ')
+      ? oficina.nome_oficina.split(' - ')[1]
+      : oficina.nome_oficina;
+
+    let ticketUrl = `/oficina/ticket/${oficina.loja}/1/1`;
+    if (oficina.loja === 100) ticketUrl = `/oficina/ticket/100/1/36171`;
+    else if (oficina.loja === 102) ticketUrl = `/oficina/ticket/102/1/1169`;
+    else if (oficina.loja === 103) ticketUrl = `/oficina/ticket/103/1/48085`;
+
+    return `
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+        <div class="card-pdv p-4 d-flex flex-column justify-content-between">
+          <div>
+            <div class="status-indicator ${isOffline ? 'offline' : ''}"></div>
+            
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <div class="text-muted small fw-medium text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.05em;">
+                CÓDIGO: ${escapeHTML(String(oficina.loja))}
+              </div>
+              
+              ${!isOffline ? `
+                <a href="${ticketUrl}" class="btn-teste-ticket btn-outline-primary bg-light border text-primary" target="_blank">
+                  <i class="bi bi-search me-1"></i>Testar Ticket
+                </a>
+              ` : ''}
+            </div>
+            
+            <h4 class="fw-bold text-dark h5 mb-2 text-truncate" title="${escapeHTML(oficina.nome_oficina)}">
+              ${escapeHTML(nomeFormatado)}
+            </h4>
+
+            ${isOffline ? `
+              <div class="fw-semibold fs-6 text-muted my-3">
+                <i class="bi bi-wifi-off me-1 text-danger"></i> Link Indisponível
+              </div>
+            ` : `
+              <div class="fw-bold fs-4 text-dark mb-3">
+                ${fmtMoeda.format(faturamento)}
+              </div>
+            `}
+          </div>
+
+          <div>
+            <hr class="my-3" style="border-color: #f1f5f9;">
+            
+            ${!isOffline ? `
+              <div class="d-flex flex-wrap gap-2 mb-2">
+                <span class="badge-doc"><i class="bi bi-receipt me-1"></i>${oficina.qtd_vendas || 0} Tickets</span>
+                <span class="badge-doc"><i class="bi bi-box-seam me-1"></i>${oficina.total_pecas || 0} Peças</span>
+              </div>
+            ` : ''}
+            
+            <div class="text-secondary fw-semibold small mt-2 text-truncate" style="font-size: 0.72rem;" title="${escapeHTML(oficina.nome_oficina)}">
+              <i class="bi bi-geo-alt-fill me-1 text-primary"></i>${escapeHTML(oficina.nome_oficina)}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// =========================================================================
+// 5. LÓGICA DE NEGÓCIO: RELATÓRIOS E PEDIDOS (SUPABASE)
 // =========================================================================
 
 /**
@@ -210,8 +328,8 @@ function atualizarKPIs(pedidos) {
   if (DOM.kpis.retrabalho) DOM.kpis.retrabalho.textContent = retrabalho;
   if (DOM.kpis.pecas) DOM.kpis.pecas.textContent = totalPecas.toLocaleString("pt-BR");
 
-  // Atualiza Cards Macros se presentes e vazios
-  if (DOM.macro.totalFaturado && DOM.macro.totalFaturado.textContent.includes("0,00")) {
+  // Atualiza Cards Macros se a requisição /oficinas/hoje ainda não tiver preenchido
+  if (DOM.macro.totalFaturado && (DOM.macro.totalFaturado.textContent.includes("0,00") || DOM.macro.totalFaturado.textContent === "")) {
     DOM.macro.totalFaturado.textContent = fmtMoeda.format(faturamentoTotal);
   }
 }
@@ -449,7 +567,7 @@ function atualizarGraficos(pedidos) {
 }
 
 // =========================================================================
-// 5. EVENTOS REALTIME & INICIALIZAÇÃO
+// 6. EVENTOS REALTIME & INICIALIZAÇÃO
 // =========================================================================
 
 /**
@@ -464,7 +582,10 @@ function escutarRealtime() {
     .channel("admin-pedidos-changes")
     .on("postgres_changes", { event: "*", schema: "public", table: "pedidos" }, () => {
       clearTimeout(state.debounceTimer);
-      state.debounceTimer = setTimeout(gerarRelatorio, 400);
+      state.debounceTimer = setTimeout(() => {
+        gerarRelatorio();
+        carregarOficinasHoje();
+      }, 400);
     })
     .subscribe((status) => {
       if (status === "SUBSCRIBED") {
@@ -475,9 +596,17 @@ function escutarRealtime() {
 
 // Inicializador Único
 document.addEventListener("DOMContentLoaded", () => {
+  // Preenche a data se vazia
+  if (DOM.dataExibicao && !DOM.dataExibicao.textContent.trim()) {
+    DOM.dataExibicao.textContent = `(${new Date().toLocaleDateString('pt-BR')})`;
+  }
+
+  // Carrega requisições em paralelo
+  carregarOficinasHoje();
   gerarRelatorio();
   escutarRealtime();
 
+  // Listeners dos Filtros
   DOM.btnFiltrar?.addEventListener("click", gerarRelatorio);
   DOM.filtroStatus?.addEventListener("change", gerarRelatorio);
 

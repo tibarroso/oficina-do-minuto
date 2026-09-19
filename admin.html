@@ -111,7 +111,6 @@
             border-radius: 6px;
             margin-bottom: 12px;
         }
-        .label-cancelado { color: #dc2626; background: #fef2f2; }
         .label-produtos { color: #475569; background: #f1f5f9; }
         .label-liquido { color: #16a34a; background: #f0fdf4; }
         .label-white { color: #94a3b8; background: rgba(255,255,255,0.08); }
@@ -214,15 +213,8 @@
         .secao-relatorios { background: var(--surface); border-radius: 16px; padding: 24px; border: 1px solid var(--border-color); box-shadow: var(--shadow-soft); }
         .secao-relatorios h2 { font-size: 18px; color: var(--primary-blue); font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
 
-        table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
-        th { background-color: var(--primary-blue); color: #ffffff; font-weight: 600; padding: 12px 14px; white-space: nowrap; }
-        td { padding: 10px 14px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
-        tr:nth-child(even) { background-color: #f8fafc; }
-        tr:hover { background-color: #f1f5f9; }
-
         footer { background-color: #0f172a; color: #94a3b8; text-align: center; padding: 16px; font-size: 13px; margin-top: auto; }
 
-        /* Responsividade */
         @media (max-width: 768px) {
             header { padding: 16px 20px; flex-direction: column; gap: 12px; }
             main { padding: 130px 16px 40px; }
@@ -252,12 +244,12 @@
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3 section-intro">
             <div>
                 <h2 class="title-global mb-1" id="titulo_painel">
-                    Painel de Vendas — Oficinas <span id="data_exibicao">({{ data_atual if data_atual else "19/09/2026" }})</span>
+                    Painel de Vendas — Oficinas <span id="data_exibicao">(19/09/2026)</span>
                 </h2>
                 <p class="text-muted small mb-0">Visão geral de faturamento, ordens de serviço e métricas em tempo real.</p>
             </div>
             <div>
-                <a href="/pdv/periodo" class="btn btn-periodo px-4 py-2 shadow-sm">
+                <a href="#" class="btn btn-periodo px-4 py-2 shadow-sm">
                     <i class="bi bi-calendar3 me-2"></i>Selecionar Período
                 </a>
             </div>
@@ -268,25 +260,19 @@
             <div class="col-12 col-md-4">
                 <div class="card-top-macro destaque p-4 text-start">
                     <span class="metric-label label-white">FATURAMENTO TOTAL (BRUTO)</span>
-                    <div class="value-large text-white mt-1" id="total_faturado">
-                        R$ {{ "%.2f"|format(total_geral|default(0.0))|replace('.', ',') }}
-                    </div>
+                    <div class="value-large text-white mt-1" id="total_faturado">R$ 0,00</div>
                 </div>
             </div>
             <div class="col-12 col-md-4">
                 <div class="card-top-macro p-4 text-start">
                     <span class="metric-label label-produtos">FATURAMENTO PRODUTOS</span>
-                    <div class="value-large mt-1 text-secondary" id="total_produtos">
-                        R$ {{ "%.2f"|format(total_produtos|default(0.0))|replace('.', ',') }}
-                    </div>
+                    <div class="value-large mt-1 text-secondary" id="total_produtos">R$ 0,00</div>
                 </div>
             </div>
             <div class="col-12 col-md-4">
                 <div class="card-top-macro p-4 text-start" style="border-left: 4px solid #16a34a;">
                     <span class="metric-label label-liquido">FATURAMENTO SÓ SERVIÇOS</span>
-                    <div class="value-large mt-1 text-success" id="total_servicos">
-                        R$ {{ "%.2f"|format(total_servicos|default(0.0))|replace('.', ',') }}
-                    </div>
+                    <div class="value-large mt-1 text-success" id="total_servicos">R$ 0,00</div>
                 </div>
             </div>
         </div>
@@ -320,75 +306,11 @@
             <h3 class="h5 fw-bold m-0 text-secondary">Filiais e Lojas</h3>
         </div>
 
+        <!-- O JS de vocês renderizará os cards das oficinas aqui -->
         <div class="row g-4 justify-content-start mb-5" id="cards">
-            {% for oficina in oficinas %}
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                <div class="card-pdv p-4 d-flex flex-column justify-content-between">
-                    <div>
-                        <div class="status-indicator {% if oficina.status %}offline{% endif %}"></div>
-                        
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <div class="text-muted small fw-medium text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.05em;">
-                                CÓDIGO: {{ oficina.loja }}
-                            </div>
-                            
-                            {% if not oficina.status %}
-                                {% if oficina.loja == 100 %}
-                                    <a href="/oficina/ticket/100/1/36171" class="btn-teste-ticket btn-outline-primary bg-light border text-primary" target="_blank">
-                                        <i class="bi bi-search me-1"></i>Testar Ticket
-                                    </a>
-                                {% elif oficina.loja == 102 %}
-                                    <a href="/oficina/ticket/102/1/1169" class="btn-teste-ticket btn-outline-primary bg-light border text-primary" target="_blank">
-                                        <i class="bi bi-search me-1"></i>Testar Ticket
-                                    </a>
-                                {% elif oficina.loja == 103 %}
-                                    <a href="/oficina/ticket/103/1/48085" class="btn-teste-ticket btn-outline-primary bg-light border text-primary" target="_blank">
-                                        <i class="bi bi-search me-1"></i>Testar Ticket
-                                    </a>
-                                {% else %}
-                                    <a href="/oficina/ticket/{{ oficina.loja }}/1/1" class="btn-teste-ticket btn-outline-primary bg-light border text-primary" target="_blank">
-                                        <i class="bi bi-search me-1"></i>Testar Ticket
-                                    </a>
-                                {% endif %}
-                            {% endif %}
-                        </div>
-                        
-                        <h4 class="fw-bold text-dark h5 mb-2 text-truncate" title="{{ oficina.nome_oficina }}">
-                            {{ oficina.nome_oficina.split(' - ')[1] if ' - ' in oficina.nome_oficina else oficina.nome_oficina }}
-                        </h4>
-
-                        {% if oficina.status %}
-                            <div class="fw-semibold fs-6 text-muted my-3">
-                                <i class="bi bi-wifi-off me-1 text-danger"></i> Link Indisponível
-                            </div>
-                        {% else %}
-                            <div class="fw-bold fs-4 text-dark mb-3">
-                                R$ {{ "%.2f"|format(oficina.faturamento_total|default(0.0))|replace('.', ',') }}
-                            </div>
-                        {% endif %}
-                    </div>
-
-                    <div>
-                        <hr class="my-3" style="border-color: #f1f5f9;">
-                        
-                        {% if not oficina.status %}
-                            <div class="d-flex flex-wrap gap-2 mb-2">
-                                <span class="badge-doc"><i class="bi bi-receipt me-1"></i>{{ oficina.qtd_vendas }} Tickets</span>
-                                <span class="badge-doc"><i class="bi bi-box-seam me-1"></i>{{ oficina.total_pecas }} Peças</span>
-                            </div>
-                        {% endif %}
-                        
-                        <div class="text-secondary fw-semibold small mt-2 text-truncate" style="font-size: 0.72rem;" title="{{ oficina.nome_oficina }}">
-                            <i class="bi bi-geo-alt-fill me-1 text-primary"></i>{{ oficina.nome_oficina }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% else %}
             <div class="col-12 text-center py-4">
-                <p class="text-muted mb-0">Nenhuma oficina encontrada para exibição.</p>
+                <p class="text-muted mb-0">Carregando oficinas...</p>
             </div>
-            {% endfor %}
         </div>
 
         <!-- Barra de Filtros -->

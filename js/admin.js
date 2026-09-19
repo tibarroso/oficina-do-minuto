@@ -1,69 +1,132 @@
 import { supabase } from "./supabase.js";
 
-// Elementos do DOM
-const containerPedidos = document.getElementById("containerPedidos");
-const filtroStatus = document.getElementById("filtroStatus");
-const pesquisaOS = document.getElementById("pesquisaOS");
-const btnFiltrar = document.getElementById("btnFiltrar");
+// =========================================================================
+// 1. MAPEAMENTO E ELEMENTOS DO DOM (com verificação de integridade)
+// =========================================================================
+const DOM = {
+  containerPedidos: document.getElementById("containerPedidos"),
+  filtroStatus: document.getElementById("filtroStatus"),
+  pesquisaOS: document.getElementById("pesquisaOS"),
+  btnFiltrar: document.getElementById("btnFiltrar"),
+  kpis: {
+    faturamento: document.getElementById("kpiFaturamento"),
+    total: document.getElementById("kpiTotal"),
+    pendentes: document.getElementById("kpiPendentes"),
+    retrabalho: document.getElementById("kpiRetrabalho"),
+    pecas: document.getElementById("kpiPecas"),
+  },
+  graficos: {
+    status: document.getElementById("graficoStatus"),
+    servico: document.getElementById("graficoServico"),
+  }
+};
 
-// Estado da Aplicação
-let pedidosGlobais = [];
-let chartStatus = null;
-let chartServico = null;
-let debounceTimer = null;
-let realtimeChannel = null;
+// =========================================================================
+// 2. ESTADO DA APLICAÇÃO & INSTÂNCIAS
+// =========================================================================
+const state = {
+  pedidosGlobais: [],
+  chartStatus: null,
+  chartServico: null,
+  debounceTimer: null,
+  realtimeChannel: null,
+  isCarregando: false,
+};
+
+// Configurações e Mapeamentos Visuais
+const PALETA_CORES = {
+  sucesso: { bg: "#e8f8f5", texto: "#18BC9C", hex: "#18BC9C" },
+  transporte: { bg: "#eef2f7", texto: "#2980b9", hex: "#2980b9" },
+  alerta: { bg: "#fdedec", texto: "#e74c3c", hex: "#e74c3c" },
+  pendente: { bg: "#fef9e7", texto: "#f39c12", hex: "#f39c12" },
+  roxo: { hex: "#8e44ad" },
+  escuro: { hex: "#34495e" }
+};
+
+// Formato padrão Moeda BRL
+const fmtMoeda = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+});
+
+// =========================================================================
+// 3. FUNÇÕES AUXILIARES DE TRATAMENTO E SEGURANÇA
+// =========================================================================
+
+/**
+ * Sanitiza strings para exibição segura via HTML (Prevenção contra XSS)
+ */
+function escapeHTML(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 /**
  * Retorna as cores estilizadas com base no status do pedido.
  */
 function obterEstiloStatus(status) {
-  const s = String(status || "").toLowerCase();
-  if (s.includes("finalizado") || s.includes("entregue")) {
-    return { bg: "#e8f8f5", texto: "#18BC9C" };
+  const s = String(status || "").toLowerCase().trim();
+
+  if (s.includes("finalizado") || s.includes("entregue") || s.includes("concluido")) {
+    return PALETA_CORES.sucesso;
   }
-  if (s.includes("transporte") || s.includes("coleta") || s.includes("retorno")) {
-    return { bg: "#eef2f7", texto: "#2980b9" };
+  if (s.includes("transporte") || s.includes("coleta") || s.includes("retorno") || s.includes("rota")) {
+    return PALETA_CORES.transporte;
   }
-  if (s.includes("retrabalho") || s.includes("orçamento")) {
-    return { bg: "#fdedec", texto: "#e74c3c" };
+  if (s.includes("retrabalho") || s.includes("orçamento") || s.includes("recusado") || s.includes("cancelado")) {
+    return PALETA_CORES.alerta;
   }
-  return { bg: "#fef9e7", texto: "#f39c12" };
+  return PALETA_CORES.pendente;
 }
 
 /**
- * Extrai campos organizados de textos estruturados em chave-valor ou objetos JSON.
+ * Extrai dados estruturados de observação tratando JSONs, strings chave:valor e nulos.
  */
 function extrairDadosObs(obsText) {
   const dadosPadrao = {
     ticket: "---",
     cliente: "Não informado",
     saco: "---",
-    pecas: "0",
-    valor: "0,00"
+    pecas: 0,
+    valor: 0
   };
 
   if (!obsText) return dadosPadrao;
 
-  // Trata caso a observação venha como objeto JSON ou string JSON
   let obsObj = obsText;
-  if (typeof obsText === "string" && (obsText.startsWith("{") || obsText.startsWith("["))) {
-    try {
-      obsObj = JSON.parse(obsText);
-    } catch {
-      // Caso falhe o parse, continua como string comum
+
+  // Se for string, tenta fazer parse de JSON
+  if (typeof obsText === "string") {
+    const textoLimpo = obsText.trim();
+    if (textoLimpo.startsWith("{") || textoLimpo.startsWith("[")) {
+      try {
+        obsObj = JSON.parse(textoLimpo);
+      } catch {
+        // Falha no parse JSON -> processará como texto estruturado por chave-valor
+      }
     }
   }
 
+  // Se for objeto estruturado
   if (typeof obsObj === "object" && obsObj !== null) {
+    const numPecas = parseInt(String(obsObj.pecas || obsObj.qtd || 0).replace(/\D/g, ""), 10);
+    const numValor = parseFloat(String(obsObj.valor || obsObj.total || 0).replace(/[^\d,-]/g, "").replace(",", "."));
+
     return {
-      ticket: obsObj.ticket || obsObj.cod || dadosPadrao.ticket,
-      cliente: obsObj.cliente || obsObj.nome || dadosPadrao.cliente,
-      saco: obsObj.saco || obsObj.bag || dadosPadrao.saco,
-      pecas: String(obsObj.pecas || obsObj.qtd || dadosPadrao.pecas),
-      valor: String(obsObj.valor || obsObj.total || dadosPadrao.valor)
+      ticket: String(obsObj.ticket || obsObj.cod || dadosPadrao.ticket),
+      cliente: String(obsObj.cliente || obsObj.nome || dadosPadrao.cliente),
+      saco: String(obsObj.saco || obsObj.bag || dadosPadrao.saco),
+      pecas: isNaN(numPecas) ? 0 : numPecas,
+      valor: isNaN(numValor) ? 0 : numValor
     };
   }
 
+  // Se for String simples no formato "Chave: Valor | Chave2: Valor2"
   const dados = { ...dadosPadrao };
   const partes = String(obsText).split(/[|\n]/);
 
@@ -80,17 +143,23 @@ function extrairDadosObs(obsText) {
     } else if (chaveLower.includes("saco")) {
       dados.saco = valor;
     } else if (chaveLower.includes("peça") || chaveLower.includes("peca")) {
-      dados.pecas = valor;
+      const p = parseInt(valor.replace(/\D/g, ""), 10);
+      if (!isNaN(p)) dados.pecas = p;
     } else if (chaveLower.includes("valor") || chaveLower.includes("total")) {
-      dados.valor = valor.replace(/R\$\s?/, "").trim();
+      const v = parseFloat(valor.replace(/[^\d,-]/g, "").replace(",", "."));
+      if (!isNaN(v)) dados.valor = v;
     }
   });
 
   return dados;
 }
 
+// =========================================================================
+// 4. LÓGICA DE NEGÓCIO E RENDERIZAÇÃO
+// =========================================================================
+
 /**
- * Atualiza os contadores em tela (incluindo o Faturamento Total).
+ * Atualiza os KPIs na tela.
  */
 function atualizarKPIs(pedidos) {
   let pendentes = 0;
@@ -100,44 +169,45 @@ function atualizarKPIs(pedidos) {
 
   pedidos.forEach((p) => {
     const st = String(p.status || "").toLowerCase();
-    if (st.includes("coleta") || st.includes("aguardando")) pendentes++;
+    if (st.includes("coleta") || st.includes("aguardando") || st.includes("pendente")) pendentes++;
     if (st.includes("retrabalho")) retrabalho++;
 
     const parsed = extrairDadosObs(p.obs_loja_origem || p.observacao);
 
-    // Cálculo das peças
-    const valPecas = p.pecas ?? parsed.pecas;
-    const qtdPecas = parseInt(String(valPecas).replace(/\D/g, ""), 10);
-    if (!isNaN(qtdPecas)) totalPecas += qtdPecas;
+    // Soma das Peças
+    if (p.pecas !== undefined && p.pecas !== null) {
+      const q = parseInt(String(p.pecas).replace(/\D/g, ""), 10);
+      totalPecas += isNaN(q) ? 0 : q;
+    } else {
+      totalPecas += parsed.pecas;
+    }
 
-    // Cálculo do Faturamento Total
-    const valValor = p.valor ?? parsed.valor;
-    const numValor = parseFloat(String(valValor).replace(/[^\d,-]/g, "").replace(",", "."));
-    if (!isNaN(numValor)) faturamentoTotal += numValor;
+    // Soma do Faturamento
+    if (p.valor !== undefined && p.valor !== null) {
+      const v = parseFloat(String(p.valor).replace(/[^\d,-]/g, "").replace(",", "."));
+      faturamentoTotal += isNaN(v) ? 0 : v;
+    } else {
+      faturamentoTotal += parsed.valor;
+    }
   });
 
-  const elFaturamento = document.getElementById("kpiFaturamento");
-  const elTotal = document.getElementById("kpiTotal");
-  const elPendentes = document.getElementById("kpiPendentes");
-  const elRetrabalho = document.getElementById("kpiRetrabalho");
-  const elPecas = document.getElementById("kpiPecas");
-
-  if (elFaturamento) {
-    elFaturamento.textContent = faturamentoTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-  }
-  if (elTotal) elTotal.textContent = pedidos.length;
-  if (elPendentes) elPendentes.textContent = pendentes;
-  if (elRetrabalho) elRetrabalho.textContent = retrabalho;
-  if (elPecas) elPecas.textContent = totalPecas;
+  if (DOM.kpis.faturamento) DOM.kpis.faturamento.textContent = fmtMoeda.format(faturamentoTotal);
+  if (DOM.kpis.total) DOM.kpis.total.textContent = pedidos.length;
+  if (DOM.kpis.pendentes) DOM.kpis.pendentes.textContent = pendentes;
+  if (DOM.kpis.retrabalho) DOM.kpis.retrabalho.textContent = retrabalho;
+  if (DOM.kpis.pecas) DOM.kpis.pecas.textContent = totalPecas.toLocaleString("pt-BR");
 }
 
 /**
- * Consulta o Supabase e dispara renderizações.
+ * Consulta dados no Supabase e gerencia o ciclo de atualização.
  */
 async function gerarRelatorio() {
+  if (state.isCarregando) return;
+  state.isCarregando = true;
+
   try {
-    if (containerPedidos && containerPedidos.children.length === 0) {
-      containerPedidos.innerHTML = `<p style="text-align: center; color: #64748b; padding: 20px;">Carregando pedidos...</p>`;
+    if (DOM.containerPedidos && DOM.containerPedidos.children.length === 0) {
+      DOM.containerPedidos.innerHTML = `<p style="text-align: center; color: #64748b; padding: 24px;">Carregando pedidos...</p>`;
     }
 
     let query = supabase.from("pedidos").select(`
@@ -145,50 +215,62 @@ async function gerarRelatorio() {
       pedido_eventos ( observacao )
     `);
 
-    const statusVal = filtroStatus?.value;
+    // Filtro por Status
+    const statusVal = DOM.filtroStatus?.value;
     if (statusVal && statusVal.toLowerCase() !== "todos") {
       query = query.ilike("status", `%${statusVal}%`);
     }
 
-    const termo = pesquisaOS?.value?.trim();
+    // Filtro de Pesquisa / Busca Textual ou Numérica
+    const termo = DOM.pesquisaOS?.value?.trim();
     if (termo) {
       if (/^\d+$/.test(termo) && termo.length <= 10) {
         query = query.eq("id", Number(termo));
       } else {
-        // Sanitiza termo para evitar quebras em buscas dinâmicas com .or()
-        const termoSanitizado = termo.replace(/[%_,]/g, "");
-        query = query.or(
-          `loja_origem.ilike.%${termoSanitizado}%,tipo_servico.ilike.%${termoSanitizado}%,status.ilike.%${termoSanitizado}%`
-        );
+        // Sanitiza caracteres reservadas para ilike do PostgREST
+        const termoSanitizado = termo.replace(/[%_,()]/g, "");
+        if (termoSanitizado) {
+          query = query.or(
+            `loja_origem.ilike.%${termoSanitizado}%,tipo_servico.ilike.%${termoSanitizado}%,status.ilike.%${termoSanitizado}%`
+          );
+        }
       }
     }
 
     const { data: pedidos, error } = await query.order("criado_em", { ascending: false });
+
     if (error) throw error;
 
-    pedidosGlobais = pedidos || [];
+    state.pedidosGlobais = pedidos || [];
 
-    atualizarKPIs(pedidosGlobais);
-    renderizarTabelaRelatorio(pedidosGlobais);
-    atualizarGraficos(pedidosGlobais);
+    // Atualização em lote
+    atualizarKPIs(state.pedidosGlobais);
+    renderizarTabelaRelatorio(state.pedidosGlobais);
+    atualizarGraficos(state.pedidosGlobais);
 
   } catch (err) {
-    console.error("Erro ao gerar relatório:", err);
-    if (containerPedidos) {
-      containerPedidos.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 20px;">Erro ao carregar dados: ${err.message || err}</p>`;
+    console.error("❌ Erro ao gerar relatório:", err);
+    if (DOM.containerPedidos) {
+      DOM.containerPedidos.innerHTML = `
+        <div style="text-align: center; color: #e74c3c; padding: 24px;">
+          <p><strong>Não foi possível carregar os dados.</strong></p>
+          <small>${escapeHTML(err.message || "Erro de conexão com o banco de dados")}</small>
+        </div>`;
     }
+  } finally {
+    state.isCarregando = false;
   }
 }
 
 /**
- * Renderiza os itens na tabela principal.
+ * Renderiza os registros em formato de Tabela com DOM Fragment e Sanitização.
  */
 function renderizarTabelaRelatorio(pedidos) {
-  if (!containerPedidos) return;
-  containerPedidos.innerHTML = "";
+  if (!DOM.containerPedidos) return;
+  DOM.containerPedidos.innerHTML = "";
 
   if (!pedidos || pedidos.length === 0) {
-    containerPedidos.innerHTML = "<p style='text-align: center; color: #777; padding: 20px;'>Nenhum pedido encontrado.</p>";
+    DOM.containerPedidos.innerHTML = `<p style="text-align: center; color: #64748b; padding: 24px;">Nenhum pedido encontrado para os filtros selecionados.</p>`;
     return;
   }
 
@@ -212,32 +294,39 @@ function renderizarTabelaRelatorio(pedidos) {
 
   pedidos.forEach((p) => {
     const tr = document.createElement("tr");
-
     const parsedObs = extrairDadosObs(p.obs_loja_origem || p.observacao);
     const coresStatus = obterEstiloStatus(p.status);
 
-    const ticket = p.ticket || parsedObs.ticket;
-    const cliente = p.cliente || parsedObs.cliente;
-    const saco = p.saco || parsedObs.saco;
-    const pecas = p.pecas || parsedObs.pecas;
-    const valor = p.valor || parsedObs.valor;
+    const ticket = escapeHTML(p.ticket || parsedObs.ticket);
+    const cliente = escapeHTML(p.cliente || parsedObs.cliente);
+    const saco = escapeHTML(p.saco || parsedObs.saco);
+    
+    // Tratamento e formatação de valores
+    const pecasVal = p.pecas ?? parsedObs.pecas;
+    const pecas = escapeHTML(String(pecasVal));
 
+    const valorVal = p.valor !== undefined && p.valor !== null ? p.valor : parsedObs.valor;
+    const valorStr = typeof valorVal === "number" 
+      ? fmtMoeda.format(valorVal) 
+      : escapeHTML(String(valorVal));
+
+    // Formatação de Data
     let dataFormatada = "---";
     const dataRef = p.criado_em || p.created_at;
     if (dataRef) {
       const d = new Date(dataRef);
       if (!isNaN(d.getTime())) {
-        dataFormatada = d.toLocaleDateString("pt-BR") + " " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+        dataFormatada = `${d.toLocaleDateString("pt-BR")} ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
       }
     }
 
     tr.innerHTML = `
-      <td><strong>#${p.id ?? "N/A"}</strong></td>
-      <td>${p.loja_origem ?? "Não informada"}</td>
-      <td><span class="obs-pill">${p.tipo_servico ?? "Geral"}</span></td>
+      <td><strong>#${escapeHTML(String(p.id ?? "N/A"))}</strong></td>
+      <td>${escapeHTML(p.loja_origem ?? "Não informada")}</td>
+      <td><span class="obs-pill">${escapeHTML(p.tipo_servico ?? "Geral")}</span></td>
       <td>
         <span class="badge-status" style="background-color: ${coresStatus.bg}; color: ${coresStatus.texto};">
-          ${p.status ?? "Sem status"}
+          ${escapeHTML(p.status ?? "Sem status")}
         </span>
       </td>
       <td>
@@ -246,7 +335,7 @@ function renderizarTabelaRelatorio(pedidos) {
           <span class="obs-pill">Cliente: <strong>${cliente}</strong></span>
           <span class="obs-pill">Saco: <strong>${saco}</strong></span>
           <span class="obs-pill">Peças: <strong>${pecas}</strong></span>
-          <span class="obs-pill">Valor: <strong>R$ ${valor}</strong></span>
+          <span class="obs-pill">Valor: <strong>${valorStr}</strong></span>
         </div>
       </td>
       <td style="color: #64748b;">${dataFormatada}</td>
@@ -256,11 +345,11 @@ function renderizarTabelaRelatorio(pedidos) {
   });
 
   corpoTabela.appendChild(fragmento);
-  containerPedidos.appendChild(tabela);
+  DOM.containerPedidos.appendChild(tabela);
 }
 
 /**
- * Desenha e atualiza os gráficos Chart.js com atualização reativa segura.
+ * Desenha e atualiza os gráficos Chart.js com tratamento de concorrência.
  */
 function atualizarGraficos(pedidos) {
   if (typeof window.Chart === "undefined") return;
@@ -275,43 +364,52 @@ function atualizarGraficos(pedidos) {
     servicoCount[sr] = (servicoCount[sr] || 0) + 1;
   });
 
-  // Gráfico Status
-  const elStatus = document.getElementById("graficoStatus");
-  if (elStatus) {
+  // --- Gráfico Status (Doughnut) ---
+  if (DOM.graficos.status) {
     const labelsStatus = Object.keys(statusCount);
     const dataStatus = Object.values(statusCount);
 
-    if (chartStatus) {
-      chartStatus.data.labels = labelsStatus;
-      chartStatus.data.datasets[0].data = dataStatus;
-      chartStatus.update();
+    if (state.chartStatus) {
+      state.chartStatus.data.labels = labelsStatus;
+      state.chartStatus.data.datasets[0].data = dataStatus;
+      state.chartStatus.update("none"); // Otimização para atualização fluida sem reset de animação
     } else {
-      chartStatus = new Chart(elStatus.getContext("2d"), {
+      state.chartStatus = new Chart(DOM.graficos.status.getContext("2d"), {
         type: "doughnut",
         data: {
           labels: labelsStatus,
           datasets: [{
             data: dataStatus,
-            backgroundColor: ["#f39c12", "#18BC9C", "#e74c3c", "#2980b9", "#8e44ad", "#34495e"]
+            backgroundColor: [
+              PALETA_CORES.pendente.hex,
+              PALETA_CORES.sucesso.hex,
+              PALETA_CORES.alerta.hex,
+              PALETA_CORES.transporte.hex,
+              PALETA_CORES.roxo.hex,
+              PALETA_CORES.escuro.hex
+            ]
           }]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'right' } }
+        }
       });
     }
   }
 
-  // Gráfico Serviço
-  const elServico = document.getElementById("graficoServico");
-  if (elServico) {
+  // --- Gráfico Serviço (Bar) ---
+  if (DOM.graficos.servico) {
     const labelsServico = Object.keys(servicoCount);
     const dataServico = Object.values(servicoCount);
 
-    if (chartServico) {
-      chartServico.data.labels = labelsServico;
-      chartServico.data.datasets[0].data = dataServico;
-      chartServico.update();
+    if (state.chartServico) {
+      state.chartServico.data.labels = labelsServico;
+      state.chartServico.data.datasets[0].data = dataServico;
+      state.chartServico.update("none");
     } else {
-      chartServico = new Chart(elServico.getContext("2d"), {
+      state.chartServico = new Chart(DOM.graficos.servico.getContext("2d"), {
         type: "bar",
         data: {
           labels: labelsServico,
@@ -322,45 +420,61 @@ function atualizarGraficos(pedidos) {
             borderRadius: 4
           }]
         },
-        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
       });
     }
   }
 }
 
+// =========================================================================
+// 5. EVENTOS REALTIME & INICIALIZAÇÃO
+// =========================================================================
+
 /**
- * Inscrição em tempo real com reutilização de canal.
+ * Assina atualizações em tempo real com reutilização de canal.
  */
 function escutarRealtime() {
-  if (realtimeChannel) {
-    supabase.removeChannel(realtimeChannel);
+  if (state.realtimeChannel) {
+    supabase.removeChannel(state.realtimeChannel);
   }
 
-  realtimeChannel = supabase
-    .channel("pedidos-alteracoes")
+  state.realtimeChannel = supabase
+    .channel("admin-pedidos-changes")
     .on("postgres_changes", { event: "*", schema: "public", table: "pedidos" }, () => {
-      gerarRelatorio();
+      // Debounce para evitar múltiplas chamadas seguidas em surtos de escrita
+      clearTimeout(state.debounceTimer);
+      state.debounceTimer = setTimeout(gerarRelatorio, 400);
     })
-    .subscribe();
+    .subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        console.log("⚡ Conectado ao Realtime do Supabase (Pedidos)");
+      }
+    });
 }
 
-// Inicialização de Eventos
+// Inicializador Único
 document.addEventListener("DOMContentLoaded", () => {
   gerarRelatorio();
   escutarRealtime();
 
-  btnFiltrar?.addEventListener("click", gerarRelatorio);
-  filtroStatus?.addEventListener("change", gerarRelatorio);
+  DOM.btnFiltrar?.addEventListener("click", gerarRelatorio);
+  DOM.filtroStatus?.addEventListener("change", gerarRelatorio);
 
-  pesquisaOS?.addEventListener("input", () => {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(gerarRelatorio, 300);
+  DOM.pesquisaOS?.addEventListener("input", () => {
+    clearTimeout(state.debounceTimer);
+    state.debounceTimer = setTimeout(gerarRelatorio, 350);
   });
 });
 
-// Limpeza de conexão ao fechar a janela
+// Limpeza de recursos na saída
 window.addEventListener("beforeunload", () => {
-  if (realtimeChannel) {
-    supabase.removeChannel(realtimeChannel);
+  if (state.realtimeChannel) {
+    supabase.removeChannel(state.realtimeChannel);
   }
+  if (state.chartStatus) state.chartStatus.destroy();
+  if (state.chartServico) state.chartServico.destroy();
 });

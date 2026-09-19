@@ -67,23 +67,29 @@
         .section-intro { margin-bottom: 24px; }
         .title-global { font-size: 2rem; color: #0f172a; font-weight: 700; }
 
-        /* Botão Filtro Premium */
-        .btn-periodo {
-            background-color: #0f172a;
-            color: #ffffff;
-            border: 1px solid #1e293b;
-            font-weight: 500;
-            font-size: 0.875rem;
-            border-radius: 8px;
-            transition: all 0.2s;
-            text-decoration: none;
+        /* Contêiner de Seleção de Período */
+        .periodo-container {
             display: inline-flex;
             align-items: center;
-        }
-        .btn-periodo:hover {
-            background-color: #1e293b;
+            background-color: #0f172a;
             color: #ffffff;
-            transform: translateY(-1px);
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid #1e293b;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .periodo-container input[type="date"] {
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            font-size: 0.875rem;
+            font-weight: 500;
+            outline: none;
+            cursor: pointer;
+        }
+        .periodo-container input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
         }
 
         /* Cards Macro de Faturamento */
@@ -249,9 +255,10 @@
                 <p class="text-muted small mb-0">Visão geral de faturamento, ordens de serviço e métricas em tempo real.</p>
             </div>
             <div>
-                <a href="#" class="btn btn-periodo px-4 py-2 shadow-sm">
-                    <i class="bi bi-calendar3 me-2"></i>Selecionar Período
-                </a>
+                <div class="periodo-container">
+                    <i class="bi bi-calendar3 me-2"></i>
+                    <input type="date" id="filtro_data" title="Selecionar Data do Painel">
+                </div>
             </div>
         </div>
 

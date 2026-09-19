@@ -114,19 +114,17 @@ function extrairDadosObs(obsText) {
 
   let obsObj = obsText;
 
-  // Se for string, tenta fazer parse de JSON
   if (typeof obsText === "string") {
     const textoLimpo = obsText.trim();
     if (textoLimpo.startsWith("{") || textoLimpo.startsWith("[")) {
       try {
         obsObj = JSON.parse(textoLimpo);
       } catch {
-        // Falha no parse JSON -> processará como texto estruturado
+        // Falha no parse JSON
       }
     }
   }
 
-  // Se for objeto estruturado
   if (typeof obsObj === "object" && obsObj !== null) {
     const numPecas = parseInt(String(obsObj.pecas || obsObj.qtd || 0).replace(/\D/g, ""), 10);
     const numValor = parseFloat(String(obsObj.valor || obsObj.total || 0).replace(/[^\d,-]/g, "").replace(",", "."));
@@ -140,7 +138,6 @@ function extrairDadosObs(obsText) {
     };
   }
 
-  // Se for String simples no formato "Chave: Valor | Chave2: Valor2"
   const dados = { ...dadosPadrao };
   const partes = String(obsText).split(/[|\n]/);
 
@@ -169,34 +166,77 @@ function extrairDadosObs(obsText) {
 }
 
 // =========================================================================
-// 4. LÓGICA DE NEGÓCIO: OFICINAS DO DIA (/oficinas/hoje)
+// 4. OFICINAS DO DIA (SUPABASE DIRECT CONSULTA)
 // =========================================================================
 
 /**
- * Carrega a volumetria e faturamento consolidado das oficinas no dia atual.
+ * Consulta no Supabase os dados das lojas/oficinas consolidadas no dia.
  */
 async function carregarOficinasHoje() {
   try {
-    const response = await fetch('/oficinas/hoje');
-    const data = await response.json();
+    const hojeInicio = new Date();
+    hojeInicio.setHours(0, 0, 0, 0);
 
-    if (data && data.sucesso) {
-      state.oficinasHoje = data.oficinas || [];
+    // Consulta os pedidos criados hoje
+    const { data: pedidosHoje, error } = await supabase
+      .from("pedidos")
+      .select("*")
+      .gte("criado_em", hojeInicio.toISOString());
 
-      // 1. Atualiza Cards Macros de Faturamento
-      if (DOM.macro.totalFaturado) DOM.macro.totalFaturado.textContent = fmtMoeda.format(data.total_geral || 0);
-      if (DOM.macro.totalProdutos) DOM.macro.totalProdutos.textContent = fmtMoeda.format(data.total_produtos || 0);
-      if (DOM.macro.totalServicos) DOM.macro.totalServicos.textContent = fmtMoeda.format(data.total_servicos || 0);
+    if (error) throw error;
 
-      // 2. Renderiza Grid de Filiais/Lojas
-      renderizarCardsOficinas(state.oficinasHoje);
-    }
+    // Agrupa totais por loja de origem
+    const mapaOficinas = {};
+    let faturamentoGeral = 0;
+
+    (pedidosHoje || []).forEach((p) => {
+      const lojaNome = p.loja_origem || "Loja Não Identificada";
+      const parsed = extrairDadosObs(p.obs_loja_origem || p.observacao);
+
+      const val = p.valor !== undefined && p.valor !== null 
+        ? parseFloat(String(p.valor).replace(/[^\d,-]/g, "").replace(",", ".")) 
+        : parsed.valor;
+      
+      const pecasVal = p.pecas !== undefined && p.pecas !== null 
+        ? parseInt(String(p.pecas).replace(/\D/g, ""), 10) 
+        : parsed.pecas;
+
+      const vFinal = isNaN(val) ? 0 : val;
+      const pFinal = isNaN(pecasVal) ? 0 : pecasVal;
+
+      faturamentoGeral += vFinal;
+
+      if (!mapaOficinas[lojaNome]) {
+        mapaOficinas[lojaNome] = {
+          loja: p.loja_id || 100,
+          nome_oficina: lojaNome,
+          faturamento_total: 0,
+          qtd_vendas: 0,
+          total_pecas: 0,
+          status: "Online"
+        };
+      }
+
+      mapaOficinas[lojaNome].faturamento_total += vFinal;
+      mapaOficinas[lojaNome].qtd_vendas += 1;
+      mapaOficinas[lojaNome].total_pecas += pFinal;
+    });
+
+    const listaOficinas = Object.values(mapaOficinas);
+    state.oficinasHoje = listaOficinas;
+
+    // Atualiza Cards Macros do Topo
+    if (DOM.macro.totalFaturado) DOM.macro.totalFaturado.textContent = fmtMoeda.format(faturamentoGeral);
+
+    // Renderiza a lista na tela
+    renderizarCardsOficinas(state.oficinasHoje);
+
   } catch (err) {
-    console.error("❌ Erro ao buscar dados de /oficinas/hoje:", err);
+    console.error("❌ Erro ao consultar oficinas do dia:", err);
     if (DOM.containerCardsOficinas) {
       DOM.containerCardsOficinas.innerHTML = `
-        <div class="col-12 text-center py-4 text-danger">
-          Erro ao carregar dados das oficinas do dia.
+        <div class="col-12 text-center py-4 text-muted">
+          Sem registros de oficinas ativas para o dia atual.
         </div>
       `;
     }
@@ -212,14 +252,14 @@ function renderizarCardsOficinas(oficinas) {
   if (!oficinas || oficinas.length === 0) {
     DOM.containerCardsOficinas.innerHTML = `
       <div class="col-12 text-center py-4">
-        <p class="text-muted mb-0">Nenhuma oficina registrada para hoje.</p>
+        <p class="text-muted mb-0">Nenhuma movimentação de oficina registrada para hoje.</p>
       </div>
     `;
     return;
   }
 
   DOM.containerCardsOficinas.innerHTML = oficinas.map((oficina) => {
-    const isOffline = oficina.status !== null && oficina.status !== "" && oficina.status !== "Online";
+    const isOffline = oficina.status !== "Online";
     const faturamento = oficina.faturamento_total || 0;
 
     const nomeFormatado = oficina.nome_oficina.includes(' - ')
@@ -255,7 +295,7 @@ function renderizarCardsOficinas(oficinas) {
 
             ${isOffline ? `
               <div class="fw-semibold fs-6 text-muted my-3">
-                <i class="bi bi-wifi-off me-1 text-danger"></i> Link Indisponível
+                <i class="bi bi-wifi-off me-1 text-danger"></i> Indisponível
               </div>
             ` : `
               <div class="fw-bold fs-4 text-dark mb-3">
@@ -285,7 +325,7 @@ function renderizarCardsOficinas(oficinas) {
 }
 
 // =========================================================================
-// 5. LÓGICA DE NEGÓCIO: RELATÓRIOS E PEDIDOS (SUPABASE)
+// 5. LÓGICA DE NEGÓCIO: RELATÓRIOS E PEDIDOS
 // =========================================================================
 
 /**
@@ -328,8 +368,7 @@ function atualizarKPIs(pedidos) {
   if (DOM.kpis.retrabalho) DOM.kpis.retrabalho.textContent = retrabalho;
   if (DOM.kpis.pecas) DOM.kpis.pecas.textContent = totalPecas.toLocaleString("pt-BR");
 
-  // Atualiza Cards Macros se a requisição /oficinas/hoje ainda não tiver preenchido
-  if (DOM.macro.totalFaturado && (DOM.macro.totalFaturado.textContent.includes("0,00") || DOM.macro.totalFaturado.textContent === "")) {
+  if (DOM.macro.totalFaturado && (!DOM.macro.totalFaturado.textContent || DOM.macro.totalFaturado.textContent.includes("0,00"))) {
     DOM.macro.totalFaturado.textContent = fmtMoeda.format(faturamentoTotal);
   }
 }
@@ -357,7 +396,7 @@ async function gerarRelatorio() {
       query = query.ilike("status", `%${statusVal}%`);
     }
 
-    // Filtro de Pesquisa / Busca Textual ou Numérica
+    // Filtro de Pesquisa
     const termo = DOM.pesquisaOS?.value?.trim();
     if (termo) {
       if (/^\d+$/.test(termo) && termo.length <= 10) {
@@ -378,7 +417,6 @@ async function gerarRelatorio() {
 
     state.pedidosGlobais = pedidos || [];
 
-    // Atualização em lote
     atualizarKPIs(state.pedidosGlobais);
     renderizarTabelaRelatorio(state.pedidosGlobais);
     atualizarGraficos(state.pedidosGlobais);
@@ -437,7 +475,6 @@ function renderizarTabelaRelatorio(pedidos) {
     const cliente = escapeHTML(p.cliente || parsedObs.cliente);
     const saco = escapeHTML(p.saco || parsedObs.saco);
     
-    // Tratamento e formatação de valores
     const pecasVal = p.pecas ?? parsedObs.pecas;
     const pecas = escapeHTML(String(pecasVal));
 
@@ -446,7 +483,6 @@ function renderizarTabelaRelatorio(pedidos) {
       ? fmtMoeda.format(valorVal) 
       : escapeHTML(String(valorVal));
 
-    // Formatação de Data
     let dataFormatada = "---";
     const dataRef = p.criado_em || p.created_at;
     if (dataRef) {
@@ -596,17 +632,14 @@ function escutarRealtime() {
 
 // Inicializador Único
 document.addEventListener("DOMContentLoaded", () => {
-  // Preenche a data se vazia
   if (DOM.dataExibicao && !DOM.dataExibicao.textContent.trim()) {
     DOM.dataExibicao.textContent = `(${new Date().toLocaleDateString('pt-BR')})`;
   }
 
-  // Carrega requisições em paralelo
   carregarOficinasHoje();
   gerarRelatorio();
   escutarRealtime();
 
-  // Listeners dos Filtros
   DOM.btnFiltrar?.addEventListener("click", gerarRelatorio);
   DOM.filtroStatus?.addEventListener("change", gerarRelatorio);
 

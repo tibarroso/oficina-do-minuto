@@ -29,6 +29,7 @@
     body { font-family: 'Inter', sans-serif; background-color: var(--bg-light); color: var(--text-dark); min-height: 100vh; display: flex; flex-direction: column; }
     h1, h2, h3 { font-family: 'Poppins', sans-serif; }
 
+    /* Header e Navegação */
     header {
       background-color: var(--primary-blue);
       color: white;
@@ -46,13 +47,14 @@
     header nav a.active { color: var(--text-dark); background-color: var(--primary-yellow); font-weight: 600; }
     header nav a.btn-sair { color: #ff8a8a; }
 
+    /* Conteúdo Principal */
     main { flex: 1; padding: 100px 48px 60px; max-width: 1440px; width: 100%; margin: 0 auto; }
     
     .section-intro { margin-bottom: 20px; }
     .section-intro h2 { font-size: 24px; font-weight: 600; color: var(--text-dark); }
     .section-intro p { font-size: 14px; color: var(--text-muted); }
 
-    /* Cards de KPI ajustados para 5 métricas principais */
+    /* Cards de KPI */
     .kpi-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -77,7 +79,7 @@
     .kpi-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
     .kpi-value { font-size: 22px; font-weight: 700; color: var(--text-dark); }
 
-    /* Filtros */
+    /* Barra de Filtros */
     .filter-bar {
       background-color: var(--surface);
       border: 1px solid var(--border-color);
@@ -88,13 +90,14 @@
       gap: 16px;
       box-shadow: var(--shadow-soft);
       margin-bottom: 24px;
+      flex-wrap: wrap;
     }
     .filter-group { display: flex; align-items: center; gap: 8px; }
     .filter-group label { font-size: 14px; font-weight: 600; color: var(--text-muted); }
     .filter-bar select, .filter-bar input {
       padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color);
       font-size: 14px; color: var(--text-dark); background-color: #f8fafc;
-      outline: none;
+      outline: none; transition: border-color 0.2s;
     }
     .filter-bar select:focus, .filter-bar input:focus {
       border-color: var(--primary-blue);
@@ -108,7 +111,7 @@
     .btn-filtrar:hover { background-color: #083d7a; }
 
     /* Gráficos */
-    .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px; margin-bottom: 24px; }
+    .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 24px; margin-bottom: 24px; }
     .chart-container {
       background-color: var(--surface); border: 1px solid var(--border-color);
       border-radius: 16px; padding: 20px; box-shadow: var(--shadow-soft);
@@ -116,21 +119,29 @@
     .chart-container h3 { font-size: 15px; font-weight: 600; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
     .chart-wrapper { position: relative; height: 260px; width: 100%; }
 
-    /* Tabela de Dados */
+    /* Relatórios e Tabelas */
     .secao-relatorios { background: var(--surface); border-radius: 16px; padding: 24px; border: 1px solid var(--border-color); box-shadow: var(--shadow-soft); }
     .secao-relatorios h2 { font-size: 18px; color: var(--primary-blue); font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
 
     table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
-    th { background-color: var(--primary-blue); color: #ffffff; font-weight: 600; padding: 12px 14px; }
-    td { padding: 10px 14px; border-bottom: 1px solid var(--border-color); }
+    th { background-color: var(--primary-blue); color: #ffffff; font-weight: 600; padding: 12px 14px; white-space: nowrap; }
+    td { padding: 10px 14px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
     tr:nth-child(even) { background-color: #f8fafc; }
     tr:hover { background-color: #f1f5f9; }
 
-    .badge-status { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; display: inline-block; }
+    .badge-status { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; display: inline-block; text-align: center; }
     .obs-pill-group { display: flex; flex-wrap: wrap; gap: 4px; }
-    .obs-pill { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+    .obs-pill { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 2px 6px; border-radius: 4px; font-size: 11px; white-space: nowrap; }
 
     footer { background-color: #0f172a; color: #94a3b8; text-align: center; padding: 16px; font-size: 13px; margin-top: auto; }
+
+    /* Responsividade Média */
+    @media (max-width: 768px) {
+      header { padding: 16px 20px; flex-direction: column; gap: 12px; }
+      main { padding: 130px 16px 40px; }
+      .filter-bar { flex-direction: column; align-items: stretch; }
+      .filter-bar input { min-width: 100%; }
+    }
   </style>
 </head>
 <body>
@@ -152,7 +163,7 @@
       <p>Indicadores gerenciais, faturamento acumulado e monitoramento em tempo real.</p>
     </section>
 
-    <!-- Indicadores Chave (KPIs) com Faturamento -->
+    <!-- Indicadores Chave (KPIs) -->
     <div class="kpi-grid">
       <div class="kpi-card money">
         <span class="kpi-label">Faturamento Total</span>
@@ -185,13 +196,13 @@
           <option value="Aguardando coleta">Aguardando Coleta</option>
           <option value="Em serviço">Em Serviço</option>
           <option value="Finalizado">Finalizado</option>
-          <option value="Aguardando coleta para Retrabalho">Retrabalho</option>
+          <option value="Retrabalho">Retrabalho</option>
         </select>
       </div>
 
       <div class="filter-group" style="flex: 1;">
         <label for="pesquisaOS">Pesquisar:</label>
-        <input type="text" id="pesquisaOS" placeholder="Pesquisar por OS, Loja ou Serviço...">
+        <input type="text" id="pesquisaOS" placeholder="Pesquisar por ID, Loja ou Serviço..." autocomplete="off">
       </div>
 
       <button id="btnFiltrar" class="btn-filtrar" type="button">Filtrar</button>
@@ -209,12 +220,12 @@
       </div>
     </div>
 
-    <!-- Tabela -->
+    <!-- Relatório e Tabela -->
     <section class="secao-relatorios">
       <h2>📊 Relatórios Gerenciais e Volumetria</h2>
       <div style="overflow-x: auto;">
         <div id="containerPedidos">
-          <p style="text-align: center; color: #64748b; padding: 20px;">Carregando pedidos...</p>
+          <p style="text-align: center; color: #64748b; padding: 24px;">Carregando pedidos...</p>
         </div>
       </div>
     </section>
@@ -224,6 +235,7 @@
     &copy; 2026 Oficina do Minuto. Todos os direitos reservados.
   </footer>
 
+  <!-- Script Principal via ES Module -->
   <script type="module" src="./js/admin.js"></script>
 </body>
 </html>

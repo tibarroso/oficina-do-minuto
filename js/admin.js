@@ -1,10 +1,5 @@
 import { supabase } from "./supabase.js";
 
-// Configuração da URL da API (Autodetecta local vs produção)
-const API_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-  ? "http://localhost:3000"
-  : "https://sua-api-em-producao.com"; // Substitua caso publique a API futuramente
-
 // =========================================================================
 // 1. MAPEAMENTO E ELEMENTOS DO DOM
 // =========================================================================
@@ -171,44 +166,78 @@ function extrairDadosObs(obsText) {
 }
 
 // =========================================================================
-// 4. OFICINAS DO DIA (BUSCA DA API HTTP /oficinas/hoje)
+// 4. OFICINAS DO DIA (CONSULTA DIRETA NO SUPABASE SEM FETCH LOCALHOST)
 // =========================================================================
 
 /**
- * Consulta a API HTTP local para obter os dados consolidados das oficinas do dia.
+ * Consulta no Supabase os dados das lojas/oficinas consolidadas no dia.
  */
 async function carregarOficinasHoje() {
   try {
-    const response = await fetch(`${API_URL}/oficinas/hoje`);
+    const hojeInicio = new Date();
+    hojeInicio.setHours(0, 0, 0, 0);
 
-    if (!response.ok) {
-      throw new Error(`Erro na API HTTP: Status ${response.status}`);
-    }
+    // Consulta os pedidos criados a partir do início de hoje no Supabase
+    const { data: pedidosHoje, error } = await supabase
+      .from("pedidos")
+      .select("*")
+      .gte("created_at", hojeInicio.toISOString());
 
-    const data = await response.json();
+    if (error) throw error;
 
-    if (data && data.sucesso) {
-      state.oficinasHoje = data.oficinas || [];
+    // Agrupa totais e faturamento por loja
+    const mapaOficinas = {};
+    let faturamentoGeral = 0;
+    let totalProdutosGeral = 0;
+    let totalServicosGeral = 0;
 
-      // Atualiza os Cards Macros de Faturamento no Topo
-      if (DOM.macro.totalFaturado) {
-        DOM.macro.totalFaturado.textContent = fmtMoeda.format(data.total_geral || 0);
+    (pedidosHoje || []).forEach((p) => {
+      const lojaNome = p.loja_origem || "Loja Não Identificada";
+      const parsed = extrairDadosObs(p.obs_loja_origem || p.observacao);
+
+      const val = p.valor !== undefined && p.valor !== null 
+        ? parseFloat(String(p.valor).replace(/[^\d,-]/g, "").replace(",", ".")) 
+        : parsed.valor;
+      
+      const pecasVal = p.pecas !== undefined && p.pecas !== null 
+        ? parseInt(String(p.pecas).replace(/\D/g, ""), 10) 
+        : parsed.pecas;
+
+      const vFinal = isNaN(val) ? 0 : val;
+      const pFinal = isNaN(pecasVal) ? 0 : pecasVal;
+
+      faturamentoGeral += vFinal;
+      totalServicosGeral += vFinal; // Contabiliza serviços
+
+      if (!mapaOficinas[lojaNome]) {
+        mapaOficinas[lojaNome] = {
+          loja: p.loja_id || 100,
+          nome_oficina: lojaNome,
+          faturamento_total: 0,
+          qtd_vendas: 0,
+          total_pecas: 0,
+          status: "Online"
+        };
       }
-      if (DOM.macro.totalProdutos) {
-        DOM.macro.totalProdutos.textContent = fmtMoeda.format(data.total_produtos || 0);
-      }
-      if (DOM.macro.totalServicos) {
-        DOM.macro.totalServicos.textContent = fmtMoeda.format(data.total_servicos || 0);
-      }
 
-      // Renderiza os cards das oficinas na tela
-      renderizarCardsOficinas(state.oficinasHoje);
-    } else {
-      throw new Error(data.mensagem || "Resposta sem sucesso da API");
-    }
+      mapaOficinas[lojaNome].faturamento_total += vFinal;
+      mapaOficinas[lojaNome].qtd_vendas += 1;
+      mapaOficinas[lojaNome].total_pecas += pFinal;
+    });
+
+    const listaOficinas = Object.values(mapaOficinas);
+    state.oficinasHoje = listaOficinas;
+
+    // Atualiza Cards Macros do Topo
+    if (DOM.macro.totalFaturado) DOM.macro.totalFaturado.textContent = fmtMoeda.format(faturamentoGeral);
+    if (DOM.macro.totalProdutos) DOM.macro.totalProdutos.textContent = fmtMoeda.format(totalProdutosGeral);
+    if (DOM.macro.totalServicos) DOM.macro.totalServicos.textContent = fmtMoeda.format(totalServicosGeral);
+
+    // Renderiza a lista na tela
+    renderizarCardsOficinas(state.oficinasHoje);
 
   } catch (err) {
-    console.error("❌ Erro ao buscar dados de /oficinas/hoje:", err);
+    console.error("❌ Erro ao consultar oficinas do dia no Supabase:", err);
     if (DOM.containerCardsOficinas) {
       DOM.containerCardsOficinas.innerHTML = `
         <div class="col-12 text-center py-4 text-muted">
@@ -387,7 +416,7 @@ async function gerarRelatorio() {
       }
     }
 
-    const { data: pedidos, error } = await query.order("criado_em", { ascending: false });
+    const { data: pedidos, error } = await query.order("created_at", { ascending: false });
 
     if (error) throw error;
 

@@ -1,5 +1,10 @@
 import { supabase } from "./supabase.js";
 
+// Configuração da URL da API (Autodetecta local vs produção)
+const API_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+  ? "http://localhost:3000"
+  : "https://sua-api-em-producao.com"; // Substitua caso publique a API futuramente
+
 // =========================================================================
 // 1. MAPEAMENTO E ELEMENTOS DO DOM
 // =========================================================================
@@ -166,73 +171,44 @@ function extrairDadosObs(obsText) {
 }
 
 // =========================================================================
-// 4. OFICINAS DO DIA (SUPABASE DIRECT CONSULTA)
+// 4. OFICINAS DO DIA (BUSCA DA API HTTP /oficinas/hoje)
 // =========================================================================
 
 /**
- * Consulta no Supabase os dados das lojas/oficinas consolidadas no dia.
+ * Consulta a API HTTP local para obter os dados consolidados das oficinas do dia.
  */
 async function carregarOficinasHoje() {
   try {
-    const hojeInicio = new Date();
-    hojeInicio.setHours(0, 0, 0, 0);
+    const response = await fetch(`${API_URL}/oficinas/hoje`);
 
-    // Consulta os pedidos criados hoje
-    const { data: pedidosHoje, error } = await supabase
-      .from("pedidos")
-      .select("*")
-      .gte("criado_em", hojeInicio.toISOString());
+    if (!response.ok) {
+      throw new Error(`Erro na API HTTP: Status ${response.status}`);
+    }
 
-    if (error) throw error;
+    const data = await response.json();
 
-    // Agrupa totais por loja de origem
-    const mapaOficinas = {};
-    let faturamentoGeral = 0;
+    if (data && data.sucesso) {
+      state.oficinasHoje = data.oficinas || [];
 
-    (pedidosHoje || []).forEach((p) => {
-      const lojaNome = p.loja_origem || "Loja Não Identificada";
-      const parsed = extrairDadosObs(p.obs_loja_origem || p.observacao);
-
-      const val = p.valor !== undefined && p.valor !== null 
-        ? parseFloat(String(p.valor).replace(/[^\d,-]/g, "").replace(",", ".")) 
-        : parsed.valor;
-      
-      const pecasVal = p.pecas !== undefined && p.pecas !== null 
-        ? parseInt(String(p.pecas).replace(/\D/g, ""), 10) 
-        : parsed.pecas;
-
-      const vFinal = isNaN(val) ? 0 : val;
-      const pFinal = isNaN(pecasVal) ? 0 : pecasVal;
-
-      faturamentoGeral += vFinal;
-
-      if (!mapaOficinas[lojaNome]) {
-        mapaOficinas[lojaNome] = {
-          loja: p.loja_id || 100,
-          nome_oficina: lojaNome,
-          faturamento_total: 0,
-          qtd_vendas: 0,
-          total_pecas: 0,
-          status: "Online"
-        };
+      // Atualiza os Cards Macros de Faturamento no Topo
+      if (DOM.macro.totalFaturado) {
+        DOM.macro.totalFaturado.textContent = fmtMoeda.format(data.total_geral || 0);
+      }
+      if (DOM.macro.totalProdutos) {
+        DOM.macro.totalProdutos.textContent = fmtMoeda.format(data.total_produtos || 0);
+      }
+      if (DOM.macro.totalServicos) {
+        DOM.macro.totalServicos.textContent = fmtMoeda.format(data.total_servicos || 0);
       }
 
-      mapaOficinas[lojaNome].faturamento_total += vFinal;
-      mapaOficinas[lojaNome].qtd_vendas += 1;
-      mapaOficinas[lojaNome].total_pecas += pFinal;
-    });
-
-    const listaOficinas = Object.values(mapaOficinas);
-    state.oficinasHoje = listaOficinas;
-
-    // Atualiza Cards Macros do Topo
-    if (DOM.macro.totalFaturado) DOM.macro.totalFaturado.textContent = fmtMoeda.format(faturamentoGeral);
-
-    // Renderiza a lista na tela
-    renderizarCardsOficinas(state.oficinasHoje);
+      // Renderiza os cards das oficinas na tela
+      renderizarCardsOficinas(state.oficinasHoje);
+    } else {
+      throw new Error(data.mensagem || "Resposta sem sucesso da API");
+    }
 
   } catch (err) {
-    console.error("❌ Erro ao consultar oficinas do dia:", err);
+    console.error("❌ Erro ao buscar dados de /oficinas/hoje:", err);
     if (DOM.containerCardsOficinas) {
       DOM.containerCardsOficinas.innerHTML = `
         <div class="col-12 text-center py-4 text-muted">
@@ -259,7 +235,7 @@ function renderizarCardsOficinas(oficinas) {
   }
 
   DOM.containerCardsOficinas.innerHTML = oficinas.map((oficina) => {
-    const isOffline = oficina.status !== "Online";
+    const isOffline = oficina.status === "Offline";
     const faturamento = oficina.faturamento_total || 0;
 
     const nomeFormatado = oficina.nome_oficina.includes(' - ')

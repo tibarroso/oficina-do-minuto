@@ -322,7 +322,7 @@
 
             <button id="btnFiltrar" class="btn-filtrar" type="button">Filtrar</button>
 
-            <!-- Botão Visualizar Ticket que abre a Tela Flutuante Modal -->
+            <!-- Botão Visualizar Ticket que abre o Modal -->
             <button class="btn-visualizar-ticket" type="button" data-bs-toggle="modal" data-bs-target="#modalVisualizarTicket">
                 <i class="bi bi-ticket-perforated"></i> Visualizar Ticket
             </button>
@@ -352,31 +352,41 @@
         
     </main>
 
-    <!-- Modal (Tela Flutuante) para Visualizar Ticket -->
+    <!-- Modal (Tela Flutuante) para Seleção de Loja e Visualização de Ticket -->
     <div class="modal fade" id="modalVisualizarTicket" tabindex="-1" aria-labelledby="modalTicketLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
                 <div class="modal-header" style="background-color: var(--primary-blue); color: white; border-top-left-radius: 16px; border-top-right-radius: 16px;">
                     <h5 class="modal-title fw-bold" id="modalTicketLabel">
-                        <i class="bi bi-ticket-perforated me-2"></i>Visualizar Ticket
+                        <i class="bi bi-ticket-perforated me-2"></i>Buscar e Visualizar Ticket
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <!-- Campo para informar o número do Ticket -->
-                    <div class="mb-4">
-                        <label for="inputNumeroTicket" class="form-label fw-bold">Informe o Número / ID do Ticket:</label>
-                        <div class="input-group">
-                            <input type="text" id="inputNumeroTicket" class="form-control" placeholder="Ex: 1042" autocomplete="off">
-                            <button class="btn btn-primary" type="button" id="btnBuscarTicket" style="background-color: var(--primary-blue);">
-                                <i class="bi bi-search me-1"></i> Buscar Ticket
-                            </button>
+                    <form id="formModalTicket" onsubmit="return false;">
+                        <!-- Seleção da Loja / Oficina -->
+                        <div class="mb-3">
+                            <label for="selectLojaTicket" class="form-label fw-bold">Selecione a Loja / Oficina:</label>
+                            <select id="selectLojaTicket" class="form-select" required>
+                                <option value="" selected disabled>Carregando lojas...</option>
+                            </select>
                         </div>
-                    </div>
 
-                    <!-- Área onde os dados do ticket serão exibidos dinamicamente -->
-                    <div id="resultadoTicket" class="p-3 border rounded-3 bg-light" style="display: none;">
-                        <!-- O conteúdo do ticket será renderizado via JS -->
+                        <!-- Campo para informar o número do Ticket -->
+                        <div class="mb-4">
+                            <label for="inputNumeroTicket" class="form-label fw-bold">Informe o Número do Ticket:</label>
+                            <div class="input-group">
+                                <input type="text" id="inputNumeroTicket" class="form-control" placeholder="Ex: 1042" autocomplete="off" required>
+                                <button class="btn btn-primary" type="button" id="btnBuscarTicket" style="background-color: var(--primary-blue);">
+                                    <i class="bi bi-search me-1"></i> Consultar Ticket
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Área dinâmica para exibições ou mensagens do ticket -->
+                    <div id="resultadoTicket" class="p-3 border rounded-3 bg-light mt-3" style="display: none;">
+                        <!-- O conteúdo ou status da requisição será renderizado via JS -->
                     </div>
                 </div>
                 <div class="modal-footer" style="border-top: 1px solid var(--border-color);">

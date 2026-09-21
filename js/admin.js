@@ -183,12 +183,12 @@ async function consultarEExibirTicket(lojaId, serie, numero) {
 
 /**
  * Monta a estrutura HTML dentro da tela flutuante de detalhes do ticket
+ * suportando a estrutura completa de Peças, Serviços e Observações Gerais.
  */
 function renderizarDetalhesTicketModal(dados, params) {
   if (!DOM.modalDetalhes.conteudo) return;
 
   if (!dados) {
-    // Layout padrão em caso de não retorno direto da API REST local
     DOM.modalDetalhes.conteudo.innerHTML = `
       <div class="alert alert-warning mb-3">
         <i class="bi bi-exclamation-triangle-fill me-2"></i> Ticket não encontrado na API local ou dados indisponíveis no momento.
@@ -203,38 +203,120 @@ function renderizarDetalhesTicketModal(dados, params) {
     return;
   }
 
-  // Preenchimento dinâmico com os dados retornados
+  // Mapeia todas as peças e seus respectivos serviços
+  const pecasHTML = (dados.pecas || []).map((peca) => {
+    const servicosHTML = (peca.servicos || []).map((s) => {
+      const isEntregue = String(s.status || '').toLowerCase() === 'entregue';
+      const badgeStatus = isEntregue 
+        ? `<span class="badge bg-success-subtle text-success border border-success-subtle">Entregue</span>` 
+        : `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">${escapeHTML(s.status || 'Pendente')}</span>`;
+
+      return `
+        <tr>
+          <td><small class="fw-medium">${escapeHTML(s.descricao)}</small></td>
+          <td class="text-center">${s.quantidade || 1}</td>
+          <td class="text-center">${fmtMoeda.format(s.preco || 0)}</td>
+          <td class="text-center">${badgeStatus}</td>
+          <td class="text-end"><small class="text-muted">${escapeHTML(s.executor || 'Não Informado')}</small></td>
+        </tr>
+      `;
+    }).join('');
+
+    return `
+      <div class="card mb-3 border">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+          <div>
+            <strong class="text-primary me-2">Item #${peca.item}: ${escapeHTML(peca.descricao)}</strong>
+            <span class="badge bg-secondary">${escapeHTML(peca.cor || 'Sem Cor')}</span>
+            ${peca.marca ? `<span class="badge bg-outline-dark">${escapeHTML(peca.marca)}</span>` : ''}
+          </div>
+          <small class="text-muted">
+            <i class="bi bi-calendar-check me-1"></i>Entrega: ${peca.data_entrega ? escapeHTML(peca.data_entrega) : 'Não agendada'}
+          </small>
+        </div>
+        <div class="card-body p-0">
+          ${peca.observacao_peca ? `<div class="p-2 bg-light-subtle border-bottom"><small><strong>Obs Peça:</strong> ${escapeHTML(peca.observacao_peca)}</small></div>` : ''}
+          <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 align-middle">
+              <thead class="table-light">
+                <tr style="font-size: 0.75rem;">
+                  <th>SERVIÇO</th>
+                  <th class="text-center">QTD</th>
+                  <th class="text-center">PREÇO</th>
+                  <th class="text-center">STATUS</th>
+                  <th class="text-end">EXECUTOR</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${servicosHTML}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Montagem final do modal com os dados gerais do ticket
   DOM.modalDetalhes.conteudo.innerHTML = `
-    <div class="row g-3 mb-3">
+    <!-- Cabeçalho do Ticket -->
+    <div class="row g-2 mb-3">
       <div class="col-md-6">
         <div class="p-3 border rounded bg-light">
-          <small class="text-muted d-block text-uppercase fw-bold">Oficina / Loja</small>
-          <span class="fs-5 fw-bold text-dark">${escapeHTML(dados.nome_oficina || dados.loja || params.loja)}</span>
+          <small class="text-muted d-block text-uppercase fw-bold" style="font-size:0.7rem;">Oficina / Loja</small>
+          <span class="fs-6 fw-bold text-dark">${escapeHTML(dados.nome_oficina || params.loja)}</span>
+          <small class="text-muted d-block mt-1">Cód. Loja: ${escapeHTML(String(dados.loja || params.loja))}</small>
         </div>
       </div>
       <div class="col-md-3">
         <div class="p-3 border rounded bg-light">
-          <small class="text-muted d-block text-uppercase fw-bold">Série / Número</small>
-          <span class="fs-5 fw-bold text-dark">${escapeHTML(String(params.serie))} - ${escapeHTML(String(params.numero))}</span>
+          <small class="text-muted d-block text-uppercase fw-bold" style="font-size:0.7rem;">Ticket / Série</small>
+          <span class="fs-6 fw-bold text-dark">#${escapeHTML(String(dados.numero || params.numero))} (Série ${escapeHTML(String(dados.serie || params.serie))})</span>
+          <small class="text-muted d-block mt-1">Posição: ${escapeHTML(dados.posicao || '---')}</small>
         </div>
       </div>
       <div class="col-md-3">
-        <div class="p-3 border rounded bg-light">
-          <small class="text-muted d-block text-uppercase fw-bold">Status</small>
-          <span class="badge bg-success mt-1 fs-6">${escapeHTML(dados.status || 'Processado')}</span>
+        <div class="p-3 border rounded bg-light text-end">
+          <small class="text-muted d-block text-uppercase fw-bold" style="font-size:0.7rem;">Valor Total</small>
+          <span class="fs-5 fw-bold text-success">${fmtMoeda.format(dados.valor_final || dados.valor || 0)}</span>
         </div>
       </div>
     </div>
 
+    <!-- Dados do Cliente e Datas -->
     <div class="card mb-3">
-      <div class="card-header fw-bold bg-white">Dados do Cliente & Serviço</div>
-      <div class="card-body">
-        <p class="mb-2"><strong>Cliente:</strong> ${escapeHTML(dados.cliente || 'Não informado')}</p>
-        <p class="mb-2"><strong>Serviço Solicitado:</strong> ${escapeHTML(dados.servico || 'Manutenção Geral')}</p>
-        <p class="mb-2"><strong>Volume de Peças:</strong> ${escapeHTML(String(dados.pecas || 0))}</p>
-        <p class="mb-0"><strong>Valor Total:</strong> <span class="text-success fw-bold">${fmtMoeda.format(dados.valor || 0)}</span></p>
+      <div class="card-body p-3">
+        <div class="row g-2">
+          <div class="col-md-5">
+            <small class="text-muted d-block">CLIENTE</small>
+            <strong class="text-dark">${escapeHTML(dados.cliente || 'Não Informado')}</strong>
+          </div>
+          <div class="col-md-3">
+            <small class="text-muted d-block">TELEFONE</small>
+            <span>${escapeHTML(dados.telefone || '---')}</span>
+          </div>
+          <div class="col-md-2">
+            <small class="text-muted d-block">EMISSÃO</small>
+            <small>${escapeHTML(dados.data_emissao || '---')}</small>
+          </div>
+          <div class="col-md-2">
+            <small class="text-muted d-block">PREV. ENTREGA</small>
+            <small class="fw-bold text-primary">${escapeHTML(dados.data_prevista || '---')}</small>
+          </div>
+        </div>
+
+        ${dados.observacao_geral ? `
+          <hr class="my-2">
+          <div class="alert alert-warning mb-0 p-2" style="font-size: 0.85rem;">
+            <i class="bi bi-info-circle me-1"></i><strong>Observação Geral:</strong> ${escapeHTML(dados.observacao_geral)}
+          </div>
+        ` : ''}
       </div>
     </div>
+
+    <!-- Lista de Peças e Serviços -->
+    <h6 class="fw-bold mb-2 text-dark"><i class="bi bi-box-seam me-1"></i> Peças e Serviços Solicitados</h6>
+    ${pecasHTML || '<p class="text-muted small">Nenhuma peça detalhada para este ticket.</p>'}
   `;
 }
 

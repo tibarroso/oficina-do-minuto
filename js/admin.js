@@ -14,14 +14,22 @@ const DOM = {
   dataExibicao: document.getElementById("data_exibicao"),
   containerCardsOficinas: document.getElementById("cards"),
 
-  // Elementos do Modal de Ticket
+  // Elementos do Modal de Busca de Ticket
   modalTicket: {
     instancia: null,
+    elemento: document.getElementById("modalVisualizarTicket"),
     selectLoja: document.getElementById("selectLojaTicket"),
     inputSerie: document.getElementById("inputSerieTicket"),
     inputNumero: document.getElementById("inputNumeroTicket"),
     btnBuscar: document.getElementById("btnBuscarTicket"),
     resultado: document.getElementById("resultadoTicket"),
+  },
+
+  // Elementos do Modal de Detalhes do Ticket (Tela Flutuante com Dados)
+  modalDetalhes: {
+    instancia: null,
+    elemento: document.getElementById("modalDetalhesTicket"),
+    conteudo: document.getElementById("conteudoDetalhesTicket"),
   },
 
   // Cards Macro de Faturamento (Topo)
@@ -112,25 +120,122 @@ function obterEstiloStatus(status) {
 }
 
 /**
- * Monta a URL e abre a rota do Ticket em uma nova aba
+ * Consulta a API do Ticket e Exibe o Modal Flutuante com os Dados
  */
-function abrirRotaTicket(lojaId, serie, numero) {
+async function consultarEExibirTicket(lojaId, serie, numero) {
   const lojaLimpa = String(lojaId || "").trim();
   const serieLimpa = String(serie || "1").trim() || "1";
   const numeroLimpo = String(numero || "").trim();
 
   if (!lojaLimpa) {
     alert("Por favor, selecione uma Loja / Oficina válida.");
-    return false;
+    return;
   }
   if (!numeroLimpo) {
     alert("Por favor, informe o NÚMERO do Ticket.");
-    return false;
+    return;
   }
 
-  const urlTicket = `${API_URL}/oficina/ticket/${encodeURIComponent(lojaLimpa)}/${encodeURIComponent(serieLimpa)}/${encodeURIComponent(numeroLimpo)}`;
-  window.open(urlTicket, "_blank");
-  return true;
+  // Feedback de carregamento no botão
+  if (DOM.modalTicket.btnBuscar) {
+    DOM.modalTicket.btnBuscar.disabled = true;
+    DOM.modalTicket.btnBuscar.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Consultando...`;
+  }
+
+  try {
+    const urlTicket = `${API_URL}/oficina/ticket/${encodeURIComponent(lojaLimpa)}/${encodeURIComponent(serieLimpa)}/${encodeURIComponent(numeroLimpo)}`;
+    const response = await fetch(urlTicket);
+
+    let dadosTicket = null;
+    if (response.ok) {
+      dadosTicket = await response.json();
+    }
+
+    // Preenche o conteúdo HTML do Modal de Detalhes
+    renderizarDetalhesTicketModal(dadosTicket, { loja: lojaLimpa, serie: serieLimpa, numero: numeroLimpo });
+
+    // Fecha o modal de busca e em seguida abre o modal de detalhes
+    const elemBusca = DOM.modalTicket.elemento;
+    const instanceBusca = bootstrap.Modal.getInstance(elemBusca) || new bootstrap.Modal(elemBusca);
+    
+    // Listener executado apenas quando a transição do primeiro modal terminar
+    const onModalHidden = () => {
+      elemBusca.removeEventListener("hidden.bs.modal", onModalHidden);
+      
+      const elemDetalhes = DOM.modalDetalhes.elemento;
+      const instanceDetalhes = new bootstrap.Modal(elemDetalhes);
+      instanceDetalhes.show();
+    };
+
+    elemBusca.addEventListener("hidden.bs.modal", onModalHidden);
+    instanceBusca.hide();
+
+  } catch (error) {
+    console.error("❌ Erro ao consultar ticket:", error);
+    alert("Não foi possível carregar os dados do ticket. Verifique a conexão com o servidor local.");
+  } finally {
+    if (DOM.modalTicket.btnBuscar) {
+      DOM.modalTicket.btnBuscar.disabled = false;
+      DOM.modalTicket.btnBuscar.innerHTML = `<i class="bi bi-search me-1"></i> Consultar`;
+    }
+  }
+}
+
+/**
+ * Monta a estrutura HTML dentro da tela flutuante de detalhes do ticket
+ */
+function renderizarDetalhesTicketModal(dados, params) {
+  if (!DOM.modalDetalhes.conteudo) return;
+
+  if (!dados) {
+    // Layout padrão em caso de não retorno direto da API REST local
+    DOM.modalDetalhes.conteudo.innerHTML = `
+      <div class="alert alert-warning mb-3">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> Ticket não encontrado na API local ou dados indisponíveis no momento.
+      </div>
+      <div class="card p-3">
+        <h6 class="fw-bold mb-2">Informações da Consulta</h6>
+        <p class="mb-1"><strong>Loja/Oficina:</strong> ${escapeHTML(params.loja)}</p>
+        <p class="mb-1"><strong>Série:</strong> ${escapeHTML(params.serie)}</p>
+        <p class="mb-0"><strong>Número do Ticket:</strong> ${escapeHTML(params.numero)}</p>
+      </div>
+    `;
+    return;
+  }
+
+  // Preenchimento dinâmico com os dados retornados
+  DOM.modalDetalhes.conteudo.innerHTML = `
+    <div class="row g-3 mb-3">
+      <div class="col-md-6">
+        <div class="p-3 border rounded bg-light">
+          <small class="text-muted d-block text-uppercase fw-bold">Oficina / Loja</small>
+          <span class="fs-5 fw-bold text-dark">${escapeHTML(dados.nome_oficina || dados.loja || params.loja)}</span>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="p-3 border rounded bg-light">
+          <small class="text-muted d-block text-uppercase fw-bold">Série / Número</small>
+          <span class="fs-5 fw-bold text-dark">${escapeHTML(String(params.serie))} - ${escapeHTML(String(params.numero))}</span>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="p-3 border rounded bg-light">
+          <small class="text-muted d-block text-uppercase fw-bold">Status</small>
+          <span class="badge bg-success mt-1 fs-6">${escapeHTML(dados.status || 'Processado')}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header fw-bold bg-white">Dados do Cliente & Serviço</div>
+      <div class="card-body">
+        <p class="mb-2"><strong>Cliente:</strong> ${escapeHTML(dados.cliente || 'Não informado')}</p>
+        <p class="mb-2"><strong>Serviço Solicitado:</strong> ${escapeHTML(dados.servico || 'Manutenção Geral')}</p>
+        <p class="mb-2"><strong>Volume de Peças:</strong> ${escapeHTML(String(dados.pecas || 0))}</p>
+        <p class="mb-0"><strong>Valor Total:</strong> <span class="text-success fw-bold">${fmtMoeda.format(dados.valor || 0)}</span></p>
+      </div>
+    </div>
+  `;
 }
 
 /**
@@ -698,10 +803,9 @@ document.addEventListener("DOMContentLoaded", () => {
     DOM.dataExibicao.textContent = `(${new Date().toLocaleDateString('pt-BR')})`;
   }
 
-  // Inicializa o elemento do Modal via Bootstrap API
-  const modalEl = document.getElementById("modalVisualizarTicket");
-  if (modalEl && typeof bootstrap !== "undefined") {
-    DOM.modalTicket.instancia = new bootstrap.Modal(modalEl);
+  // Inicializa a instância do Modal de busca via Bootstrap API
+  if (DOM.modalTicket.elemento && typeof bootstrap !== "undefined") {
+    DOM.modalTicket.instancia = new bootstrap.Modal(DOM.modalTicket.elemento);
   }
 
   carregarOficinasHoje();
@@ -717,13 +821,13 @@ document.addEventListener("DOMContentLoaded", () => {
     state.debounceTimer = setTimeout(gerarRelatorio, 350);
   });
 
-  // Ação de Consultar no Modal de Tickets
+  // Ação do Botão Consultar do Modal de Ticket -> Abre o Modal Flutuante com dados
   DOM.modalTicket.btnBuscar?.addEventListener("click", () => {
     const lojaVal = DOM.modalTicket.selectLoja?.value;
     const serieVal = DOM.modalTicket.inputSerie?.value || "1";
     const numeroVal = DOM.modalTicket.inputNumero?.value;
 
-    abrirRotaTicket(lojaVal, serieVal, numeroVal);
+    consultarEExibirTicket(lojaVal, serieVal, numeroVal);
   });
 
   // Clique no botão "Visualizar Ticket" dos Cards Individuais de Oficina
@@ -737,7 +841,7 @@ document.addEventListener("DOMContentLoaded", () => {
         DOM.modalTicket.selectLoja.value = idLoja;
       }
 
-      // Exibe o Modal
+      // Exibe o Modal de busca
       if (DOM.modalTicket.instancia) {
         DOM.modalTicket.instancia.show();
       }

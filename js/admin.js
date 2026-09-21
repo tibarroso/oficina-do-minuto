@@ -123,7 +123,7 @@ function extrairDadosObs(obsText) {
       try {
         obsObj = JSON.parse(textoLimpo);
       } catch {
-        // Falha no parse JSON
+        // Falha no parse JSON, segue como texto puro
       }
     }
   }
@@ -293,7 +293,7 @@ function renderizarCardsOficinas(oficinas) {
 
   DOM.containerCardsOficinas.innerHTML = oficinas.map((oficina) => {
     // Trata 'null' ou 'Online' como ativo. Apenas 'Offline' bloqueia o card.
-    const isOffline = String(oficina.status).toLowerCase() === "offline";
+    const isOffline = String(oficina.status || "").toLowerCase() === "offline";
     const faturamento = oficina.faturamento_total || 0;
 
     const nomeFormatado = oficina.nome_oficina.includes(' - ')
@@ -311,7 +311,7 @@ function renderizarCardsOficinas(oficinas) {
             
             <div class="d-flex justify-content-between align-items-center mb-1">
               <div class="text-muted small fw-medium text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.05em;">
-                CÓDIGO: ${escapeHTML(String(oficina.loja))}
+                CÓDIGO: ${escapeHTML(String(oficina.loja || ""))}
               </div>
               
               ${!isOffline ? `
@@ -430,6 +430,7 @@ async function gerarRelatorio() {
       if (/^\d+$/.test(termo) && termo.length <= 10) {
         query = query.eq("id", Number(termo));
       } else {
+        // Remove pontuações/caracteres do PostgREST que causam falhas de sintaxe
         const termoSanitizado = termo.replace(/[%_,()]/g, "");
         if (termoSanitizado) {
           query = query.or(
@@ -507,9 +508,8 @@ function renderizarTabelaRelatorio(pedidos) {
     const pecas = escapeHTML(String(pecasVal));
 
     const valorVal = p.valor !== undefined && p.valor !== null ? p.valor : parsedObs.valor;
-    const valorStr = typeof valorVal === "number" 
-      ? fmtMoeda.format(valorVal) 
-      : escapeHTML(String(valorVal));
+    const valorNum = typeof valorVal === "number" ? valorVal : parseFloat(String(valorVal).replace(/[^\d,-]/g, "").replace(",", "."));
+    const valorStr = !isNaN(valorNum) ? fmtMoeda.format(valorNum) : escapeHTML(String(valorVal || "0,00"));
 
     let dataFormatada = "---";
     const dataRef = p.criado_em || p.created_at;
@@ -677,7 +677,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// Limpeza de recursos na saída
+// Limpeza de recursos na saída da página
 window.addEventListener("beforeunload", () => {
   if (state.realtimeChannel) {
     supabase.removeChannel(state.realtimeChannel);

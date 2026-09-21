@@ -102,6 +102,30 @@ function obterEstiloStatus(status) {
 }
 
 /**
+ * Solicita o número do Ticket para a loja selecionada e abre a rota na API local.
+ */
+function solicitarEBuscarTicket(lojaId, nomeOficina) {
+  if (!lojaId) {
+    alert("Loja inválida ou não identificada.");
+    return;
+  }
+
+  const numTicket = prompt(`[${nomeOficina}]\nDigite o número do Ticket que deseja visualizar:`);
+  
+  if (numTicket === null) return; // Usuário cancelou
+
+  const ticketLimpo = numTicket.trim();
+  if (!ticketLimpo) {
+    alert("Por favor, informe um número de Ticket válido.");
+    return;
+  }
+
+  // Abre a rota da API local configurada para visualizar o ticket exato
+  const urlTicket = `${API_URL}/oficina/ticket/${encodeURIComponent(lojaId)}/${encodeURIComponent(ticketLimpo)}`;
+  window.open(urlTicket, "_blank");
+}
+
+/**
  * Extrai dados estruturados de observação tratando JSONs, strings chave:valor e nulos.
  */
 function extrairDadosObs(obsText) {
@@ -299,7 +323,7 @@ function renderizarCardsOficinas(oficinas) {
       ? oficina.nome_oficina.split(' - ')[1]
       : oficina.nome_oficina;
 
-    const ticketUrl = `/oficina/ticket/${oficina.loja}/1/1`;
+    const idLoja = oficina.loja || "";
 
     return `
       <div class="col-12 col-sm-6 col-md-4 col-lg-3">
@@ -309,13 +333,13 @@ function renderizarCardsOficinas(oficinas) {
             
             <div class="d-flex justify-content-between align-items-center mb-1">
               <div class="text-muted small fw-medium text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.05em;">
-                CÓDIGO: ${escapeHTML(String(oficina.loja || ""))}
+                CÓDIGO: ${escapeHTML(String(idLoja))}
               </div>
               
               ${!isOffline ? `
-                <a href="${ticketUrl}" class="btn-teste-ticket btn-outline-primary bg-light border text-primary" target="_blank">
-                  <i class="bi bi-search me-1"></i>Testar Ticket
-                </a>
+                <button type="button" class="btn btn-sm btn-outline-primary bg-light border text-primary btn-ver-ticket" data-loja="${escapeHTML(String(idLoja))}" data-nome="${escapeHTML(oficina.nome_oficina)}">
+                  <i class="bi bi-receipt me-1"></i>Visualizar Ticket
+                </button>
               ` : ''}
             </div>
             
@@ -672,6 +696,16 @@ document.addEventListener("DOMContentLoaded", () => {
   DOM.pesquisaOS?.addEventListener("input", () => {
     clearTimeout(state.debounceTimer);
     state.debounceTimer = setTimeout(gerarRelatorio, 350);
+  });
+
+  // Event Delegation para captura de clique no botão de "Visualizar Ticket"
+  DOM.containerCardsOficinas?.addEventListener("click", (evt) => {
+    const btn = evt.target.closest(".btn-ver-ticket");
+    if (btn) {
+      const idLoja = btn.dataset.loja;
+      const nomeOficina = btn.dataset.nome;
+      solicitarEBuscarTicket(idLoja, nomeOficina);
+    }
   });
 });
 

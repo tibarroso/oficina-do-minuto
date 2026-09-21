@@ -14,6 +14,16 @@ const DOM = {
   dataExibicao: document.getElementById("data_exibicao"),
   containerCardsOficinas: document.getElementById("cards"),
 
+  // Elementos do Modal de Ticket
+  modalTicket: {
+    instancia: null,
+    selectLoja: document.getElementById("selectLojaTicket"),
+    inputSerie: document.getElementById("inputSerieTicket"),
+    inputNumero: document.getElementById("inputNumeroTicket"),
+    btnBuscar: document.getElementById("btnBuscarTicket"),
+    resultado: document.getElementById("resultadoTicket"),
+  },
+
   // Cards Macro de Faturamento (Topo)
   macro: {
     totalFaturado: document.getElementById("total_faturado"),
@@ -102,34 +112,25 @@ function obterEstiloStatus(status) {
 }
 
 /**
- * Solicita a série e o número do Ticket para a loja selecionada e abre a rota /oficina/ticket/:loja/:serie/:numero
+ * Monta a URL e abre a rota do Ticket em uma nova aba
  */
-function solicitarEBuscarTicket(lojaId, nomeOficina) {
-  if (!lojaId) {
-    alert("Loja inválida ou não identificada.");
-    return;
+function abrirRotaTicket(lojaId, serie, numero) {
+  const lojaLimpa = String(lojaId || "").trim();
+  const serieLimpa = String(serie || "1").trim() || "1";
+  const numeroLimpo = String(numero || "").trim();
+
+  if (!lojaLimpa) {
+    alert("Por favor, selecione uma Loja / Oficina válida.");
+    return false;
+  }
+  if (!numeroLimpo) {
+    alert("Por favor, informe o NÚMERO do Ticket.");
+    return false;
   }
 
-  // Solicita o número do Ticket primeiro
-  const numTicket = prompt(`[${nomeOficina}]\nDigite o NÚMERO do Ticket:`);
-  if (numTicket === null) return; // Usuário cancelou
-  const ticketLimpo = numTicket.trim();
-
-  if (!ticketLimpo) {
-    alert("Por favor, informe um número de Ticket válido.");
-    return;
-  }
-
-  // Solicita a Série com o valor padrão "1"
-  const inputSerie = prompt(`[${nomeOficina}]\nDigite a SÉRIE do Ticket (caso não saiba, mantenha 1):`, "1");
-  if (inputSerie === null) return; // Usuário cancelou
-  const serieLimpa = inputSerie.trim() || "1";
-
-  // Monta exatamente a rota: /oficina/ticket/:loja/:serie/:numero (ex: /oficina/ticket/101/1/452)
-  const urlTicket = `${API_URL}/oficina/ticket/${encodeURIComponent(lojaId)}/${encodeURIComponent(serieLimpa)}/${encodeURIComponent(ticketLimpo)}`;
-
-  // Abre em uma nova aba
+  const urlTicket = `${API_URL}/oficina/ticket/${encodeURIComponent(lojaLimpa)}/${encodeURIComponent(serieLimpa)}/${encodeURIComponent(numeroLimpo)}`;
   window.open(urlTicket, "_blank");
+  return true;
 }
 
 /**
@@ -200,8 +201,28 @@ function extrairDadosObs(obsText) {
 }
 
 // =========================================================================
-// 4. OFICINAS DO DIA (INTEGRAÇÃO COM API LOCAL + FALLBACK SUPABASE)
+// 4. OFICINAS DO DIA & PREENCHIMENTO DE SELECTS
 // =========================================================================
+
+/**
+ * Atualiza as opções do <select> de lojas dentro do Modal.
+ */
+function atualizarSelectLojasModal(oficinas) {
+  if (!DOM.modalTicket.selectLoja) return;
+
+  if (!oficinas || oficinas.length === 0) {
+    DOM.modalTicket.selectLoja.innerHTML = `<option value="" disabled selected>Nenhuma loja encontrada</option>`;
+    return;
+  }
+
+  const options = oficinas.map((oficina) => {
+    const idLoja = oficina.loja || "";
+    const nome = oficina.nome_oficina || `Loja ${idLoja}`;
+    return `<option value="${escapeHTML(String(idLoja))}">${escapeHTML(nome)} (Cód: ${escapeHTML(String(idLoja))})</option>`;
+  });
+
+  DOM.modalTicket.selectLoja.innerHTML = `<option value="" disabled selected>Selecione uma Loja / Oficina...</option>` + options.join('');
+}
 
 /**
  * Consulta a rota /oficinas/hoje da API local ou faz fallback via Supabase.
@@ -219,12 +240,12 @@ async function carregarOficinasHoje() {
     if (data && data.sucesso) {
       state.oficinasHoje = data.oficinas || [];
 
-      // Atualiza os Cards Macros com base no retorno da API
       if (DOM.macro.totalFaturado) DOM.macro.totalFaturado.textContent = fmtMoeda.format(data.total_geral || 0);
       if (DOM.macro.totalProdutos) DOM.macro.totalProdutos.textContent = fmtMoeda.format(data.total_produtos || 0);
       if (DOM.macro.totalServicos) DOM.macro.totalServicos.textContent = fmtMoeda.format(data.total_servicos || 0);
 
       renderizarCardsOficinas(state.oficinasHoje);
+      atualizarSelectLojasModal(state.oficinasHoje);
       return;
     }
 
@@ -294,6 +315,7 @@ async function carregarOficinasHojeFallbackSupabase() {
     if (DOM.macro.totalServicos) DOM.macro.totalServicos.textContent = fmtMoeda.format(faturamentoGeral);
 
     renderizarCardsOficinas(state.oficinasHoje);
+    atualizarSelectLojasModal(state.oficinasHoje);
 
   } catch (err) {
     console.error("❌ Erro no fallback do Supabase:", err);
@@ -386,12 +408,9 @@ function renderizarCardsOficinas(oficinas) {
 }
 
 // =========================================================================
-// 5. LÓGICA DE NEGÓCIO: RELATÓRIOS E PEDIDOS
+// 5. RELATÓRIOS, KPIS E GRÁFICOS
 // =========================================================================
 
-/**
- * Atualiza os KPIs operacionais e macros na tela.
- */
 function atualizarKPIs(pedidos) {
   let pendentes = 0;
   let retrabalho = 0;
@@ -427,9 +446,6 @@ function atualizarKPIs(pedidos) {
   if (DOM.kpis.pecas) DOM.kpis.pecas.textContent = totalPecas.toLocaleString("pt-BR");
 }
 
-/**
- * Consulta dados no Supabase e gerencia o ciclo de atualização.
- */
 async function gerarRelatorio() {
   if (state.isCarregando) return;
   state.isCarregando = true;
@@ -487,9 +503,6 @@ async function gerarRelatorio() {
   }
 }
 
-/**
- * Renderiza os registros em formato de Tabela com DOM Fragment e Sanitização.
- */
 function renderizarTabelaRelatorio(pedidos) {
   if (!DOM.containerPedidos) return;
   DOM.containerPedidos.innerHTML = "";
@@ -571,9 +584,6 @@ function renderizarTabelaRelatorio(pedidos) {
   DOM.containerPedidos.appendChild(tabela);
 }
 
-/**
- * Desenha e atualiza os gráficos Chart.js com gerenciamento de instâncias.
- */
 function atualizarGraficos(pedidos) {
   if (typeof window.Chart === "undefined") return;
 
@@ -587,7 +597,6 @@ function atualizarGraficos(pedidos) {
     servicoCount[sr] = (servicoCount[sr] || 0) + 1;
   });
 
-  // --- Gráfico Status (Doughnut) ---
   if (DOM.graficos.status) {
     const labelsStatus = Object.keys(statusCount);
     const dataStatus = Object.values(statusCount);
@@ -625,7 +634,6 @@ function atualizarGraficos(pedidos) {
     }
   }
 
-  // --- Gráfico Serviço (Bar) ---
   if (DOM.graficos.servico) {
     const labelsServico = Object.keys(servicoCount);
     const dataServico = Object.values(servicoCount);
@@ -660,12 +668,9 @@ function atualizarGraficos(pedidos) {
 }
 
 // =========================================================================
-// 6. EVENTOS REALTIME & INICIALIZAÇÃO
+// 6. REALTIME & INICIALIZAÇÃO DOS EVENTOS
 // =========================================================================
 
-/**
- * Assina atualizações em tempo real com reutilização de canal.
- */
 function escutarRealtime() {
   if (state.realtimeChannel) {
     supabase.removeChannel(state.realtimeChannel);
@@ -687,16 +692,23 @@ function escutarRealtime() {
     });
 }
 
-// Inicializador Único
+// Inicializador
 document.addEventListener("DOMContentLoaded", () => {
   if (DOM.dataExibicao && !DOM.dataExibicao.textContent.trim()) {
     DOM.dataExibicao.textContent = `(${new Date().toLocaleDateString('pt-BR')})`;
+  }
+
+  // Inicializa o elemento do Modal via Bootstrap API
+  const modalEl = document.getElementById("modalVisualizarTicket");
+  if (modalEl && typeof bootstrap !== "undefined") {
+    DOM.modalTicket.instancia = new bootstrap.Modal(modalEl);
   }
 
   carregarOficinasHoje();
   gerarRelatorio();
   escutarRealtime();
 
+  // Eventos da barra de pesquisa e filtros
   DOM.btnFiltrar?.addEventListener("click", gerarRelatorio);
   DOM.filtroStatus?.addEventListener("change", gerarRelatorio);
 
@@ -705,18 +717,35 @@ document.addEventListener("DOMContentLoaded", () => {
     state.debounceTimer = setTimeout(gerarRelatorio, 350);
   });
 
-  // Event Delegation para captura de clique no botão de "Visualizar Ticket"
+  // Ação de Consultar no Modal de Tickets
+  DOM.modalTicket.btnBuscar?.addEventListener("click", () => {
+    const lojaVal = DOM.modalTicket.selectLoja?.value;
+    const serieVal = DOM.modalTicket.inputSerie?.value || "1";
+    const numeroVal = DOM.modalTicket.inputNumero?.value;
+
+    abrirRotaTicket(lojaVal, serieVal, numeroVal);
+  });
+
+  // Clique no botão "Visualizar Ticket" dos Cards Individuais de Oficina
   DOM.containerCardsOficinas?.addEventListener("click", (evt) => {
     const btn = evt.target.closest(".btn-ver-ticket");
     if (btn) {
       const idLoja = btn.dataset.loja;
-      const nomeOficina = btn.dataset.nome;
-      solicitarEBuscarTicket(idLoja, nomeOficina);
+      
+      // Pré-seleciona a loja correspondente no select do modal
+      if (DOM.modalTicket.selectLoja) {
+        DOM.modalTicket.selectLoja.value = idLoja;
+      }
+
+      // Exibe o Modal
+      if (DOM.modalTicket.instancia) {
+        DOM.modalTicket.instancia.show();
+      }
     }
   });
 });
 
-// Limpeza de recursos na saída da página
+// Limpeza de recursos na saída
 window.addEventListener("beforeunload", () => {
   if (state.realtimeChannel) {
     supabase.removeChannel(state.realtimeChannel);

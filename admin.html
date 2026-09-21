@@ -352,7 +352,7 @@
         
     </main>
 
-    <!-- Modal (Tela Flutuante) para Seleção de Loja e Visualização de Ticket -->
+    <!-- Modal para Seleção de Loja, Série e Visualização de Ticket -->
     <div class="modal fade" id="modalVisualizarTicket" tabindex="-1" aria-labelledby="modalTicketLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
@@ -372,14 +372,20 @@
                             </select>
                         </div>
 
-                        <!-- Campo para informar o número do Ticket -->
-                        <div class="mb-4">
-                            <label for="inputNumeroTicket" class="form-label fw-bold">Informe o Número do Ticket:</label>
-                            <div class="input-group">
-                                <input type="text" id="inputNumeroTicket" class="form-control" placeholder="Ex: 1042" autocomplete="off" required>
-                                <button class="btn btn-primary" type="button" id="btnBuscarTicket" style="background-color: var(--primary-blue);">
-                                    <i class="bi bi-search me-1"></i> Consultar Ticket
-                                </button>
+                        <!-- Série e Número do Ticket lado a lado -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label for="inputSerieTicket" class="form-label fw-bold">Série:</label>
+                                <input type="text" id="inputSerieTicket" class="form-control" placeholder="Ex: 1" autocomplete="off" required>
+                            </div>
+                            <div class="col-md-8">
+                                <label for="inputNumeroTicket" class="form-label fw-bold">Número do Ticket:</label>
+                                <div class="input-group">
+                                    <input type="text" id="inputNumeroTicket" class="form-control" placeholder="Ex: 1042" autocomplete="off" required>
+                                    <button class="btn btn-primary" type="button" id="btnBuscarTicket" style="background-color: var(--primary-blue);">
+                                        <i class="bi bi-search me-1"></i> Consultar
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </form>

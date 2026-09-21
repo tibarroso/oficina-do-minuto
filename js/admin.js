@@ -13,14 +13,14 @@ const DOM = {
   btnFiltrar: document.getElementById("btnFiltrar"),
   dataExibicao: document.getElementById("data_exibicao"),
   containerCardsOficinas: document.getElementById("cards"),
-  
+
   // Cards Macro de Faturamento (Topo)
   macro: {
     totalFaturado: document.getElementById("total_faturado"),
     totalProdutos: document.getElementById("total_produtos"),
     totalServicos: document.getElementById("total_servicos"),
   },
-  
+
   // KPIs Operacionais
   kpis: {
     faturamento: document.getElementById("kpiFaturamento"),
@@ -123,7 +123,7 @@ function extrairDadosObs(obsText) {
       try {
         obsObj = JSON.parse(textoLimpo);
       } catch {
-        // Falha no parse JSON, segue como texto puro
+        // Segue como texto puro em caso de falha no JSON
       }
     }
   }
@@ -178,7 +178,7 @@ function extrairDadosObs(obsText) {
 async function carregarOficinasHoje() {
   try {
     const res = await fetch(`${API_URL}/oficinas/hoje`);
-    
+
     if (!res.ok) {
       throw new Error(`Erro na API REST: Status ${res.status}`);
     }
@@ -196,7 +196,7 @@ async function carregarOficinasHoje() {
       renderizarCardsOficinas(state.oficinasHoje);
       return;
     }
-    
+
     throw new Error("Formato de resposta inválido da API.");
 
   } catch (err) {
@@ -227,12 +227,12 @@ async function carregarOficinasHojeFallbackSupabase() {
       const lojaNome = p.loja_origem || "Loja Não Identificada";
       const parsed = extrairDadosObs(p.obs_loja_origem || p.observacao);
 
-      const val = p.valor !== undefined && p.valor !== null 
-        ? parseFloat(String(p.valor).replace(/[^\d,-]/g, "").replace(",", ".")) 
+      const val = p.valor !== undefined && p.valor !== null
+        ? parseFloat(String(p.valor).replace(/[^\d,-]/g, "").replace(",", "."))
         : parsed.valor;
-      
-      const pecasVal = p.pecas !== undefined && p.pecas !== null 
-        ? parseInt(String(p.pecas).replace(/\D/g, ""), 10) 
+
+      const pecasVal = p.pecas !== undefined && p.pecas !== null
+        ? parseInt(String(p.pecas).replace(/\D/g, ""), 10)
         : parsed.pecas;
 
       const vFinal = isNaN(val) ? 0 : val;
@@ -292,7 +292,6 @@ function renderizarCardsOficinas(oficinas) {
   }
 
   DOM.containerCardsOficinas.innerHTML = oficinas.map((oficina) => {
-    // Trata 'null' ou 'Online' como ativo. Apenas 'Offline' bloqueia o card.
     const isOffline = String(oficina.status || "").toLowerCase() === "offline";
     const faturamento = oficina.faturamento_total || 0;
 
@@ -300,7 +299,6 @@ function renderizarCardsOficinas(oficinas) {
       ? oficina.nome_oficina.split(' - ')[1]
       : oficina.nome_oficina;
 
-    // Constrói a URL do Ticket com base no código 'loja' da API
     const ticketUrl = `/oficina/ticket/${oficina.loja}/1/1`;
 
     return `
@@ -376,7 +374,6 @@ function atualizarKPIs(pedidos) {
 
     const parsed = extrairDadosObs(p.obs_loja_origem || p.observacao);
 
-    // Soma das Peças
     if (p.pecas !== undefined && p.pecas !== null) {
       const q = parseInt(String(p.pecas).replace(/\D/g, ""), 10);
       totalPecas += isNaN(q) ? 0 : q;
@@ -384,7 +381,6 @@ function atualizarKPIs(pedidos) {
       totalPecas += parsed.pecas;
     }
 
-    // Soma do Faturamento
     if (p.valor !== undefined && p.valor !== null) {
       const v = parseFloat(String(p.valor).replace(/[^\d,-]/g, "").replace(",", "."));
       faturamentoTotal += isNaN(v) ? 0 : v;
@@ -393,7 +389,6 @@ function atualizarKPIs(pedidos) {
     }
   });
 
-  // Atualiza Indicadores Rápidos
   if (DOM.kpis.faturamento) DOM.kpis.faturamento.textContent = fmtMoeda.format(faturamentoTotal);
   if (DOM.kpis.total) DOM.kpis.total.textContent = pedidos.length;
   if (DOM.kpis.pendentes) DOM.kpis.pendentes.textContent = pendentes;
@@ -418,19 +413,16 @@ async function gerarRelatorio() {
       pedido_eventos ( observacao )
     `);
 
-    // Filtro por Status
     const statusVal = DOM.filtroStatus?.value;
     if (statusVal && statusVal.toLowerCase() !== "todos") {
       query = query.ilike("status", `%${statusVal}%`);
     }
 
-    // Filtro de Pesquisa
     const termo = DOM.pesquisaOS?.value?.trim();
     if (termo) {
       if (/^\d+$/.test(termo) && termo.length <= 10) {
         query = query.eq("id", Number(termo));
       } else {
-        // Remove pontuações/caracteres do PostgREST que causam falhas de sintaxe
         const termoSanitizado = termo.replace(/[%_,()]/g, "");
         if (termoSanitizado) {
           query = query.or(
@@ -503,7 +495,7 @@ function renderizarTabelaRelatorio(pedidos) {
     const ticket = escapeHTML(p.ticket || parsedObs.ticket);
     const cliente = escapeHTML(p.cliente || parsedObs.cliente);
     const saco = escapeHTML(p.saco || parsedObs.saco);
-    
+
     const pecasVal = p.pecas ?? parsedObs.pecas;
     const pecas = escapeHTML(String(pecasVal));
 
@@ -549,7 +541,7 @@ function renderizarTabelaRelatorio(pedidos) {
 }
 
 /**
- * Desenha e atualiza os gráficos Chart.js com tratamento de concorrência.
+ * Desenha e atualiza os gráficos Chart.js com gerenciamento de instâncias.
  */
 function atualizarGraficos(pedidos) {
   if (typeof window.Chart === "undefined") return;
@@ -574,6 +566,9 @@ function atualizarGraficos(pedidos) {
       state.chartStatus.data.datasets[0].data = dataStatus;
       state.chartStatus.update("none");
     } else {
+      const chartExistente = Chart.getChart(DOM.graficos.status);
+      if (chartExistente) chartExistente.destroy();
+
       state.chartStatus = new Chart(DOM.graficos.status.getContext("2d"), {
         type: "doughnut",
         data: {
@@ -609,6 +604,9 @@ function atualizarGraficos(pedidos) {
       state.chartServico.data.datasets[0].data = dataServico;
       state.chartServico.update("none");
     } else {
+      const chartExistente = Chart.getChart(DOM.graficos.servico);
+      if (chartExistente) chartExistente.destroy();
+
       state.chartServico = new Chart(DOM.graficos.servico.getContext("2d"), {
         type: "bar",
         data: {

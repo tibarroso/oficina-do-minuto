@@ -102,7 +102,7 @@ function obterEstiloStatus(status) {
 }
 
 /**
- * Solicita o número do Ticket para a loja selecionada e abre a rota na API local.
+ * Solicita a série e o número do Ticket para a loja selecionada e abre a rota /oficina/ticket/:loja/:serie/:numero
  */
 function solicitarEBuscarTicket(lojaId, nomeOficina) {
   if (!lojaId) {
@@ -110,18 +110,25 @@ function solicitarEBuscarTicket(lojaId, nomeOficina) {
     return;
   }
 
-  const numTicket = prompt(`[${nomeOficina}]\nDigite o número do Ticket que deseja visualizar:`);
-  
-  if (numTicket === null) return; // Usuário cancelou
+  // Solicitando a série (Ex: 1, 01, A, etc)
+  const serie = prompt(`[${nomeOficina}]\nDigite a SÉRIE do Ticket (ex: 1):`);
+  if (serie === null) return; // Usuário cancelou
+  const serieLimpas = serie.trim();
 
+  // Solicitando o número do Ticket
+  const numTicket = prompt(`[${nomeOficina}]\nDigite o NÚMERO do Ticket:`);
+  if (numTicket === null) return; // Usuário cancelou
   const ticketLimpo = numTicket.trim();
-  if (!ticketLimpo) {
-    alert("Por favor, informe um número de Ticket válido.");
+
+  if (!serieLimpas || !ticketLimpo) {
+    alert("Série e Número do Ticket são obrigatórios para realizar a consulta.");
     return;
   }
 
-  // Abre a rota da API local configurada para visualizar o ticket exato
-  const urlTicket = `${API_URL}/oficina/ticket/${encodeURIComponent(lojaId)}/${encodeURIComponent(ticketLimpo)}`;
+  // Monta a rota completa conforme a API: /oficina/ticket/:loja/:serie/:numero
+  const urlTicket = `${API_URL}/oficina/ticket/${encodeURIComponent(lojaId)}/${encodeURIComponent(serieLimpas)}/${encodeURIComponent(ticketLimpo)}`;
+  
+  // Abre em uma nova aba
   window.open(urlTicket, "_blank");
 }
 

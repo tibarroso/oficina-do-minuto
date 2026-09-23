@@ -10,21 +10,20 @@ let chartStatusInstance = null;
 let chartServicoInstance = null;
 let chartFaturamentoDiarioInstance = null;
 
-let vendasAtuais = [];
-let vendasFiltradas = [];
-let oficinasCadastradas = [];
-let metadadosFaturamento = {};
+let state = {
+  vendasAtuais: [],
+  vendasFiltradas: [],
+  debouncePesquisa: null
+};
 
 // =========================================================================
 // 1. MAPEAMENTO DE ELEMENTOS DO DOM (COMPLETO)
 // =========================================================================
 const DOM = {
-  // Painel Principal e Contêineres
   containerPedidos: document.getElementById("containerPedidos"),
   containerCardsOficinas: document.getElementById("cards"),
   dataExibicao: document.getElementById("data_exibicao"),
   
-  // Elementos de Filtragem e Busca
   filtroStatus: document.getElementById("filtroStatus"),
   pesquisaOS: document.getElementById("pesquisaOS"),
   btnFiltrar: document.getElementById("btnFiltrar"),
@@ -33,7 +32,6 @@ const DOM = {
   btnBuscarPeriodo: document.getElementById("btn_buscar_periodo"),
   btnLimparFiltros: document.getElementById("btnLimparFiltros"),
 
-  // Modal de Busca Rápida de Ticket / OS
   modalTicket: {
     instancia: null,
     elemento: document.getElementById("modalVisualizarTicket"),
@@ -44,7 +42,6 @@ const DOM = {
     resultado: document.getElementById("resultadoTicket"),
   },
 
-  // Modal de Detalhes Completos da OS (Tela Flutuante)
   modalDetalhes: {
     instancia: null,
     elemento: document.getElementById("modalDetalhesTicket"),
@@ -53,14 +50,12 @@ const DOM = {
     btnExportarPDF: document.getElementById("btnExportarTicketPDF")
   },
 
-  // Cards Macro do Topo (Faturamento Global)
   macro: {
     totalFaturado: document.getElementById("total_faturado"),
     totalProdutos: document.getElementById("total_produtos"),
     totalServicos: document.getElementById("total_servicos"),
   },
 
-  // Cards de KPIs Operacionais e Desempenho
   kpis: {
     faturamentoTotal: document.getElementById("kpiFaturamentoTotal"),
     totalOS: document.getElementById("kpiTotalOS"),
@@ -72,7 +67,6 @@ const DOM = {
     margemMedia: document.getElementById("kpiMargemMedia")
   },
 
-  // Canvas e Gráficos do Dashboard
   graficos: {
     canvasStatus: document.getElementById("graficoStatus"),
     canvasServico: document.getElementById("graficoServico"),
@@ -110,35 +104,38 @@ function configurarIntervaloDatasPadrao() {
 }
 
 function registrarEscutadoresEventos() {
-  if (DOM.btnBuscarPeriodo) {
-    DOM.btnBuscarPeriodo.addEventListener("click", async () => {
-      await carregarDadosPorPeriodo();
-    });
-  }
+  DOM.btnBuscarPeriodo?.addEventListener("click", carregarDadosPorPeriodo);
+  DOM.btnFiltrar?.addEventListener("click", aplicarFiltrosTabela);
+  DOM.btnLimparFiltros?.addEventListener("click", resetarFiltros);
+  
+  // Debounce para evitar múltiplas renderizações enquanto digita
+  DOM.pesquisaOS?.addEventListener("input", () => {
+    clearTimeout(state.debouncePesquisa);
+    state.debouncePesquisa = setTimeout(aplicarFiltrosTabela, 300);
+  });
 
-  if (DOM.btnFiltrar) {
-    DOM.btnFiltrar.addEventListener("click", aplicarFiltrosTabela);
-  }
+  DOM.filtroStatus?.addEventListener("change", aplicarFiltrosTabela);
+  DOM.modalTicket.btnBuscar?.addEventListener("click", executarBuscaTicket);
+  DOM.modalDetalhes.btnImprimir?.addEventListener("click", () => window.print());
 
-  if (DOM.btnLimparFiltros) {
-    DOM.btnLimparFiltros.addEventListener("click", resetarFiltros);
-  }
+  // Event Delegation para Botões dinâmicos da Tabela
+  DOM.containerPedidos?.addEventListener("click", (evt) => {
+    const btnDetalhes = evt.target.closest(".btn-ver-detalhes");
+    if (btnDetalhes) {
+      const idOS = btnDetalhes.getAttribute("data-id");
+      abrirModalDetalhesTicket(idOS);
+    }
+  });
 
-  if (DOM.pesquisaOS) {
-    DOM.pesquisaOS.addEventListener("input", aplicarFiltrosTabela);
-  }
-
-  if (DOM.filtroStatus) {
-    DOM.filtroStatus.addEventListener("change", aplicarFiltrosTabela);
-  }
-
-  if (DOM.modalTicket.btnBuscar) {
-    DOM.modalTicket.btnBuscar.addEventListener("click", executarBuscaTicket);
-  }
-
-  if (DOM.modalDetalhes.btnImprimir) {
-    DOM.modalDetalhes.btnImprimir.addEventListener("click", () => window.print());
-  }
+  // Event Delegation para Botões das Oficinas
+  DOM.containerCardsOficinas?.addEventListener("click", (evt) => {
+    const btn = evt.target.closest(".btn-ver-ticket");
+    if (btn) {
+      const idLoja = btn.dataset.loja;
+      if (DOM.modalTicket.selectLoja) DOM.modalTicket.selectLoja.value = idLoja;
+      if (DOM.modalTicket.instancia) DOM.modalTicket.instancia.show();
+    }
+  });
 }
 
 async function executarCarregamentoInicial() {
@@ -159,13 +156,13 @@ async function carregarDadosPorPeriodo() {
   exibirLoadingState();
 
   try {
-    vendasAtuais = await consultarVendasNoSupabase(dataInicio, dataFim);
-    vendasFiltradas = [...vendasAtuais];
+    state.vendasAtuais = await consultarVendasNoSupabase(dataInicio, dataFim);
+    state.vendasFiltradas = [...state.vendasAtuais];
 
     processarAtualizacaoInterface();
   } catch (erro) {
-    console.error("[SUPABASE ERRO] Falha ao recuperar registros do banco:", erro);
-    exibirErroNaInterface("Houve um erro ao carregar as Ordens de Serviço do Supabase.");
+    console.error("[ERRO CARREGAMENTO]:", erro);
+    exibirErroNaInterface("Houve um erro ao carregar as Ordens de Serviço.");
   }
 }
 
@@ -174,21 +171,9 @@ async function consultarVendasNoSupabase(inicio, fim) {
     const { data, error } = await supabase
       .from('vendas')
       .select(`
-        id,
-        numero_os,
-        serie,
-        loja,
-        status,
-        servico,
-        valor_produtos,
-        valor_servicos,
-        desconto,
-        quantidade_pecas,
-        created_at,
-        cliente_nome,
-        cliente_documento,
-        tecnico_responsavel,
-        observacoes
+        id, numero_os, serie, loja, status, servico,
+        valor_produtos, valor_servicos, desconto, quantidade_pecas,
+        created_at, cliente_nome, cliente_documento, tecnico_responsavel, observacoes
       `)
       .gte('created_at', `${inicio}T00:00:00`)
       .lte('created_at', `${fim}T23:59:59`)
@@ -198,10 +183,9 @@ async function consultarVendasNoSupabase(inicio, fim) {
     if (data && data.length > 0) return padronizarEstruturaVendas(data);
 
   } catch (errSupabase) {
-    console.warn("Falha no Supabase. Tentando fallback via API REST local...", errSupabase);
+    console.warn("Falha no Supabase. Tentando fallback API local...", errSupabase);
   }
 
-  // Fallback REST Local
   try {
     const resposta = await fetch(`${API_URL}/api/vendas?inicio=${inicio}&fim=${fim}`);
     if (resposta.ok) {
@@ -237,16 +221,16 @@ function padronizarEstruturaVendas(dadosBrutos) {
 }
 
 // =========================================================================
-// 4. PROCESSAMENTO DAS REGRAS DE NEGÓCIO E METRICAS (KPIS)
+// 4. PROCESSAMENTO E REGRAS DE NEGÓCIO (KPIS)
 // =========================================================================
 
 function processarAtualizacaoInterface() {
-  atualizarCardsFaturamentoMacro(vendasFiltradas);
-  atualizarCardsKPIsOperacionais(vendasFiltradas);
-  renderizarCardsPorOficina(vendasFiltradas);
-  renderizarConjuntoGraficos(vendasFiltradas);
-  renderizarTabelaOrdensServico(vendasFiltradas);
-  popularSelectLojasModal(vendasAtuais);
+  atualizarCardsFaturamentoMacro(state.vendasFiltradas);
+  atualizarCardsKPIsOperacionais(state.vendasFiltradas);
+  renderizarCardsPorOficina(state.vendasFiltradas);
+  renderizarConjuntoGraficos(state.vendasFiltradas);
+  renderizarTabelaOrdensServico(state.vendasFiltradas);
+  popularSelectLojasModal(state.vendasAtuais);
 }
 
 function atualizarCardsFaturamentoMacro(vendas) {
@@ -279,7 +263,7 @@ function atualizarCardsKPIsOperacionais(vendas) {
     totalDescontos += v.desconto;
     volumePecasTotal += v.pecas;
 
-    if (v.status === 'Aguardando coleta' || v.status === 'Em serviço' || v.status === 'Pendente') {
+    if (['Aguardando coleta', 'Em serviço', 'Pendente'].includes(v.status)) {
       qtdPendentes++;
     }
     if (v.status === 'Retrabalho') {
@@ -306,7 +290,7 @@ function renderizarCardsPorOficina(vendas) {
     DOM.containerCardsOficinas.innerHTML = `
       <div class="col-12 text-center py-4 text-muted">
         <i class="bi bi-building-exclamation fs-3 d-block mb-2"></i>
-        Nenhuma unidade com atividades registradas no período selecionado.
+        Nenhuma unidade com atividades registradas no período.
       </div>`;
     return;
   }
@@ -315,12 +299,7 @@ function renderizarCardsPorOficina(vendas) {
 
   vendas.forEach(v => {
     if (!agrupamento[v.loja]) {
-      agrupamento[v.loja] = {
-        totalFaturado: 0,
-        qtdOS: 0,
-        totalProdutos: 0,
-        totalServicos: 0
-      };
+      agrupamento[v.loja] = { totalFaturado: 0, qtdOS: 0, totalProdutos: 0, totalServicos: 0 };
     }
     agrupamento[v.loja].totalProdutos += v.valorProdutos;
     agrupamento[v.loja].totalServicos += v.valorServicos;
@@ -336,7 +315,9 @@ function renderizarCardsPorOficina(vendas) {
         <div class="card shadow-sm border-0 h-100 p-3">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <span class="badge bg-primary-subtle text-primary fw-bold">${info.qtdOS} OS(s)</span>
-            <i class="bi bi-shop text-muted"></i>
+            <button class="btn btn-sm btn-light btn-ver-ticket" data-loja="${nomeLoja}" title="Buscar Ticket">
+              <i class="bi bi-search"></i>
+            </button>
           </div>
           <h6 class="fw-bold text-dark text-truncate mb-1" title="${nomeLoja}">${nomeLoja}</h6>
           <div class="small text-muted mb-2">
@@ -355,13 +336,18 @@ function renderizarCardsPorOficina(vendas) {
 }
 
 // =========================================================================
-// 5. GRÁFICOS ANALÍTICOS (CHART.JS)
+// 5. GRÁFICOS ANALÍTICOS (CHART.JS SAFE MODE)
 // =========================================================================
 
 function renderizarConjuntoGraficos(vendas) {
   destruirGraficosExistentes();
 
-  // 1. Gráfico por Status
+  // Garante que o Chart.js está carregado antes de instanciar
+  if (typeof Chart === "undefined") {
+    console.warn("Chart.js não encontrado no escopo global.");
+    return;
+  }
+
   if (DOM.graficos.canvasStatus) {
     const mapaStatus = {};
     vendas.forEach(v => mapaStatus[v.status] = (mapaStatus[v.status] || 0) + 1);
@@ -375,15 +361,10 @@ function renderizarConjuntoGraficos(vendas) {
           backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#6b7280', '#8b5cf6']
         }]
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { position: 'bottom' } }
-      }
+      options: { responsive: true, maintainAspectRatio: false }
     });
   }
 
-  // 2. Gráfico por Serviço
   if (DOM.graficos.canvasServico) {
     const mapaServicos = {};
     vendas.forEach(v => mapaServicos[v.servico] = (mapaServicos[v.servico] || 0) + 1);
@@ -399,15 +380,10 @@ function renderizarConjuntoGraficos(vendas) {
           borderRadius: 4
         }]
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-      }
+      options: { responsive: true, maintainAspectRatio: false }
     });
   }
 
-  // 3. Gráfico de Evolução Diária de Faturamento
   if (DOM.graficos.canvasFaturamentoDiario) {
     const mapaDiario = {};
     vendas.forEach(v => {
@@ -432,28 +408,15 @@ function renderizarConjuntoGraficos(vendas) {
           tension: 0.3
         }]
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: { y: { beginAtZero: true } }
-      }
+      options: { responsive: true, maintainAspectRatio: false }
     });
   }
 }
 
 function destruirGraficosExistentes() {
-  if (chartStatusInstance) {
-    chartStatusInstance.destroy();
-    chartStatusInstance = null;
-  }
-  if (chartServicoInstance) {
-    chartServicoInstance.destroy();
-    chartServicoInstance = null;
-  }
-  if (chartFaturamentoDiarioInstance) {
-    chartFaturamentoDiarioInstance.destroy();
-    chartFaturamentoDiarioInstance = null;
-  }
+  if (chartStatusInstance) { chartStatusInstance.destroy(); chartStatusInstance = null; }
+  if (chartServicoInstance) { chartServicoInstance.destroy(); chartServicoInstance = null; }
+  if (chartFaturamentoDiarioInstance) { chartFaturamentoDiarioInstance.destroy(); chartFaturamentoDiarioInstance = null; }
 }
 
 // =========================================================================
@@ -467,7 +430,7 @@ function renderizarTabelaOrdensServico(vendas) {
     DOM.containerPedidos.innerHTML = `
       <div class="text-center py-5 text-muted">
         <i class="bi bi-inbox display-5 d-block mb-3"></i>
-        Nenhuma Ordem de Serviço encontrada para os filtros aplicados.
+        Nenhuma Ordem de Serviço encontrada.
       </div>`;
     return;
   }
@@ -512,21 +475,13 @@ function renderizarTabelaOrdensServico(vendas) {
 
   htmlTabela += `</tbody></table></div>`;
   DOM.containerPedidos.innerHTML = htmlTabela;
-
-  // Associa os cliques aos botões da tabela recém-criada
-  document.querySelectorAll(".btn-ver-detalhes").forEach(btn => {
-    btn.addEventListener("click", (e) => {
-      const idOS = e.currentTarget.getAttribute("data-id");
-      abrirModalDetalhesTicket(idOS);
-    });
-  });
 }
 
 function aplicarFiltrosTabela() {
   const termo = DOM.pesquisaOS ? DOM.pesquisaOS.value.toLowerCase().trim() : '';
   const statusSel = DOM.filtroStatus ? DOM.filtroStatus.value : 'Todos';
 
-  vendasFiltradas = vendasAtuais.filter(v => {
+  state.vendasFiltradas = state.vendasAtuais.filter(v => {
     const porStatus = (statusSel === 'Todos') || (v.status.toLowerCase() === statusSel.toLowerCase());
     const porTexto = v.os.toString().toLowerCase().includes(termo) ||
                      v.loja.toLowerCase().includes(termo) ||
@@ -546,7 +501,7 @@ function resetarFiltros() {
 }
 
 // =========================================================================
-// 7. MODAIS DE INTERAÇÃO (BUSCA RÁPIDA & DETALHES)
+// 7. MODAIS DE INTERAÇÃO
 // =========================================================================
 
 function popularSelectLojasModal(vendas) {
@@ -563,9 +518,8 @@ function popularSelectLojasModal(vendas) {
 }
 
 function executarBuscaTicket() {
-  const loja = DOM.modalTicket.selectLoja ? DOM.modalTicket.selectLoja.value : '';
-  const serie = DOM.modalTicket.inputSerie ? DOM.modalTicket.inputSerie.value.trim() : '';
-  const numero = DOM.modalTicket.inputNumero ? DOM.modalTicket.inputNumero.value.trim() : '';
+  const loja = DOM.modalTicket.selectLoja?.value;
+  const numero = DOM.modalTicket.inputNumero?.value?.trim();
 
   if (!DOM.modalTicket.resultado) return;
 
@@ -576,8 +530,7 @@ function executarBuscaTicket() {
     return;
   }
 
-  const encontrado = vendasAtuais.find(v => v.loja === loja && v.os.toString() === numero);
-
+  const encontrado = state.vendasAtuais.find(v => v.loja === loja && v.os.toString() === numero);
   DOM.modalTicket.resultado.style.display = "block";
 
   if (encontrado) {
@@ -599,7 +552,7 @@ function executarBuscaTicket() {
 }
 
 function abrirModalDetalhesTicket(idTicket) {
-  const ticket = vendasAtuais.find(v => v.id.toString() === idTicket.toString());
+  const ticket = state.vendasAtuais.find(v => v.id.toString() === idTicket.toString());
 
   if (!DOM.modalDetalhes.conteudo) return;
 
@@ -675,7 +628,7 @@ function abrirModalDetalhesTicket(idTicket) {
 }
 
 // =========================================================================
-// 8. UTILS E CONTINGÊNCIA (FALLBACK MOCK DADOS)
+// 8. UTILS & CONTINGÊNCIA
 // =========================================================================
 
 function validarDatas(inicio, fim) {

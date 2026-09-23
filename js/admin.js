@@ -3,7 +3,7 @@ import { supabase } from "./supabase.js";
 // Configuração da URL da API (ambiente local)
 const API_URL = 'http://localhost:3000';
 
-    document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => {
     const inputInicio = document.getElementById("filtro_data_inicio");
     const inputFim = document.getElementById("filtro_data_fim");
     const btnBuscarPeriodo = document.getElementById("btn_buscar_periodo");
@@ -37,49 +37,36 @@ const API_URL = 'http://localhost:3000';
     }
 });
 
-// Função que busca no Supabase e atualiza os cards de Faturamento
+// Função que busca na sua API Node.js (SQL Server das 4 lojas) e atualiza os cards
 async function atualizarFaturamentoPorPeriodo(dataInicio, dataFim) {
     try {
-        // Certifique-se de que a variável 'supabase' está disponível no seu escopo global
-        // Substitua 'pedidos' pelo nome exato da sua tabela no Supabase
-        // E 'created_at' ou 'data' pela coluna de data real da sua tabela
-        const { data: pedidos, error } = await supabase
-            .from('pedidos') 
-            .select('*')
-            .gte('created_at', dataInicio + 'T00:00:00')
-            .lte('created_at', dataFim + 'T23:59:59');
+        // Chamada para a rota que criamos na sua API Express
+        const resposta = await fetch(`/api/oficinas/periodo?dataInicio=${dataInicio}&dataFim=${dataFim}`);
+        const resultado = await resposta.json();
 
-        if (error) {
-            console.error("Erro do Supabase:", error);
+        if (!resultado.sucesso) {
+            console.error("Erro ao buscar dados do período:", resultado.mensagem);
             return;
         }
 
-        let totalBruto = 0;
-        let totalProdutos = 0;
-        let totalServicos = 0;
+        // Atualizar os elementos no HTML do admin.html com os totais consolidados
+        document.getElementById("total_faturado").textContent = formatarMoeda(resultado.total_geral);
+        document.getElementById("total_produtos").textContent = formatarMoeda(resultado.total_produtos);
+        document.getElementById("total_servicos").textContent = formatarMoeda(resultado.total_servicos);
 
-        if (pedidos && pedidos.length > 0) {
-            pedidos.forEach(p => {
-                // Ajuste os nomes das colunas conforme sua tabela (ex: valor_total ou valorTotal)
-                totalBruto += Number(p.valor_total || p.valorTotal || p.total) || 0;
-                totalProdutos += Number(p.valor_produtos || p.valorProdutos || p.produtos) || 0;
-                totalServicos += Number(p.valor_servicos || p.valorServicos || p.servicos) || 0;
-            });
-        }
-
-        // Atualizar os elementos no HTML do admin.html
-        document.getElementById("total_faturado").textContent = formatarMoeda(totalBruto);
-        document.getElementById("total_produtos").textContent = formatarMoeda(totalProdutos);
-        document.getElementById("total_servicos").textContent = formatarMoeda(totalServicos);
+        // Opcional: Se você também quiser atualizar a lista/cards individuais de cada loja na tela:
+        // if (resultado.oficinas) {
+        //     atualizarCardsDasLojas(resultado.oficinas);
+        // }
 
     } catch (err) {
-        console.error("Erro ao processar faturamento:", err);
+        console.error("Erro na requisição do faturamento por período:", err);
     }
 }
 
 // Função auxiliar para formatar em Real (R$)
 function formatarMoeda(valor) {
-    return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
 // =========================================================================

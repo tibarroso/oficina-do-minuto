@@ -16,56 +16,65 @@ document.addEventListener("DOMContentLoaded", () => {
         inputFim.value = hoje.toISOString().split("T")[0];
     }
 
-    // 2. Disparar a busca ao clicar em "Filtrar"
-// Dentro do seu addEventListener do botão "Filtrar":
-if (btnBuscarPeriodo) {
-    btnBuscarPeriodo.addEventListener("click", () => {
-        const dataInicio = inputInicio.value;
-        const dataFim = inputFim.value;
+    // Carregar os dados ao abrir a página com o período padrão
+    if (inputInicio && inputFim) {
+        atualizarFaturamentoPorPeriodo(inputInicio.value, inputFim.value);
+    }
 
-        if (!dataInicio || !dataFim) {
-            alert("Por favor, selecione a data inicial e a data final.");
+    // 2. Disparar a busca ao clicar em "Filtrar"
+    if (btnBuscarPeriodo) {
+        btnBuscarPeriodo.addEventListener("click", () => {
+            const dataInicio = inputInicio.value;
+            const dataFim = inputFim.value;
+
+            if (!dataInicio || !dataFim) {
+                alert("Por favor, selecione a data inicial e a data final.");
+                return;
+            }
+
+            atualizarFaturamentoPorPeriodo(dataInicio, dataFim);
+        });
+    }
+});
+
+// Função que busca no Supabase e atualiza os cards de Faturamento
+async function atualizarFaturamentoPorPeriodo(dataInicio, dataFim) {
+    try {
+        // Certifique-se de que a variável 'supabase' está disponível no seu escopo global
+        // Substitua 'pedidos' pelo nome exato da sua tabela no Supabase
+        // E 'created_at' ou 'data' pela coluna de data real da sua tabela
+        const { data: pedidos, error } = await supabase
+            .from('pedidos') 
+            .select('*')
+            .gte('created_at', dataInicio + 'T00:00:00')
+            .lte('created_at', dataFim + 'T23:59:59');
+
+        if (error) {
+            console.error("Erro do Supabase:", error);
             return;
         }
 
-        // CHAME AQUI A SUA FUNÇÃO QUE BUSCA OS DADOS NO SUPABASE PASSANDO AS DATAS:
-        // Exemplo comum (substitua pelo nome da função que você já usa para carregar os pedidos):
-        carregarPedidosDoSupabase(dataInicio, dataFim);
-    });
-}
+        let totalBruto = 0;
+        let totalProdutos = 0;
+        let totalServicos = 0;
 
-// Função que calcula e atualiza os cards de Faturamento
-function atualizarFaturamentoPorPeriodo(dataInicio, dataFim) {
-    // Exemplo de dados (substitua pela sua fonte real de dados ou API)
-    // Suponha que seus pedidos/tickets estejam salvos em um array ou localStorage
-    const pedidos = JSON.parse(localStorage.getItem("pedidos_oficina")) || [];
+        if (pedidos && pedidos.length > 0) {
+            pedidos.forEach(p => {
+                // Ajuste os nomes das colunas conforme sua tabela (ex: valor_total ou valorTotal)
+                totalBruto += Number(p.valor_total || p.valorTotal || p.total) || 0;
+                totalProdutos += Number(p.valor_produtos || p.valorProdutos || p.produtos) || 0;
+                totalServicos += Number(p.valor_servicos || p.valorServicos || p.servicos) || 0;
+            });
+        }
 
-    // Converter as strings de data para objetos Date para comparar corretamente (ignorando fuso horário se necessário)
-    const inicio = new Date(dataInicio + "T00:00:00");
-    const fim = new Date(dataFim + "T23:59:59");
+        // Atualizar os elementos no HTML do admin.html
+        document.getElementById("total_faturado").textContent = formatarMoeda(totalBruto);
+        document.getElementById("total_produtos").textContent = formatarMoeda(totalProdutos);
+        document.getElementById("total_servicos").textContent = formatarMoeda(totalServicos);
 
-    // Filtrar pedidos dentro do período
-    const pedidosFiltrados = pedidos.filter(pedido => {
-        // Supondo que cada pedido tenha uma propriedade 'data' (ex: "2026-06-15")
-        const dataPedido = new Date(pedido.data + "T00:00:00");
-        return dataPedido >= inicio && dataPedido <= fim;
-    });
-
-    // Calcular os totais
-    let totalBruto = 0;
-    let totalProdutos = 0;
-    let totalServicos = 0;
-
-    pedidosFiltrados.forEach(p => {
-        totalBruto += Number(p.valorTotal) || 0;
-        totalProdutos += Number(p.valorProdutos) || 0;
-        totalServicos += Number(p.valorServicos) || 0;
-    });
-
-    // Atualizar os elementos no HTML do admin.html
-    document.getElementById("total_faturado").textContent = formatarMoeda(totalBruto);
-    document.getElementById("total_produtos").textContent = formatarMoeda(totalProdutos);
-    document.getElementById("total_servicos").textContent = formatarMoeda(totalServicos);
+    } catch (err) {
+        console.error("Erro ao processar faturamento:", err);
+    }
 }
 
 // Função auxiliar para formatar em Real (R$)

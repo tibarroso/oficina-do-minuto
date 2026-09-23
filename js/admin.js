@@ -1,6 +1,6 @@
 import { supabase } from "./supabase.js";
 
-// Configuração da URL da API (ambiente local ou produção)
+// Configuração da URL da API (ambiente local)
 const API_URL = 'http://localhost:3000';
 
 // =========================================================================
@@ -25,7 +25,7 @@ const DOM = {
     resultado: document.getElementById("resultadoTicket"),
   },
 
-  // Elementos do Modal de Detalhes do Ticket
+  // Elementos do Modal de Detalhes do Ticket (Tela Flutuante com Dados)
   modalDetalhes: {
     instancia: null,
     elemento: document.getElementById("modalDetalhesTicket"),
@@ -88,6 +88,9 @@ const fmtMoeda = new Intl.NumberFormat("pt-BR", {
 // 3. FUNÇÕES AUXILIARES DE TRATAMENTO E SEGURANÇA
 // =========================================================================
 
+/**
+ * Sanitiza strings para exibição segura via HTML (Prevenção contra XSS)
+ */
 function escapeHTML(str) {
   if (str === null || str === undefined) return "";
   return String(str)
@@ -98,24 +101,42 @@ function escapeHTML(str) {
     .replace(/'/g, "&#039;");
 }
 
+/**
+ * Retorna as cores estilizadas com base no status do pedido.
+ */
 function obterEstiloStatus(status) {
   const s = String(status || "").toLowerCase().trim();
-  if (s.includes("finalizado") || s.includes("entregue") || s.includes("concluido")) return PALETA_CORES.sucesso;
-  if (s.includes("transporte") || s.includes("coleta") || s.includes("retorno") || s.includes("rota")) return PALETA_CORES.transporte;
-  if (s.includes("retrabalho") || s.includes("orçamento") || s.includes("recusado") || s.includes("cancelado")) return PALETA_CORES.alerta;
+
+  if (s.includes("finalizado") || s.includes("entregue") || s.includes("concluido")) {
+    return PALETA_CORES.sucesso;
+  }
+  if (s.includes("transporte") || s.includes("coleta") || s.includes("retorno") || s.includes("rota")) {
+    return PALETA_CORES.transporte;
+  }
+  if (s.includes("retrabalho") || s.includes("orçamento") || s.includes("recusado") || s.includes("cancelado")) {
+    return PALETA_CORES.alerta;
+  }
   return PALETA_CORES.pendente;
 }
 
+/**
+ * Consulta a API do Ticket e Exibe o Modal Flutuante com os Dados
+ */
 async function consultarEExibirTicket(lojaId, serie, numero) {
   const lojaLimpa = String(lojaId || "").trim();
   const serieLimpa = String(serie || "1").trim() || "1";
   const numeroLimpo = String(numero || "").trim();
 
-  if (!lojaLimpa || !numeroLimpo) {
-    alert("Por favor, selecione a Loja e informe o Número do Ticket.");
+  if (!lojaLimpa) {
+    alert("Por favor, selecione uma Loja / Oficina válida.");
+    return;
+  }
+  if (!numeroLimpo) {
+    alert("Por favor, informe o NÚMERO do Ticket.");
     return;
   }
 
+  // Feedback de carregamento no botão
   if (DOM.modalTicket.btnBuscar) {
     DOM.modalTicket.btnBuscar.disabled = true;
     DOM.modalTicket.btnBuscar.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Consultando...`;
@@ -128,44 +149,18 @@ async function consultarEExibirTicket(lojaId, serie, numero) {
     let dadosTicket = null;
     if (response.ok) {
       dadosTicket = await response.json();
-    } else {
-      // Dados verídicos simulados caso a API local não responda no teste
-      dadosTicket = {
-        loja: lojaLimpa,
-        nome_oficina: "Assistência Técnica Matriz - Centro",
-        numero: numeroLimpo,
-        serie: serieLimpa,
-        posicao: "Bancada de Reparo 03",
-        cliente: "Carlos Eduardo da Silva",
-        telefone: "(11) 98765-4321",
-        data_emissao: "23/09/2026 09:15",
-        data_prevista: "25/09/2026",
-        valor_final: 450.00,
-        observacao_geral: "Cliente relatou aquecimento excessivo e falha no conector de carga.",
-        pecas: [
-          {
-            item: 1,
-            descricao: "Smartphone Samsung Galaxy S23",
-            cor: "Preto",
-            marca: "Samsung",
-            data_entrega: "25/09/2026",
-            observacao_peca: "Troca de placa de circuito de carga e limpeza interna.",
-            servicos: [
-              { descricao: "Substituição de Conector USB-C", quantidade: 1, preco: 180.00, status: "Entregue", executor: "Marcos Vinicius" },
-              { descricao: "Manutenção Preventiva de Cooler/Dissipador", quantidade: 1, preco: 270.00, status: "Pendente", executor: "Lucas Souza" }
-            ]
-          }
-        ]
-      };
     }
 
+    // Preenche o conteúdo HTML do Modal de Detalhes
     renderizarDetalhesTicketModal(dadosTicket, { loja: lojaLimpa, serie: serieLimpa, numero: numeroLimpo });
 
+    // Fecha o modal de busca e em seguida abre o modal de detalhes
     const elemBusca = DOM.modalTicket.elemento;
     const instanceBusca = bootstrap.Modal.getInstance(elemBusca) || new bootstrap.Modal(elemBusca);
     
     const onModalHidden = () => {
       elemBusca.removeEventListener("hidden.bs.modal", onModalHidden);
+      
       const elemDetalhes = DOM.modalDetalhes.elemento;
       const instanceDetalhes = new bootstrap.Modal(elemDetalhes);
       instanceDetalhes.show();
@@ -176,7 +171,7 @@ async function consultarEExibirTicket(lojaId, serie, numero) {
 
   } catch (error) {
     console.error("❌ Erro ao consultar ticket:", error);
-    alert("Erro ao conectar com o servidor de tickets.");
+    alert("Não foi possível carregar os dados do ticket. Verifique a conexão com o servidor local.");
   } finally {
     if (DOM.modalTicket.btnBuscar) {
       DOM.modalTicket.btnBuscar.disabled = false;
@@ -185,8 +180,26 @@ async function consultarEExibirTicket(lojaId, serie, numero) {
   }
 }
 
+/**
+ * Monta a estrutura HTML dentro da tela flutuante de detalhes do ticket
+ */
 function renderizarDetalhesTicketModal(dados, params) {
   if (!DOM.modalDetalhes.conteudo) return;
+
+  if (!dados) {
+    DOM.modalDetalhes.conteudo.innerHTML = `
+      <div class="alert alert-warning mb-3">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> Ticket não encontrado na API local ou dados indisponíveis no momento.
+      </div>
+      <div class="card p-3">
+        <h6 class="fw-bold mb-2">Informações da Consulta</h6>
+        <p class="mb-1"><strong>Loja/Oficina:</strong> ${escapeHTML(params.loja)}</p>
+        <p class="mb-1"><strong>Série:</strong> ${escapeHTML(params.serie)}</p>
+        <p class="mb-0"><strong>Número do Ticket:</strong> ${escapeHTML(params.numero)}</p>
+      </div>
+    `;
+    return;
+  }
 
   const pecasHTML = (dados.pecas || []).map((peca) => {
     const servicosHTML = (peca.servicos || []).map((s) => {
@@ -201,7 +214,7 @@ function renderizarDetalhesTicketModal(dados, params) {
           <td class="text-center">${s.quantidade || 1}</td>
           <td class="text-center">${fmtMoeda.format(s.preco || 0)}</td>
           <td class="text-center">${badgeStatus}</td>
-          <td class="text-end"><small class="text-muted">${escapeHTML(s.executor || 'Técnico Responsável')}</small></td>
+          <td class="text-end"><small class="text-muted">${escapeHTML(s.executor || 'Não Informado')}</small></td>
         </tr>
       `;
     }).join('');
@@ -211,12 +224,15 @@ function renderizarDetalhesTicketModal(dados, params) {
         <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
           <div>
             <strong class="text-primary me-2">Item #${peca.item}: ${escapeHTML(peca.descricao)}</strong>
-            <span class="badge bg-secondary">${escapeHTML(peca.cor || 'Padrão')}</span>
+            <span class="badge bg-secondary">${escapeHTML(peca.cor || 'Sem Cor')}</span>
             ${peca.marca ? `<span class="badge bg-outline-dark">${escapeHTML(peca.marca)}</span>` : ''}
           </div>
-          <small class="text-muted"><i class="bi bi-calendar-check me-1"></i>Previsão: ${escapeHTML(peca.data_entrega || 'A definir')}</small>
+          <small class="text-muted">
+            <i class="bi bi-calendar-check me-1"></i>Entrega: ${peca.data_entrega ? escapeHTML(peca.data_entrega) : 'Não agendada'}
+          </small>
         </div>
         <div class="card-body p-0">
+          ${peca.observacao_peca ? `<div class="p-2 bg-light-subtle border-bottom"><small><strong>Obs Peça:</strong> ${escapeHTML(peca.observacao_peca)}</small></div>` : ''}
           <div class="table-responsive">
             <table class="table table-sm table-hover mb-0 align-middle">
               <thead class="table-light">
@@ -228,7 +244,9 @@ function renderizarDetalhesTicketModal(dados, params) {
                   <th class="text-end">EXECUTOR</th>
                 </tr>
               </thead>
-              <tbody>${servicosHTML}</tbody>
+              <tbody>
+                ${servicosHTML}
+              </tbody>
             </table>
           </div>
         </div>
@@ -242,25 +260,28 @@ function renderizarDetalhesTicketModal(dados, params) {
         <div class="p-3 border rounded bg-light">
           <small class="text-muted d-block text-uppercase fw-bold" style="font-size:0.7rem;">Oficina / Loja</small>
           <span class="fs-6 fw-bold text-dark">${escapeHTML(dados.nome_oficina || params.loja)}</span>
+          <small class="text-muted d-block mt-1">Cód. Loja: ${escapeHTML(String(dados.loja || params.loja))}</small>
         </div>
       </div>
       <div class="col-md-3">
         <div class="p-3 border rounded bg-light">
           <small class="text-muted d-block text-uppercase fw-bold" style="font-size:0.7rem;">Ticket / Série</small>
-          <span class="fs-6 fw-bold text-dark">#${escapeHTML(String(dados.numero || params.numero))}</span>
+          <span class="fs-6 fw-bold text-dark">#${escapeHTML(String(dados.numero || params.numero))} (Série ${escapeHTML(String(dados.serie || params.serie))})</span>
+          <small class="text-muted d-block mt-1">Posição: ${escapeHTML(dados.posicao || '---')}</small>
         </div>
       </div>
       <div class="col-md-3">
         <div class="p-3 border rounded bg-light text-end">
           <small class="text-muted d-block text-uppercase fw-bold" style="font-size:0.7rem;">Valor Total</small>
-          <span class="fs-5 fw-bold text-success">${fmtMoeda.format(dados.valor_final || 0)}</span>
+          <span class="fs-5 fw-bold text-success">${fmtMoeda.format(dados.valor_final || dados.valor || 0)}</span>
         </div>
       </div>
     </div>
+
     <div class="card mb-3">
       <div class="card-body p-3">
         <div class="row g-2">
-          <div class="col-md-6">
+          <div class="col-md-5">
             <small class="text-muted d-block">CLIENTE</small>
             <strong class="text-dark">${escapeHTML(dados.cliente || 'Não Informado')}</strong>
           </div>
@@ -268,20 +289,95 @@ function renderizarDetalhesTicketModal(dados, params) {
             <small class="text-muted d-block">TELEFONE</small>
             <span>${escapeHTML(dados.telefone || '---')}</span>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-2">
             <small class="text-muted d-block">EMISSÃO</small>
             <small>${escapeHTML(dados.data_emissao || '---')}</small>
           </div>
+          <div class="col-md-2">
+            <small class="text-muted d-block">PREV. ENTREGA</small>
+            <small class="fw-bold text-primary">${escapeHTML(dados.data_prevista || '---')}</small>
+          </div>
         </div>
+
+        ${dados.observacao_geral ? `
+          <hr class="my-2">
+          <div class="alert alert-warning mb-0 p-2" style="font-size: 0.85rem;">
+            <i class="bi bi-info-circle me-1"></i><strong>Observação Geral:</strong> ${escapeHTML(dados.observacao_geral)}
+          </div>
+        ` : ''}
       </div>
     </div>
-    <h6 class="fw-bold mb-2 text-dark"><i class="bi bi-box-seam me-1"></i> Detalhes dos Serviços</h6>
-    ${pecasHTML}
+
+    <h6 class="fw-bold mb-2 text-dark"><i class="bi bi-box-seam me-1"></i> Peças e Serviços Solicitados</h6>
+    ${pecasHTML || '<p class="text-muted small">Nenhuma peça detalhada para este ticket.</p>'}
   `;
 }
 
+/**
+ * Extrai dados estruturados de observação tratando JSONs, strings chave:valor e nulos.
+ */
 function extrairDadosObs(obsText) {
-  return { ticket: "TK-9482", cliente: "Ana Paula Souza", saco: "Saco 04", pecas: 2, valor: 350.00 };
+  const dadosPadrao = {
+    ticket: "---",
+    cliente: "Não informado",
+    saco: "---",
+    pecas: 0,
+    valor: 0
+  };
+
+  if (!obsText) return dadosPadrao;
+
+  let obsObj = obsText;
+
+  if (typeof obsText === "string") {
+    const textoLimpo = obsText.trim();
+    if (textoLimpo.startsWith("{") || textoLimpo.startsWith("[")) {
+      try {
+        obsObj = JSON.parse(textoLimpo);
+      } catch {
+        // Segue como texto puro em caso de falha no JSON
+      }
+    }
+  }
+
+  if (typeof obsObj === "object" && obsObj !== null) {
+    const numPecas = parseInt(String(obsObj.pecas || obsObj.qtd || 0).replace(/\D/g, ""), 10);
+    const numValor = parseFloat(String(obsObj.valor || obsObj.total || 0).replace(/[^\d,-]/g, "").replace(",", "."));
+
+    return {
+      ticket: String(obsObj.ticket || obsObj.cod || dadosPadrao.ticket),
+      cliente: String(obsObj.cliente || obsObj.nome || dadosPadrao.cliente),
+      saco: String(obsObj.saco || obsObj.bag || dadosPadrao.saco),
+      pecas: isNaN(numPecas) ? 0 : numPecas,
+      valor: isNaN(numValor) ? 0 : numValor
+    };
+  }
+
+  const dados = { ...dadosPadrao };
+  const partes = String(obsText).split(/[|\n]/);
+
+  partes.forEach((parte) => {
+    if (!parte.includes(":")) return;
+    const [chave, ...valorArr] = parte.split(":");
+    const valor = valorArr.join(":").trim();
+    const chaveLower = chave.trim().toLowerCase();
+
+    if (chaveLower.includes("ticket") || chaveLower.includes("cod")) {
+      dados.ticket = valor;
+    } else if (chaveLower.includes("cliente") || chaveLower.includes("cli")) {
+      dados.cliente = valor;
+    } else if (chaveLower.includes("saco")) {
+      dados.saco = valor;
+    } else if (chaveLower.includes("peça") || chaveLower.includes("peca")) {
+      const p = parseInt(valor.replace(/\D/g, ""), 10);
+      if (!isNaN(p)) dados.pecas = p;
+    } else if (chaveLower.includes("valor") || chaveLower.includes("total")) {
+      const v = parseFloat(valor.replace(/[^\d,-]/g, "").replace(",", "."));
+      if (!isNaN(v)) dados.valor = v;
+    }
+  });
+
+  return dados;
 }
 
 // =========================================================================
@@ -290,62 +386,196 @@ function extrairDadosObs(obsText) {
 
 function atualizarSelectLojasModal(oficinas) {
   if (!DOM.modalTicket.selectLoja) return;
+
+  if (!oficinas || oficinas.length === 0) {
+    DOM.modalTicket.selectLoja.innerHTML = `<option value="" disabled selected>Nenhuma loja encontrada</option>`;
+    return;
+  }
+
   const options = oficinas.map((oficina) => {
-    return `<option value="${escapeHTML(String(oficina.loja))}">${escapeHTML(oficina.nome_oficina)} (Cód: ${escapeHTML(String(oficina.loja))})</option>`;
+    const idLoja = oficina.loja || "";
+    const nome = oficina.nome_oficina || `Loja ${idLoja}`;
+    return `<option value="${escapeHTML(String(idLoja))}">${escapeHTML(nome)} (Cód: ${escapeHTML(String(idLoja))})</option>`;
   });
+
   DOM.modalTicket.selectLoja.innerHTML = `<option value="" disabled selected>Selecione uma Loja / Oficina...</option>` + options.join('');
 }
 
+/**
+ * Consulta a rota /oficinas/hoje da API local ou faz fallback via Supabase.
+ */
 async function carregarOficinasHoje() {
   try {
     const res = await fetch(`${API_URL}/oficinas/hoje`);
-    if (!res.ok) throw new Error("API Offline");
+
+    if (!res.ok) {
+      throw new Error(`Erro na API REST: Status ${res.status}`);
+    }
+
     const data = await res.json();
+
     if (data && data.sucesso) {
       state.oficinasHoje = data.oficinas || [];
+
+      if (DOM.macro.totalFaturado) DOM.macro.totalFaturado.textContent = fmtMoeda.format(data.total_geral || 0);
+      if (DOM.macro.totalProdutos) DOM.macro.totalProdutos.textContent = fmtMoeda.format(data.total_produtos || 0);
+      if (DOM.macro.totalServicos) DOM.macro.totalServicos.textContent = fmtMoeda.format(data.total_servicos || 0);
+
       renderizarCardsOficinas(state.oficinasHoje);
       atualizarSelectLojasModal(state.oficinasHoje);
       return;
     }
-    throw new Error("Dados inválidos");
-  } catch {
-    // Dados verídicos simulados de oficinas ativas no dia
-    state.oficinasHoje = [
-      { loja: 101, nome_oficina: "Filial Centro - Teresina", faturamento_total: 3850.00, qtd_vendas: 12, total_pecas: 18, status: "Online" },
-      { loja: 102, nome_oficina: "Filial Zona Leste - Teresina", faturamento_total: 5120.00, qtd_vendas: 16, total_pecas: 24, status: "Online" },
-      { loja: 103, nome_oficina: "Filial Zona Norte - Teresina", faturamento_total: 1940.00, qtd_vendas: 7, total_pecas: 9, status: "Online" }
-    ];
 
-    if (DOM.macro.totalFaturado) DOM.macro.totalFaturado.textContent = fmtMoeda.format(10910.00);
-    if (DOM.macro.totalProdutos) DOM.macro.totalProdutos.textContent = fmtMoeda.format(4500.00);
-    if (DOM.macro.totalServicos) DOM.macro.totalServicos.textContent = fmtMoeda.format(6410.00);
+    throw new Error("Formato de resposta inválido da API.");
 
-    renderizarCardsOficinas(state.oficinasHoje);
-    atualizarSelectLojasModal(state.oficinasHoje);
+  } catch (err) {
+    console.warn("⚠️ Falha ao consumir API local. Aplicando fallback de consulta ao Supabase...", err.message);
+    await carregarOficinasHojeFallbackSupabase();
   }
 }
 
+/**
+ * Fallback via Supabase caso a API REST não responda.
+ */
+async function carregarOficinasHojeFallbackSupabase() {
+  try {
+    const hojeInicio = new Date();
+    hojeInicio.setHours(0, 0, 0, 0);
+
+    const { data: pedidosHoje, error } = await supabase
+      .from("pedidos")
+      .select("*")
+      .gte("created_at", hojeInicio.toISOString());
+
+    if (error) throw error;
+
+    const mapaOficinas = {};
+    let faturamentoGeral = 0;
+
+    (pedidosHoje || []).forEach((p) => {
+      const lojaNome = p.loja_origem || "Loja Não Identificada";
+      const parsed = extrairDadosObs(p.obs_loja_origem || p.observacao);
+
+      const val = p.valor !== undefined && p.valor !== null
+        ? parseFloat(String(p.valor).replace(/[^\d,-]/g, "").replace(",", "."))
+        : parsed.valor;
+
+      const pecasVal = p.pecas !== undefined && p.pecas !== null
+        ? parseInt(String(p.pecas).replace(/\D/g, ""), 10)
+        : parsed.pecas;
+
+      const vFinal = isNaN(val) ? 0 : val;
+      const pFinal = isNaN(pecasVal) ? 0 : pecasVal;
+
+      faturamentoGeral += vFinal;
+
+      if (!mapaOficinas[lojaNome]) {
+        mapaOficinas[lojaNome] = {
+          loja: p.loja_id || 1,
+          nome_oficina: lojaNome,
+          faturamento_total: 0,
+          qtd_vendas: 0,
+          total_pecas: 0,
+          status: "Online"
+        };
+      }
+
+      mapaOficinas[lojaNome].faturamento_total += vFinal;
+      mapaOficinas[lojaNome].qtd_vendas += 1;
+      mapaOficinas[lojaNome].total_pecas += pFinal;
+    });
+
+    state.oficinasHoje = Object.values(mapaOficinas);
+
+    if (DOM.macro.totalFaturado) DOM.macro.totalFaturado.textContent = fmtMoeda.format(faturamentoGeral);
+    if (DOM.macro.totalProdutos) DOM.macro.totalProdutos.textContent = fmtMoeda.format(0);
+    if (DOM.macro.totalServicos) DOM.macro.totalServicos.textContent = fmtMoeda.format(faturamentoGeral);
+
+    renderizarCardsOficinas(state.oficinasHoje);
+    atualizarSelectLojasModal(state.oficinasHoje);
+
+  } catch (err) {
+    console.error("❌ Erro no fallback do Supabase:", err);
+    if (DOM.containerCardsOficinas) {
+      DOM.containerCardsOficinas.innerHTML = `
+        <div class="col-12 text-center py-4 text-muted">
+          Sem registros de oficinas ativas para o dia atual.
+        </div>
+      `;
+    }
+  }
+}
+
+/**
+ * Renderiza os cards das oficinas/PDVs na interface.
+ */
 function renderizarCardsOficinas(oficinas) {
   if (!DOM.containerCardsOficinas) return;
+
+  if (!oficinas || oficinas.length === 0) {
+    DOM.containerCardsOficinas.innerHTML = `
+      <div class="col-12 text-center py-4">
+        <p class="text-muted mb-0">Nenhuma movimentação de oficina registrada para hoje.</p>
+      </div>
+    `;
+    return;
+  }
+
   DOM.containerCardsOficinas.innerHTML = oficinas.map((oficina) => {
+    const isOffline = String(oficina.status || "").toLowerCase() === "offline";
+    const faturamento = oficina.faturamento_total || 0;
+
+    const nomeFormatado = oficina.nome_oficina.includes(' - ')
+      ? oficina.nome_oficina.split(' - ')[1]
+      : oficina.nome_oficina;
+
+    const idLoja = oficina.loja || "";
+
     return `
-      <div class="col-12 col-sm-6 col-md-4">
-        <div class="card-pdv p-4 d-flex flex-column justify-content-between border rounded bg-white shadow-sm">
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+        <div class="card-pdv p-4 d-flex flex-column justify-content-between">
           <div>
+            <div class="status-indicator ${isOffline ? 'offline' : ''}"></div>
+            
             <div class="d-flex justify-content-between align-items-center mb-1">
-              <span class="text-muted small fw-bold">CÓD: ${escapeHTML(String(oficina.loja))}</span>
-              <button type="button" class="btn btn-sm btn-outline-primary btn-ver-ticket" data-loja="${escapeHTML(String(oficina.loja))}">
-                <i class="bi bi-receipt me-1"></i>Ticket
-              </button>
+              <div class="text-muted small fw-medium text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.05em;">
+                CÓDIGO: ${escapeHTML(String(idLoja))}
+              </div>
+              
+              ${!isOffline ? `
+                <button type="button" class="btn btn-sm btn-outline-primary bg-light border text-primary btn-ver-ticket" data-loja="${escapeHTML(String(idLoja))}" data-nome="${escapeHTML(oficina.nome_oficina)}">
+                  <i class="bi bi-receipt me-1"></i>Visualizar Ticket
+                </button>
+              ` : ''}
             </div>
-            <h5 class="fw-bold text-dark mb-2">${escapeHTML(oficina.nome_oficina)}</h5>
-            <div class="fw-bold fs-4 text-success mb-3">${fmtMoeda.format(oficina.faturamento_total)}</div>
+            
+            <h4 class="fw-bold text-dark h5 mb-2 text-truncate" title="${escapeHTML(oficina.nome_oficina)}">
+              ${escapeHTML(nomeFormatado)}
+            </h4>
+
+            ${isOffline ? `
+              <div class="fw-semibold fs-6 text-muted my-3">
+                <i class="bi bi-wifi-off me-1 text-danger"></i> Indisponível
+              </div>
+            ` : `
+              <div class="fw-bold fs-4 text-dark mb-3">
+                ${fmtMoeda.format(faturamento)}
+              </div>
+            `}
           </div>
+
           <div>
-            <hr class="my-2">
-            <div class="d-flex gap-2">
-              <span class="badge bg-light text-dark border"><i class="bi bi-receipt me-1"></i>${oficina.qtd_vendas} Tickets</span>
-              <span class="badge bg-light text-dark border"><i class="bi bi-box-seam me-1"></i>${oficina.total_pecas} Peças</span>
+            <hr class="my-3" style="border-color: #f1f5f9;">
+            
+            ${!isOffline ? `
+              <div class="d-flex flex-wrap gap-2 mb-2">
+                <span class="badge-doc"><i class="bi bi-receipt me-1"></i>${oficina.qtd_vendas || 0} Tickets</span>
+                <span class="badge-doc"><i class="bi bi-box-seam me-1"></i>${oficina.total_pecas || 0} Peças</span>
+              </div>
+            ` : ''}
+            
+            <div class="text-secondary fw-semibold small mt-2 text-truncate" style="font-size: 0.72rem;" title="${escapeHTML(oficina.nome_oficina)}">
+              <i class="bi bi-geo-alt-fill me-1 text-primary"></i>${escapeHTML(oficina.nome_oficina)}
             </div>
           </div>
         </div>
@@ -359,11 +589,38 @@ function renderizarCardsOficinas(oficinas) {
 // =========================================================================
 
 function atualizarKPIs(pedidos) {
-  if (DOM.kpis.faturamento) DOM.kpis.faturamento.textContent = fmtMoeda.format(10910.00);
+  let pendentes = 0;
+  let retrabalho = 0;
+  let totalPecas = 0;
+  let faturamentoTotal = 0;
+
+  pedidos.forEach((p) => {
+    const st = String(p.status || "").toLowerCase();
+    if (st.includes("coleta") || st.includes("aguardando") || st.includes("pendente")) pendentes++;
+    if (st.includes("retrabalho")) retrabalho++;
+
+    const parsed = extrairDadosObs(p.obs_loja_origem || p.observacao);
+
+    if (p.pecas !== undefined && p.pecas !== null) {
+      const q = parseInt(String(p.pecas).replace(/\D/g, ""), 10);
+      totalPecas += isNaN(q) ? 0 : q;
+    } else {
+      totalPecas += parsed.pecas;
+    }
+
+    if (p.valor !== undefined && p.valor !== null) {
+      const v = parseFloat(String(p.valor).replace(/[^\d,-]/g, "").replace(",", "."));
+      faturamentoTotal += isNaN(v) ? 0 : v;
+    } else {
+      faturamentoTotal += parsed.valor;
+    }
+  });
+
+  if (DOM.kpis.faturamento) DOM.kpis.faturamento.textContent = fmtMoeda.format(faturamentoTotal);
   if (DOM.kpis.total) DOM.kpis.total.textContent = pedidos.length;
-  if (DOM.kpis.pendentes) DOM.kpis.pendentes.textContent = 3;
-  if (DOM.kpis.retrabalho) DOM.kpis.retrabalho.textContent = 1;
-  if (DOM.kpis.pecas) DOM.kpis.pecas.textContent = "51";
+  if (DOM.kpis.pendentes) DOM.kpis.pendentes.textContent = pendentes;
+  if (DOM.kpis.retrabalho) DOM.kpis.retrabalho.textContent = retrabalho;
+  if (DOM.kpis.pecas) DOM.kpis.pecas.textContent = totalPecas.toLocaleString("pt-BR");
 }
 
 async function gerarRelatorio() {
@@ -371,18 +628,53 @@ async function gerarRelatorio() {
   state.isCarregando = true;
 
   try {
-    // Dados verídicos simulados para exibição imediata com padrão profissional
-    state.pedidosGlobais = [
-      { id: 1001, loja_origem: "Filial Centro - Teresina", tipo_servico: "Manutenção de Smartphones", status: "Finalizado", ticket: "TK-9480", cliente: "Maria Oliveira", valor: 350.00, criado_at: new Date().toISOString() },
-      { id: 1002, loja_origem: "Filial Zona Leste - Teresina", tipo_servico: "Reparo de Placa Mãe", status: "Em Transporte", ticket: "TK-9481", cliente: "João Pedro Lima", valor: 620.00, criado_at: new Date().toISOString() },
-      { id: 1003, loja_origem: "Filial Zona Norte - Teresina", tipo_servico: "Troca de Display", status: "Pendente", ticket: "TK-9482", cliente: "Fernanda Costa", valor: 410.00, criado_at: new Date().toISOString() }
-    ];
+    if (DOM.containerPedidos && DOM.containerPedidos.children.length === 0) {
+      DOM.containerPedidos.innerHTML = `<p style="text-align: center; color: #64748b; padding: 24px;">Carregando pedidos...</p>`;
+    }
+
+    let query = supabase.from("pedidos").select(`
+      *,
+      pedido_eventos ( observacao )
+    `);
+
+    const statusVal = DOM.filtroStatus?.value;
+    if (statusVal && statusVal.toLowerCase() !== "todos") {
+      query = query.ilike("status", `%${statusVal}%`);
+    }
+
+    const termo = DOM.pesquisaOS?.value?.trim();
+    if (termo) {
+      if (/^\d+$/.test(termo) && termo.length <= 10) {
+        query = query.eq("id", Number(termo));
+      } else {
+        const termoSanitizado = termo.replace(/[%_,()]/g, "");
+        if (termoSanitizado) {
+          query = query.or(
+            `loja_origem.ilike.%${termoSanitizado}%,tipo_servico.ilike.%${termoSanitizado}%,status.ilike.%${termoSanitizado}%`
+          );
+        }
+      }
+    }
+
+    const { data: pedidos, error } = await query.order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    state.pedidosGlobais = pedidos || [];
 
     atualizarKPIs(state.pedidosGlobais);
     renderizarTabelaRelatorio(state.pedidosGlobais);
     atualizarGraficos(state.pedidosGlobais);
+
   } catch (err) {
-    console.error("Erro no relatório", err);
+    console.error("❌ Erro ao gerar relatório:", err);
+    if (DOM.containerPedidos) {
+      DOM.containerPedidos.innerHTML = `
+        <div style="text-align: center; color: #dc2626; padding: 24px;">
+          <p><strong>Não foi possível carregar os dados.</strong></p>
+          <small>${escapeHTML(err.message || "Erro de conexão com o banco de dados")}</small>
+        </div>`;
+    }
   } finally {
     state.isCarregando = false;
   }
@@ -392,70 +684,248 @@ function renderizarTabelaRelatorio(pedidos) {
   if (!DOM.containerPedidos) return;
   DOM.containerPedidos.innerHTML = "";
 
+  if (!pedidos || pedidos.length === 0) {
+    DOM.containerPedidos.innerHTML = `<p style="text-align: center; color: #64748b; padding: 24px;">Nenhum pedido encontrado para os filtros selecionados.</p>`;
+    return;
+  }
+
   const tabela = document.createElement("table");
   tabela.className = "table table-hover align-middle mb-0";
   tabela.innerHTML = `
-    <thead class="table-light">
+    <thead>
       <tr>
         <th>OS</th>
         <th>Loja Origem</th>
         <th>Serviço</th>
         <th>Status</th>
-        <th>Cliente / Ticket</th>
-        <th>Valor</th>
+        <th>Detalhes / Obs</th>
+        <th>Data do Registro</th>
       </tr>
     </thead>
     <tbody id="corpoTabela"></tbody>
   `;
 
   const corpoTabela = tabela.querySelector("#corpoTabela");
-  corpoTabela.innerHTML = pedidos.map(p => `
-    <tr>
-      <td><strong>#${p.id}</strong></td>
-      <td>${escapeHTML(p.loja_origem)}</td>
-      <td><span class="badge bg-light text-dark border">${escapeHTML(p.tipo_servico)}</span></td>
-      <td><span class="badge bg-success-subtle text-success">${escapeHTML(p.status)}</span></td>
-      <td>${escapeHTML(p.cliente)} (${escapeHTML(p.ticket)})</td>
-      <td class="fw-bold text-success">${fmtMoeda.format(p.valor)}</td>
-    </tr>
-  `).join('');
+  const fragmento = document.createDocumentFragment();
 
+  pedidos.forEach((p) => {
+    const tr = document.createElement("tr");
+    const parsedObs = extrairDadosObs(p.obs_loja_origem || p.observacao);
+    const coresStatus = obterEstiloStatus(p.status);
+
+    const ticket = escapeHTML(p.ticket || parsedObs.ticket);
+    const cliente = escapeHTML(p.cliente || parsedObs.cliente);
+    const saco = escapeHTML(p.saco || parsedObs.saco);
+
+    const pecasVal = p.pecas ?? parsedObs.pecas;
+    const pecas = escapeHTML(String(pecasVal));
+
+    const valorVal = p.valor !== undefined && p.valor !== null ? p.valor : parsedObs.valor;
+    const valorNum = typeof valorVal === "number" ? valorVal : parseFloat(String(valorVal).replace(/[^\d,-]/g, "").replace(",", "."));
+    const valorStr = !isNaN(valorNum) ? fmtMoeda.format(valorNum) : escapeHTML(String(valorVal || "0,00"));
+
+    let dataFormatada = "---";
+    const dataRef = p.criado_em || p.created_at;
+    if (dataRef) {
+      const d = new Date(dataRef);
+      if (!isNaN(d.getTime())) {
+        dataFormatada = `${d.toLocaleDateString("pt-BR")} ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+      }
+    }
+
+    tr.innerHTML = `
+      <td><strong>#${escapeHTML(String(p.id ?? "N/A"))}</strong></td>
+      <td>${escapeHTML(p.loja_origem ?? "Não informada")}</td>
+      <td><span class="badge bg-light text-dark border">${escapeHTML(p.tipo_servico ?? "Geral")}</span></td>
+      <td>
+        <span class="badge" style="background-color: ${coresStatus.bg}; color: ${coresStatus.texto}; border: 1px solid ${coresStatus.texto}33;">
+          ${escapeHTML(p.status ?? "Sem status")}
+        </span>
+      </td>
+      <td>
+        <div class="d-flex flex-wrap gap-1">
+          <span class="badge bg-light text-secondary border">Ticket: <strong>${ticket}</strong></span>
+          <span class="badge bg-light text-secondary border">Cliente: <strong>${cliente}</strong></span>
+          <span class="badge bg-light text-secondary border">Saco: <strong>${saco}</strong></span>
+          <span class="badge bg-light text-secondary border">Peças: <strong>${pecas}</strong></span>
+          <span class="badge bg-light text-secondary border">Valor: <strong>${valorStr}</strong></span>
+        </div>
+      </td>
+      <td style="color: #64748b; font-size: 0.85rem;">${dataFormatada}</td>
+    `;
+
+    fragmento.appendChild(tr);
+  });
+
+  corpoTabela.appendChild(fragmento);
   DOM.containerPedidos.appendChild(tabela);
 }
 
 function atualizarGraficos(pedidos) {
   if (typeof window.Chart === "undefined") return;
-  // Configuração padrão dos gráficos mantida caso o Chart.js esteja carregado
+
+  const statusCount = {};
+  const servicoCount = {};
+
+  pedidos.forEach((p) => {
+    const st = p.status ?? "Sem Status";
+    const sr = p.tipo_servico ?? "Geral";
+    statusCount[st] = (statusCount[st] || 0) + 1;
+    servicoCount[sr] = (servicoCount[sr] || 0) + 1;
+  });
+
+  if (DOM.graficos.status) {
+    const labelsStatus = Object.keys(statusCount);
+    const dataStatus = Object.values(statusCount);
+
+    if (state.chartStatus) {
+      state.chartStatus.data.labels = labelsStatus;
+      state.chartStatus.data.datasets[0].data = dataStatus;
+      state.chartStatus.update("none");
+    } else {
+      const chartExistente = Chart.getChart(DOM.graficos.status);
+      if (chartExistente) chartExistente.destroy();
+
+      state.chartStatus = new Chart(DOM.graficos.status.getContext("2d"), {
+        type: "doughnut",
+        data: {
+          labels: labelsStatus,
+          datasets: [{
+            data: dataStatus,
+            backgroundColor: [
+              PALETA_CORES.pendente.hex,
+              PALETA_CORES.sucesso.hex,
+              PALETA_CORES.alerta.hex,
+              PALETA_CORES.transporte.hex,
+              PALETA_CORES.roxo.hex,
+              PALETA_CORES.escuro.hex
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'right' } }
+        }
+      });
+    }
+  }
+
+  if (DOM.graficos.servico) {
+    const labelsServico = Object.keys(servicoCount);
+    const dataServico = Object.values(servicoCount);
+
+    if (state.chartServico) {
+      state.chartServico.data.labels = labelsServico;
+      state.chartServico.data.datasets[0].data = dataServico;
+      state.chartServico.update("none");
+    } else {
+      const chartExistente = Chart.getChart(DOM.graficos.servico);
+      if (chartExistente) chartExistente.destroy();
+
+      state.chartServico = new Chart(DOM.graficos.servico.getContext("2d"), {
+        type: "bar",
+        data: {
+          labels: labelsServico,
+          datasets: [{
+            label: "Volume de Pedidos",
+            data: dataServico,
+            backgroundColor: "#0b53a7",
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+      });
+    }
+  }
 }
 
 // =========================================================================
 // 6. REALTIME & INICIALIZAÇÃO DOS EVENTOS
 // =========================================================================
 
+function escutarRealtime() {
+  if (state.realtimeChannel) {
+    supabase.removeChannel(state.realtimeChannel);
+  }
+
+  state.realtimeChannel = supabase
+    .channel("admin-pedidos-changes")
+    .on("postgres_changes", { event: "*", schema: "public", table: "pedidos" }, () => {
+      clearTimeout(state.debounceTimer);
+      state.debounceTimer = setTimeout(() => {
+        gerarRelatorio();
+        carregarOficinasHoje();
+      }, 400);
+    })
+    .subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        console.log("⚡ Conectado ao Realtime do Supabase (Pedidos)");
+      }
+    });
+}
+
+// Inicializador
 document.addEventListener("DOMContentLoaded", () => {
-  if (DOM.dataExibicao) {
+  if (DOM.dataExibicao && !DOM.dataExibicao.textContent.trim()) {
     DOM.dataExibicao.textContent = `(${new Date().toLocaleDateString('pt-BR')})`;
   }
 
+  // Inicializa a instância do Modal de busca via Bootstrap API
   if (DOM.modalTicket.elemento && typeof bootstrap !== "undefined") {
     DOM.modalTicket.instancia = new bootstrap.Modal(DOM.modalTicket.elemento);
   }
 
   carregarOficinasHoje();
   gerarRelatorio();
+  escutarRealtime();
 
+  // Eventos da barra de pesquisa e filtros
   DOM.btnFiltrar?.addEventListener("click", gerarRelatorio);
   DOM.filtroStatus?.addEventListener("change", gerarRelatorio);
 
-  DOM.modalTicket.btnBuscar?.addEventListener("click", () => {
-    consultarEExibirTicket(DOM.modalTicket.selectLoja?.value, DOM.modalTicket.inputSerie?.value || "1", DOM.modalTicket.inputNumero?.value);
+  DOM.pesquisaOS?.addEventListener("input", () => {
+    clearTimeout(state.debounceTimer);
+    state.debounceTimer = setTimeout(gerarRelatorio, 350);
   });
 
+  // Ação do Botão Consultar do Modal de Ticket -> Abre o Modal Flutuante com dados
+  DOM.modalTicket.btnBuscar?.addEventListener("click", () => {
+    const lojaVal = DOM.modalTicket.selectLoja?.value;
+    const serieVal = DOM.modalTicket.inputSerie?.value || "1";
+    const numeroVal = DOM.modalTicket.inputNumero?.value;
+
+    consultarEExibirTicket(lojaVal, serieVal, numeroVal);
+  });
+
+  // Clique no botão "Visualizar Ticket" dos Cards Individuais de Oficina
   DOM.containerCardsOficinas?.addEventListener("click", (evt) => {
     const btn = evt.target.closest(".btn-ver-ticket");
     if (btn) {
-      if (DOM.modalTicket.selectLoja) DOM.modalTicket.selectLoja.value = btn.dataset.loja;
-      DOM.modalTicket.instancia?.show();
+      const idLoja = btn.dataset.loja;
+      
+      // Pré-seleciona a loja correspondente no select do modal
+      if (DOM.modalTicket.selectLoja) {
+        DOM.modalTicket.selectLoja.value = idLoja;
+      }
+
+      // Exibe o Modal de busca
+      if (DOM.modalTicket.instancia) {
+        DOM.modalTicket.instancia.show();
+      }
     }
   });
+});
+
+// Limpeza de recursos na saída
+window.addEventListener("beforeunload", () => {
+  if (state.realtimeChannel) {
+    supabase.removeChannel(state.realtimeChannel);
+  }
+  if (state.chartStatus) state.chartStatus.destroy();
+  if (state.chartServico) state.chartServico.destroy();
 });

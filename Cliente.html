@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Consulta Cliente</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+      font-size: 11px;
+    }
+
+    body {
+      background-color: #f0f4f8;
+      margin: 10px;
+    }
+
+    .top-bar {
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #333;
+    }
+
+    /* Form Topo */
+    .search-panel {
+      display: grid;
+      grid-template-columns: 150px 220px 150px 1fr 100px;
+      gap: 5px 10px;
+      align-items: center;
+      background-color: #f0f4f8;
+      padding: 5px;
+      border: 1px solid #b4c6e7;
+      margin-bottom: 5px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group label {
+      font-weight: bold;
+      color: #000080;
+      margin-bottom: 2px;
+    }
+
+    .form-group input {
+      border: 1px solid #7f9db9;
+      padding: 2px 4px;
+      height: 22px;
+      background-color: #fff;
+    }
+
+    .btn-search {
+      height: 45px;
+      background: linear-gradient(to bottom, #ffffff, #dce6f1);
+      border: 1px solid #7f9db9;
+      border-radius: 3px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #000080;
+    }
+
+    .btn-search:hover {
+      background: #c6d9f1;
+    }
+
+    /* Main Container */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 320px 60px 260px 1fr 90px;
+      gap: 5px;
+      align-items: start;
+    }
+
+    .section-title {
+      font-weight: bold;
+      color: #000080;
+      margin-bottom: 2px;
+    }
+
+    /* Lista Resultados */
+    .list-box {
+      border: 1px solid #7f9db9;
+      background-color: #fff;
+      height: 380px;
+      overflow-y: auto;
+    }
+
+    .list-box div {
+      padding: 3px 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+    }
+
+    .list-box div.selected {
+      background-color: #000080;
+      color: #fff;
+    }
+
+    /* Botões Navegação Lateral */
+    .nav-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      padding-top: 10px;
+    }
+
+    .btn-nav {
+      background: linear-gradient(to bottom, #ffffff, #dce6f1);
+      border: 1px solid #7f9db9;
+      padding: 5px 2px;
+      text-align: center;
+      font-size: 10px;
+      color: #000080;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+
+    /* Tabelas de Tickets */
+    .table-container {
+      border: 1px solid #7f9db9;
+      background-color: #fff;
+      height: 380px;
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      background-color: #c6d9f1;
+      border: 1px solid #7f9db9;
+      padding: 3px;
+      text-align: center;
+      font-weight: normal;
+    }
+
+    td {
+      border: 1px solid #e0e0e0;
+      padding: 3px;
+      text-align: center;
+    }
+
+    tr.highlight-purple td {
+      background-color: #d9d9f3;
+    }
+
+    tr.highlight-green td {
+      background-color: #c6efce;
+    }
+
+    /* Detalhes Endereço */
+    .details-box {
+      border: 1px solid #7f9db9;
+      background-color: #f9f9f9;
+      padding: 5px;
+      height: 60px;
+      margin-top: 5px;
+      grid-column: span 1;
+    }
+
+    /* Legendas */
+    .legend-container {
+      grid-column: 3 / span 3;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
+      margin-top: 5px;
+      background-color: #e8eef5;
+      padding: 5px;
+      border: 1px solid #b4c6e7;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .legend-box {
+      width: 15px;
+      height: 15px;
+      border: 1px solid #7f9db9;
+    }
+
+    /* Cores das Legendas */
+    .bg-pago { background-color: #c6d9f1; }
+    .bg-nao-pago { background-color: #ffeb9c; }
+    .bg-anulado { background-color: #fce4d6; }
+    .bg-entregue-pago { background-color: #c6efce; }
+    .bg-orcamento { background-color: #b4e6eb; }
+    .bg-delivery { background-color: #f8cbad; }
+    .bg-entregue-nao-pago { background-color: #fff2cc; }
+    .bg-orc-nao-aprovado { background-color: #f4b084; }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">OPERADOR: TESTE</div>
+
+  <!-- Form de Busca -->
+  <div class="search-panel">
+    <div class="form-group">
+      <label>Telefone</label>
+      <input type="text">
+    </div>
+    <div class="form-group">
+      <label>Nome 💡</label>
+      <input type="text" value="MARIA FERNA">
+    </div>
+    <div class="form-group">
+      <label>Código</label>
+      <input type="text">
+    </div>
+    <div></div>
+    <button class="btn-search">
+      🔍<br>[F3] Pesquisar
+    </button>
+
+    <div class="form-group" style="grid-column: span 2;">
+      <label>Endereço</label>
+      <input type="text">
+    </div>
+    <div class="form-group" style="grid-column: span 2;">
+      <label>CPF/CNPJ</label>
+      <input type="text">
+    </div>
+  </div>
+
+  <!-- Conteúdo Principal -->
+  <div class="main-grid">
+    
+    <!-- Coluna Resultado -->
+    <div>
+      <div class="section-title">Resultado</div>
+      <div class="list-box">
+        <div>MARIA FERNANDA ARAGAO FERREIRA (86 998...</div>
+        <div>MARIA FERNANDA BEZERRA (86995125995)</div>
+        <div>MARIA FERNANDA CARNEIRO PINHEIRO (8698...</div>
+        <div>MARIA FERNANDA CARVALHO ARRUDA LIMA (...</div>
+        <div>MARIA FERNANDA COUTRINHO SOUSA (71 99...</div>
+        <div>MARIA FERNANDA DA SILVA NASCIMENTO (86...</div>
+        <div>MARIA FERNANDA DE SOUSA MENDES FERRAZ...</div>
+        <div>MARIA FERNANDA ELEOTERIO PORTELA (86 9...</div>
+        <div>MARIA FERNANDA GAMA SERAINE (899810926...</div>
+        <div>MARIA FERNANDA GUIMARAES VELOSO (8699...</div>
+        <div>MARIA FERNANDA LEITE LIMA MORAIS (86 99...</div>
+        <div>MARIA FERNANDA MATIAS LOPES CIPRIANO (...</div>
+        <div>MARIA FERNANDA MELO DE OLIVEIRA (86988...</div>
+        <div>MARIA FERNANDA MONTEIRO (86995548271)</div>
+        <div>MARIA FERNANDA MOURA DA SILVA (86 9955...</div>
+        <div class="selected">MARIA FERNANDA PINHO (86999890272)</div>
+        <div>MARIA FERNANDA SOARES RIBEIRO (8699415...</div>
+        <div>MARIA FERNANDA VASCONCELOS SA (869980...</div>
+      </div>
+    </div>
+
+    <!-- Botões de Paginação -->
+    <div class="nav-buttons">
+      <br>
+      <button class="btn-nav">▲<br>Pág. Ant.</button>
+      <button class="btn-nav">▲<br>Anterior</button>
+      <button class="btn-nav">▼<br>Próximo</button>
+      <button class="btn-nav">▼<br>Próx. Pág.</button>
+    </div>
+
+    <!-- Tabela Tickets em Aberto -->
+    <div>
+      <div class="section-title">Tickets em Aberto</div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Série</th>
+              <th>Ticket</th>
+              <th>Emissão</th>
+              <th>Pos.</th>
+              <th>*</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="highlight-purple">
+              <td>1</td>
+              <td>69889</td>
+              <td>23/02/2026</td>
+              <td>49expre</td>
+              <td>*D</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tabela Tickets Entregues/Anulados -->
+    <div>
+      <div class="section-title">Tickets Entregues/Anulados</div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Série</th>
+              <th>Ticket</th>
+              <th>Emissão</th>
+              <th>*</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="highlight-green">
+              <td>1</td>
+              <td>69773</td>
+              <td>18/02/2026</td>
+              <td>*</td>
+            </tr>
+            <tr class="highlight-green">
+              <td>1</td>
+              <td>59677</td>
+              <td>16/01/2025</td>
+              <td>*</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Botão Ticket Lateral -->
+    <div>
+      <br>
+      <button class="btn-search" style="width: 100%;">
+        🔍<br>[Ctrl+T] Ticket
+      </button>
+    </div>
+
+    <!-- Detalhes do Endereço -->
+    <div>
+      <div class="section-title">Detalhes Endereço</div>
+      <div class="details-box">
+        R HONÓRIO PARENTE, 675 - JÓQUEI - TERESINA - PI - 64048360
+      </div>
+    </div>
+
+    <!-- Legenda de Status -->
+    <div class="legend-container">
+      <div class="legend-item"><div class="legend-box bg-pago"></div> Pago</div>
+      <div class="legend-item"><div class="legend-box bg-nao-pago"></div> Não Pago</div>
+      <div class="legend-item"><div class="legend-box bg-anulado"></div> Anulado</div>
+      <div class="legend-item"><div class="legend-box bg-entregue-pago"></div> Entregue Pago</div>
+      
+      <div class="legend-item"><div class="legend-box bg-orcamento"></div> Orçamento</div>
+      <div class="legend-item"><div class="legend-box bg-delivery"></div> Delivery</div>
+      <div class="legend-item"><div class="legend-box bg-entregue-nao-pago"></div> Entregue Não Pago</div>
+      <div class="legend-item"><div class="legend-box bg-orc-nao-aprovado"></div> Orç. Não Aprovado</div>
+
+      <div style="grid-column: span 4; font-weight: bold; margin-top: 3px;">
+        (*)Tck c/ Observação, (D)Disp.
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

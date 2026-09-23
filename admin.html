@@ -67,29 +67,53 @@
         .section-intro { margin-bottom: 24px; }
         .title-global { font-size: 2rem; color: #0f172a; font-weight: 700; }
 
-        /* Contêiner de Seleção de Período */
+        /* Contêiner de Seleção de Período (Data Inicial - Data Final) */
         .periodo-container {
             display: inline-flex;
             align-items: center;
+            gap: 8px;
             background-color: #0f172a;
             color: #ffffff;
-            padding: 6px 14px;
-            border-radius: 8px;
+            padding: 8px 14px;
+            border-radius: 10px;
             border: 1px solid #1e293b;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            flex-wrap: wrap;
+        }
+        .periodo-container label {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            font-weight: 600;
+            text-transform: uppercase;
         }
         .periodo-container input[type="date"] {
-            background: transparent;
-            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
             color: #ffffff;
-            font-size: 0.875rem;
+            font-size: 0.85rem;
             font-weight: 500;
+            padding: 4px 8px;
             outline: none;
             cursor: pointer;
         }
         .periodo-container input[type="date"]::-webkit-calendar-picker-indicator {
             filter: invert(1);
             cursor: pointer;
+        }
+        .btn-aplicar-periodo {
+            background-color: var(--primary-yellow);
+            color: #0f172a;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-aplicar-periodo:hover {
+            background-color: #d4ac0d;
         }
 
         /* Cards Macro de Faturamento */
@@ -242,6 +266,7 @@
             .filter-bar { flex-direction: column; align-items: stretch; }
             .filter-bar input { min-width: 100%; }
             .btn-visualizar-ticket { width: 100%; justify-content: center; }
+            .periodo-container { width: 100%; justify-content: space-between; }
         }
     </style>
 </head>
@@ -270,10 +295,22 @@
                 </h2>
                 <p class="text-muted small mb-0">Visão geral de faturamento, ordens de serviço e métricas em tempo real.</p>
             </div>
+            
+            <!-- Seleção de Período (De / Até) -->
             <div>
                 <div class="periodo-container">
-                    <i class="bi bi-calendar3 me-2" aria-hidden="true"></i>
-                    <input type="date" id="filtro_data" aria-label="Selecionar Data do Painel" title="Selecionar Data do Painel">
+                    <i class="bi bi-calendar-range me-1" aria-hidden="true"></i>
+                    <div>
+                        <label for="filtro_data_inicio" class="d-block">De:</label>
+                        <input type="date" id="filtro_data_inicio" aria-label="Data Inicial">
+                    </div>
+                    <div>
+                        <label for="filtro_data_fim" class="d-block">Até:</label>
+                        <input type="date" id="filtro_data_fim" aria-label="Data Final">
+                    </div>
+                    <button type="button" id="btn_buscar_periodo" class="btn-aplicar-periodo align-self-end mt-3 mt-sm-0">
+                        <i class="bi bi-filter"></i> Filtrar
+                    </button>
                 </div>
             </div>
         </div>
@@ -332,7 +369,7 @@
         <!-- Renderizado dinamicamente pelo JS -->
         <div class="row g-4 justify-content-start mb-5" id="cards">
             <div class="col-12 text-center py-4">
-                <p class="text-muted mb-0">Carregando oficinas do dia...</p>
+                <p class="text-muted mb-0">Carregando oficinas do período...</p>
             </div>
         </div>
 

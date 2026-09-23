@@ -3,7 +3,7 @@ import { supabase } from "./supabase.js";
 // Configuração da URL da API (ambiente local)
 const API_URL = 'http://localhost:3000';
 
-document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", () => {
     const inputInicio = document.getElementById("filtro_data_inicio");
     const inputFim = document.getElementById("filtro_data_fim");
     const btnBuscarPeriodo = document.getElementById("btn_buscar_periodo");

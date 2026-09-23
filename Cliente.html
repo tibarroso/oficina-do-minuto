@@ -211,28 +211,28 @@
   <div class="search-panel">
     <div class="form-group">
       <label>Telefone</label>
-      <input type="text">
+      <input type="text" id="filtro-telefone">
     </div>
     <div class="form-group">
       <label>Nome 💡</label>
-      <input type="text" value="MARIA FERNA">
+      <input type="text" id="filtro-nome">
     </div>
     <div class="form-group">
       <label>Código</label>
-      <input type="text">
+      <input type="text" id="filtro-codigo" readonly>
     </div>
     <div></div>
-    <button class="btn-search">
+    <button class="btn-search" id="btn-pesquisar">
       🔍<br>[F3] Pesquisar
     </button>
 
     <div class="form-group" style="grid-column: span 2;">
       <label>Endereço</label>
-      <input type="text">
+      <input type="text" id="filtro-endereco" readonly>
     </div>
     <div class="form-group" style="grid-column: span 2;">
       <label>CPF/CNPJ</label>
-      <input type="text">
+      <input type="text" id="filtro-cpf" readonly>
     </div>
   </div>
 
@@ -242,25 +242,8 @@
     <!-- Coluna Resultado -->
     <div>
       <div class="section-title">Resultado</div>
-      <div class="list-box">
-        <div>MARIA FERNANDA ARAGAO FERREIRA (86 998...</div>
-        <div>MARIA FERNANDA BEZERRA (86995125995)</div>
-        <div>MARIA FERNANDA CARNEIRO PINHEIRO (8698...</div>
-        <div>MARIA FERNANDA CARVALHO ARRUDA LIMA (...</div>
-        <div>MARIA FERNANDA COUTRINHO SOUSA (71 99...</div>
-        <div>MARIA FERNANDA DA SILVA NASCIMENTO (86...</div>
-        <div>MARIA FERNANDA DE SOUSA MENDES FERRAZ...</div>
-        <div>MARIA FERNANDA ELEOTERIO PORTELA (86 9...</div>
-        <div>MARIA FERNANDA GAMA SERAINE (899810926...</div>
-        <div>MARIA FERNANDA GUIMARAES VELOSO (8699...</div>
-        <div>MARIA FERNANDA LEITE LIMA MORAIS (86 99...</div>
-        <div>MARIA FERNANDA MATIAS LOPES CIPRIANO (...</div>
-        <div>MARIA FERNANDA MELO DE OLIVEIRA (86988...</div>
-        <div>MARIA FERNANDA MONTEIRO (86995548271)</div>
-        <div>MARIA FERNANDA MOURA DA SILVA (86 9955...</div>
-        <div class="selected">MARIA FERNANDA PINHO (86999890272)</div>
-        <div>MARIA FERNANDA SOARES RIBEIRO (8699415...</div>
-        <div>MARIA FERNANDA VASCONCELOS SA (869980...</div>
+      <div class="list-box" id="lista-resultados">
+        <!-- Vazio por padrão, preenchido via JS -->
       </div>
     </div>
 
@@ -287,14 +270,8 @@
               <th>*</th>
             </tr>
           </thead>
-          <tbody>
-            <tr class="highlight-purple">
-              <td>1</td>
-              <td>69889</td>
-              <td>23/02/2026</td>
-              <td>49expre</td>
-              <td>*D</td>
-            </tr>
+          <tbody id="tabela-abertos-body">
+            <!-- Vazio por padrão -->
           </tbody>
         </table>
       </div>
@@ -313,19 +290,8 @@
               <th>*</th>
             </tr>
           </thead>
-          <tbody>
-            <tr class="highlight-green">
-              <td>1</td>
-              <td>69773</td>
-              <td>18/02/2026</td>
-              <td>*</td>
-            </tr>
-            <tr class="highlight-green">
-              <td>1</td>
-              <td>59677</td>
-              <td>16/01/2025</td>
-              <td>*</td>
-            </tr>
+          <tbody id="tabela-entregues-body">
+            <!-- Vazio por padrão -->
           </tbody>
         </table>
       </div>
@@ -342,8 +308,8 @@
     <!-- Detalhes do Endereço -->
     <div>
       <div class="section-title">Detalhes Endereço</div>
-      <div class="details-box">
-        R HONÓRIO PARENTE, 675 - JÓQUEI - TERESINA - PI - 64048360
+      <div class="details-box" id="detalhes-endereco-box">
+        <!-- Vazio por padrão -->
       </div>
     </div>
 
@@ -366,5 +332,7 @@
 
   </div>
 
+  <!-- Script de Conexão com o Back-end -->
+  <script type="module" src="./js/Cliente.js"></script>
 </body>
 </html>

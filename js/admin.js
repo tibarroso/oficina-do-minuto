@@ -17,22 +17,22 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // 2. Disparar a busca ao clicar em "Filtrar"
-    if (btnBuscarPeriodo) {
-        btnBuscarPeriodo.addEventListener("click", () => {
-            const dataInicio = inputInicio.value;
-            const dataFim = inputFim.value;
+// Dentro do seu addEventListener do botão "Filtrar":
+if (btnBuscarPeriodo) {
+    btnBuscarPeriodo.addEventListener("click", () => {
+        const dataInicio = inputInicio.value;
+        const dataFim = inputFim.value;
 
-            if (!dataInicio || !dataFim) {
-                alert("Por favor, selecione a data inicial e a data final.");
-                return;
-            }
+        if (!dataInicio || !dataFim) {
+            alert("Por favor, selecione a data inicial e a data final.");
+            return;
+        }
 
-            // CHAME AQUI A SUA FUNÇÃO REAL DE CARREGAMENTO PASSANDO AS DATAS:
-            // Exemplo: carregarDadosDoPainel(dataInicio, dataFim);
-            console.log("Filtrando período de:", dataInicio, "até", dataFim);
-        });
-    }
-});
+        // CHAME AQUI A SUA FUNÇÃO QUE BUSCA OS DADOS NO SUPABASE PASSANDO AS DATAS:
+        // Exemplo comum (substitua pelo nome da função que você já usa para carregar os pedidos):
+        carregarPedidosDoSupabase(dataInicio, dataFim);
+    });
+}
 
 // Função que calcula e atualiza os cards de Faturamento
 function atualizarFaturamentoPorPeriodo(dataInicio, dataFim) {

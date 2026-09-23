@@ -4,12 +4,11 @@ import { supabase } from "./supabase.js";
 const API_URL = 'http://localhost:3000';
 
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Elementos do filtro de período
     const inputInicio = document.getElementById("filtro_data_inicio");
     const inputFim = document.getElementById("filtro_data_fim");
     const btnBuscarPeriodo = document.getElementById("btn_buscar_periodo");
 
-    // Preencher com o mês atual por padrão (se estiverem vazios)
+    // 1. Preencher com o mês atual por padrão se estiverem vazios
     if (inputInicio && !inputInicio.value) {
         const hoje = new Date();
         const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
@@ -17,7 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
         inputFim.value = hoje.toISOString().split("T")[0];
     }
 
-    // 2. Ouvir o clique do botão de filtrar período
+    // 2. Disparar a busca ao clicar em "Filtrar"
     if (btnBuscarPeriodo) {
         btnBuscarPeriodo.addEventListener("click", () => {
             const dataInicio = inputInicio.value;
@@ -28,8 +27,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            // Chama a função que recalcula os valores com base nas datas
-            atualizarFaturamentoPorPeriodo(dataInicio, dataFim);
+            // CHAME AQUI A SUA FUNÇÃO REAL DE CARREGAMENTO PASSANDO AS DATAS:
+            // Exemplo: carregarDadosDoPainel(dataInicio, dataFim);
+            console.log("Filtrando período de:", dataInicio, "até", dataFim);
         });
     }
 });

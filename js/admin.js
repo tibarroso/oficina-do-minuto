@@ -136,7 +136,6 @@ async function consultarEExibirTicket(lojaId, serie, numero) {
     return;
   }
 
-  // Feedback de carregamento no botão
   if (DOM.modalTicket.btnBuscar) {
     DOM.modalTicket.btnBuscar.disabled = true;
     DOM.modalTicket.btnBuscar.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Consultando...`;
@@ -151,24 +150,27 @@ async function consultarEExibirTicket(lojaId, serie, numero) {
       dadosTicket = await response.json();
     }
 
-    // Preenche o conteúdo HTML do Modal de Detalhes
     renderizarDetalhesTicketModal(dadosTicket, { loja: lojaLimpa, serie: serieLimpa, numero: numeroLimpo });
 
-    // Fecha o modal de busca e em seguida abre o modal de detalhes
     const elemBusca = DOM.modalTicket.elemento;
-    const instanceBusca = bootstrap.Modal.getInstance(elemBusca) || new bootstrap.Modal(elemBusca);
-    
-    // Listener executado apenas quando a transição do primeiro modal terminar
-    const onModalHidden = () => {
-      elemBusca.removeEventListener("hidden.bs.modal", onModalHidden);
-      
-      const elemDetalhes = DOM.modalDetalhes.elemento;
-      const instanceDetalhes = new bootstrap.Modal(elemDetalhes);
-      instanceDetalhes.show();
-    };
+    const elemDetalhes = DOM.modalDetalhes.elemento;
 
-    elemBusca.addEventListener("hidden.bs.modal", onModalHidden);
-    instanceBusca.hide();
+    if (!elemBusca || !elemDetalhes) return;
+
+    const instanceBusca = bootstrap.Modal.getInstance(elemBusca) || new bootstrap.Modal(elemBusca);
+    const instanceDetalhes = bootstrap.Modal.getInstance(elemDetalhes) || new bootstrap.Modal(elemDetalhes);
+
+    // Transição segura entre os modais do Bootstrap
+    if (elemBusca.classList.contains("show")) {
+      const onModalHidden = () => {
+        elemBusca.removeEventListener("hidden.bs.modal", onModalHidden);
+        instanceDetalhes.show();
+      };
+      elemBusca.addEventListener("hidden.bs.modal", onModalHidden);
+      instanceBusca.hide();
+    } else {
+      instanceDetalhes.show();
+    }
 
   } catch (error) {
     console.error("❌ Erro ao consultar ticket:", error);
@@ -183,7 +185,6 @@ async function consultarEExibirTicket(lojaId, serie, numero) {
 
 /**
  * Monta a estrutura HTML dentro da tela flutuante de detalhes do ticket
- * suportando a estrutura completa de Peças, Serviços e Observações Gerais.
  */
 function renderizarDetalhesTicketModal(dados, params) {
   if (!DOM.modalDetalhes.conteudo) return;
@@ -203,7 +204,6 @@ function renderizarDetalhesTicketModal(dados, params) {
     return;
   }
 
-  // Mapeia todas as peças e seus respectivos serviços
   const pecasHTML = (dados.pecas || []).map((peca) => {
     const servicosHTML = (peca.servicos || []).map((s) => {
       const isEntregue = String(s.status || '').toLowerCase() === 'entregue';
@@ -257,9 +257,7 @@ function renderizarDetalhesTicketModal(dados, params) {
     `;
   }).join('');
 
-  // Montagem final do modal com os dados gerais do ticket
   DOM.modalDetalhes.conteudo.innerHTML = `
-    <!-- Cabeçalho do Ticket -->
     <div class="row g-2 mb-3">
       <div class="col-md-6">
         <div class="p-3 border rounded bg-light">
@@ -283,7 +281,6 @@ function renderizarDetalhesTicketModal(dados, params) {
       </div>
     </div>
 
-    <!-- Dados do Cliente e Datas -->
     <div class="card mb-3">
       <div class="card-body p-3">
         <div class="row g-2">
@@ -314,14 +311,13 @@ function renderizarDetalhesTicketModal(dados, params) {
       </div>
     </div>
 
-    <!-- Lista de Peças e Serviços -->
     <h6 class="fw-bold mb-2 text-dark"><i class="bi bi-box-seam me-1"></i> Peças e Serviços Solicitados</h6>
     ${pecasHTML || '<p class="text-muted small">Nenhuma peça detalhada para este ticket.</p>'}
   `;
 }
 
 /**
- * Extrai dados estruturados de observação tratando JSONs, strings chave:valor e nulos.
+ * Extrai dados estruturados de observação tratando JSONs e strings chave:valor.
  */
 function extrairDadosObs(obsText) {
   const dadosPadrao = {
@@ -342,7 +338,7 @@ function extrairDadosObs(obsText) {
       try {
         obsObj = JSON.parse(textoLimpo);
       } catch {
-        // Segue como texto puro em caso de falha no JSON
+        // Mantém como string caso falhe o parse
       }
     }
   }
@@ -391,9 +387,6 @@ function extrairDadosObs(obsText) {
 // 4. OFICINAS DO DIA & PREENCHIMENTO DE SELECTS
 // =========================================================================
 
-/**
- * Atualiza as opções do <select> de lojas dentro do Modal.
- */
 function atualizarSelectLojasModal(oficinas) {
   if (!DOM.modalTicket.selectLoja) return;
 
@@ -411,16 +404,11 @@ function atualizarSelectLojasModal(oficinas) {
   DOM.modalTicket.selectLoja.innerHTML = `<option value="" disabled selected>Selecione uma Loja / Oficina...</option>` + options.join('');
 }
 
-/**
- * Consulta a rota /oficinas/hoje da API local ou faz fallback via Supabase.
- */
 async function carregarOficinasHoje() {
   try {
     const res = await fetch(`${API_URL}/oficinas/hoje`);
 
-    if (!res.ok) {
-      throw new Error(`Erro na API REST: Status ${res.status}`);
-    }
+    if (!res.ok) throw new Error(`Erro na API REST: Status ${res.status}`);
 
     const data = await res.json();
 
@@ -444,9 +432,6 @@ async function carregarOficinasHoje() {
   }
 }
 
-/**
- * Fallback via Supabase caso a API REST não responda.
- */
 async function carregarOficinasHojeFallbackSupabase() {
   try {
     const hojeInicio = new Date();
@@ -516,9 +501,6 @@ async function carregarOficinasHojeFallbackSupabase() {
   }
 }
 
-/**
- * Renderiza os cards das oficinas/PDVs na interface.
- */
 function renderizarCardsOficinas(oficinas) {
   if (!DOM.containerCardsOficinas) return;
 
@@ -553,7 +535,7 @@ function renderizarCardsOficinas(oficinas) {
               </div>
               
               ${!isOffline ? `
-                <button type="button" class="btn btn-sm btn-outline-primary bg-light border text-primary btn-ver-ticket" data-loja="${escapeHTML(String(idLoja))}" data-nome="${escapeHTML(oficina.nome_oficina)}">
+                <button type="button" class="btn btn-sm btn-outline-primary bg-light border text-primary btn-ver-ticket" data-loja="${escapeHTML(String(idLoja))}">
                   <i class="bi bi-receipt me-1"></i>Visualizar Ticket
                 </button>
               ` : ''}
@@ -858,43 +840,50 @@ function atualizarGraficos(pedidos) {
 // 6. REALTIME & INICIALIZAÇÃO DOS EVENTOS
 // =========================================================================
 
-function escutarRealtime() {
+/**
+ * Inscreve no canal WebSocket do Supabase para refletir alterações em tempo real
+ */
+async function escutarRealtime() {
   if (state.realtimeChannel) {
-    supabase.removeChannel(state.realtimeChannel);
+    await supabase.removeChannel(state.realtimeChannel);
+    state.realtimeChannel = null;
   }
 
   state.realtimeChannel = supabase
     .channel("admin-pedidos-changes")
-    .on("postgres_changes", { event: "*", schema: "public", table: "pedidos" }, () => {
-      clearTimeout(state.debounceTimer);
-      state.debounceTimer = setTimeout(() => {
-        gerarRelatorio();
-        carregarOficinasHoje();
-      }, 400);
-    })
-    .subscribe((status) => {
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "pedidos" },
+      () => {
+        clearTimeout(state.debounceTimer);
+        state.debounceTimer = setTimeout(() => {
+          gerarRelatorio();
+          carregarOficinasHoje();
+        }, 400);
+      }
+    )
+    .subscribe((status, err) => {
       if (status === "SUBSCRIBED") {
         console.log("⚡ Conectado ao Realtime do Supabase (Pedidos)");
+      } else if (status === "CHANNEL_ERROR") {
+        console.warn("⚠️ Erro na conexão Realtime:", err);
       }
     });
 }
 
-// Inicializador
+// Inicializador Principal
 document.addEventListener("DOMContentLoaded", () => {
+  // Preenche a data no topo se estiver vazia
   if (DOM.dataExibicao && !DOM.dataExibicao.textContent.trim()) {
-    DOM.dataExibicao.textContent = `(${new Date().toLocaleDateString('pt-BR')})`;
+    DOM.dataExibicao.textContent = `(${new Date().toLocaleDateString("pt-BR")})`;
   }
 
-  // Inicializa a instância do Modal de busca via Bootstrap API
-  if (DOM.modalTicket.elemento && typeof bootstrap !== "undefined") {
-    DOM.modalTicket.instancia = new bootstrap.Modal(DOM.modalTicket.elemento);
-  }
-
+  // Carga Inicial dos Dados
   carregarOficinasHoje();
   gerarRelatorio();
   escutarRealtime();
 
-  // Eventos da barra de pesquisa e filtros
+  // Eventos da Barra de Pesquisa e Filtros
   DOM.btnFiltrar?.addEventListener("click", gerarRelatorio);
   DOM.filtroStatus?.addEventListener("change", gerarRelatorio);
 
@@ -903,7 +892,7 @@ document.addEventListener("DOMContentLoaded", () => {
     state.debounceTimer = setTimeout(gerarRelatorio, 350);
   });
 
-  // Ação do Botão Consultar do Modal de Ticket -> Abre o Modal Flutuante com dados
+  // Ação do Botão Consultar do Modal de Ticket
   DOM.modalTicket.btnBuscar?.addEventListener("click", () => {
     const lojaVal = DOM.modalTicket.selectLoja?.value;
     const serieVal = DOM.modalTicket.inputSerie?.value || "1";
@@ -915,23 +904,27 @@ document.addEventListener("DOMContentLoaded", () => {
   // Clique no botão "Visualizar Ticket" dos Cards Individuais de Oficina
   DOM.containerCardsOficinas?.addEventListener("click", (evt) => {
     const btn = evt.target.closest(".btn-ver-ticket");
-    if (btn) {
-      const idLoja = btn.dataset.loja;
-      
-      // Pré-seleciona a loja correspondente no select do modal
-      if (DOM.modalTicket.selectLoja) {
-        DOM.modalTicket.selectLoja.value = idLoja;
-      }
+    if (!btn) return;
 
-      // Exibe o Modal de busca
-      if (DOM.modalTicket.instancia) {
-        DOM.modalTicket.instancia.show();
-      }
+    const idLoja = btn.dataset.loja;
+
+    // Pré-seleciona a loja correspondente no select do modal
+    if (DOM.modalTicket.selectLoja && idLoja) {
+      DOM.modalTicket.selectLoja.value = idLoja;
+    }
+
+    // Exibe o Modal de busca com validação de instância
+    if (DOM.modalTicket.elemento && typeof bootstrap !== "undefined") {
+      const modalInstancia =
+        bootstrap.Modal.getInstance(DOM.modalTicket.elemento) ||
+        new bootstrap.Modal(DOM.modalTicket.elemento);
+      
+      modalInstancia.show();
     }
   });
 });
 
-// Limpeza de recursos na saída
+// Limpeza de recursos na saída para evitar vazamento de memória e sockets abertos
 window.addEventListener("beforeunload", () => {
   if (state.realtimeChannel) {
     supabase.removeChannel(state.realtimeChannel);

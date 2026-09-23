@@ -40,8 +40,14 @@ document.addEventListener("DOMContentLoaded", () => {
 // Função que busca na sua API Node.js (SQL Server das 4 lojas) e atualiza os cards
 async function atualizarFaturamentoPorPeriodo(dataInicio, dataFim) {
     try {
-        // Chamada para a rota que criamos na sua API Express
-        const resposta = await fetch(`/api/oficinas/periodo?dataInicio=${dataInicio}&dataFim=${dataFim}`);
+        // Agora usa a URL completa do seu servidor Node.js (http://localhost:3000)
+        const resposta = await fetch(`${API_URL}/api/oficinas/periodo?dataInicio=${dataInicio}&dataFim=${dataFim}`);
+        
+        // Verifica se a resposta HTTP deu algum erro (ex: 404 ou 500)
+        if (!resposta.ok) {
+            throw new Error(`Erro HTTP! Status: ${resposta.status}`);
+        }
+
         const resultado = await resposta.json();
 
         if (!resultado.sucesso) {
@@ -54,16 +60,10 @@ async function atualizarFaturamentoPorPeriodo(dataInicio, dataFim) {
         document.getElementById("total_produtos").textContent = formatarMoeda(resultado.total_produtos);
         document.getElementById("total_servicos").textContent = formatarMoeda(resultado.total_servicos);
 
-        // Opcional: Se você também quiser atualizar a lista/cards individuais de cada loja na tela:
-        // if (resultado.oficinas) {
-        //     atualizarCardsDasLojas(resultado.oficinas);
-        // }
-
     } catch (err) {
         console.error("Erro na requisição do faturamento por período:", err);
     }
 }
-
 // Função auxiliar para formatar em Real (R$)
 function formatarMoeda(valor) {
     return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });

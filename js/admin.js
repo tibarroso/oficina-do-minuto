@@ -3,6 +3,76 @@ import { supabase } from "./supabase.js";
 // Configuração da URL da API (ambiente local)
 const API_URL = 'http://localhost:3000';
 
+document.addEventListener("DOMContentLoaded", () => {
+    // 1. Elementos do filtro de período
+    const inputInicio = document.getElementById("filtro_data_inicio");
+    const inputFim = document.getElementById("filtro_data_fim");
+    const btnBuscarPeriodo = document.getElementById("btn_buscar_periodo");
+
+    // Preencher com o mês atual por padrão (se estiverem vazios)
+    if (inputInicio && !inputInicio.value) {
+        const hoje = new Date();
+        const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+        inputInicio.value = primeiroDia.toISOString().split("T")[0];
+        inputFim.value = hoje.toISOString().split("T")[0];
+    }
+
+    // 2. Ouvir o clique do botão de filtrar período
+    if (btnBuscarPeriodo) {
+        btnBuscarPeriodo.addEventListener("click", () => {
+            const dataInicio = inputInicio.value;
+            const dataFim = inputFim.value;
+
+            if (!dataInicio || !dataFim) {
+                alert("Por favor, selecione a data inicial e a data final.");
+                return;
+            }
+
+            // Chama a função que recalcula os valores com base nas datas
+            atualizarFaturamentoPorPeriodo(dataInicio, dataFim);
+        });
+    }
+});
+
+// Função que calcula e atualiza os cards de Faturamento
+function atualizarFaturamentoPorPeriodo(dataInicio, dataFim) {
+    // Exemplo de dados (substitua pela sua fonte real de dados ou API)
+    // Suponha que seus pedidos/tickets estejam salvos em um array ou localStorage
+    const pedidos = JSON.parse(localStorage.getItem("pedidos_oficina")) || [];
+
+    // Converter as strings de data para objetos Date para comparar corretamente (ignorando fuso horário se necessário)
+    const inicio = new Date(dataInicio + "T00:00:00");
+    const fim = new Date(dataFim + "T23:59:59");
+
+    // Filtrar pedidos dentro do período
+    const pedidosFiltrados = pedidos.filter(pedido => {
+        // Supondo que cada pedido tenha uma propriedade 'data' (ex: "2026-06-15")
+        const dataPedido = new Date(pedido.data + "T00:00:00");
+        return dataPedido >= inicio && dataPedido <= fim;
+    });
+
+    // Calcular os totais
+    let totalBruto = 0;
+    let totalProdutos = 0;
+    let totalServicos = 0;
+
+    pedidosFiltrados.forEach(p => {
+        totalBruto += Number(p.valorTotal) || 0;
+        totalProdutos += Number(p.valorProdutos) || 0;
+        totalServicos += Number(p.valorServicos) || 0;
+    });
+
+    // Atualizar os elementos no HTML do admin.html
+    document.getElementById("total_faturado").textContent = formatarMoeda(totalBruto);
+    document.getElementById("total_produtos").textContent = formatarMoeda(totalProdutos);
+    document.getElementById("total_servicos").textContent = formatarMoeda(totalServicos);
+}
+
+// Função auxiliar para formatar em Real (R$)
+function formatarMoeda(valor) {
+    return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
 // =========================================================================
 // 1. MAPEAMENTO E ELEMENTOS DO DOM
 // =========================================================================

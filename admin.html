@@ -148,6 +148,40 @@
         .kpi-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
         .kpi-value { font-size: 22px; font-weight: 700; color: var(--text-dark); }
 
+        /* Cards PDV / Oficinas renderizados via JS */
+        .card-pdv {
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: var(--shadow-soft);
+            transition: transform 0.2s, box-shadow 0.2s;
+            height: 100%;
+            position: relative;
+        }
+        .card-pdv:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+        }
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #22c55e;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+        .status-indicator.offline {
+            background-color: #ef4444;
+        }
+        .badge-doc {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            background-color: #f1f5f9;
+            color: #475569;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
         /* Barra de Filtros */
         .filter-bar {
             background-color: var(--surface);
@@ -429,7 +463,7 @@
 
     <!-- Scripts Bootstrap e Módulo Principal JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="./js/admin.js"></script>
+    <script type="module" src="./admin.js"></script>
 
 </body>
 </html>

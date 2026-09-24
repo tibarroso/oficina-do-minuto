@@ -134,8 +134,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const dataEmissaoFormatada = ticket.data_emissao ? ticket.data_emissao.split(' ')[0] : '';
             const temObs = ticket.observacao_geral ? '*' : '';
 
-            // Validação segura do status de pagamento (aceita true, 1 ou 'S')
-            const isPago = ticket.pago === true || ticket.pago === 1 || ticket.pago === 'S';
+            // Validação ultra-flexível do status de pagamento
+            const valorPago = ticket.pago !== undefined ? ticket.pago : ticket.status_pagamento;
+            const isPago = 
+                valorPago === true || 
+                valorPago === 1 || 
+                valorPago === '1' || 
+                (typeof valorPago === 'string' && ['s', 'sim', 'true', 'yes', 'pago'].includes(valorPago.trim().toLowerCase()));
+
             const isDelivery = ticket.delivery === true;
             const isOrcamento = ticket.tipo === 'ORCAMENTO';
             const isOrcNaoAprovado = ticket.status_orcamento === 'NAO_APROVADO';

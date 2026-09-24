@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 valorPago === true || 
                 valorPago === 1 || 
                 valorPago === '1' || 
-                (typeof valorPago === 'string' && ['s', 'sim', 'true', 'yes', 'pago',''].includes(valorPago.trim().toLowerCase()));
+                (typeof valorPago === 'string' && ['s', 'sim', 'true', 'yes', 'pago'].includes(valorPago.trim().toLowerCase()));
 
             const isDelivery = ticket.delivery === true;
             const isOrcamento = ticket.tipo === 'ORCAMENTO';

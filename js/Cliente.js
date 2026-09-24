@@ -140,14 +140,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const isOrcamento = ticket.tipo === 'ORCAMENTO';
             const isOrcNaoAprovado = ticket.status_orcamento === 'NAO_APROVADO';
 
-            // Definição exata das classes baseada nas regras de status
+            // --- ORDEM DE PRIORIDADE CORRIGIDA ---
             if (ehAnulado) {
                 tr.className = 'status-anulado';
+            } else if (ehEntregue) {
+                // Garante que entregue pago fique com verde-alface (#c6efce)
+                tr.className = isPago ? 'status-entregue-pago' : 'status-entregue-nao-pago';
             } else if (isDelivery) {
                 tr.className = 'status-delivery';
-            } else if (ehEntregue) {
-                // Aqui pinta de Verde-alface (#c6efce) se pago, ou Amarelo-pálido se não pago
-                tr.className = isPago ? 'status-entregue-pago' : 'status-entregue-nao-pago';
             } else if (isOrcNaoAprovado) {
                 tr.className = 'status-orc-nao-aprovado';
             } else if (isOrcamento) {

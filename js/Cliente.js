@@ -4,7 +4,6 @@ import { supabase } from "./supabase.js";
 const API_URL = 'http://localhost:3000';
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Seleção dos elementos do DOM baseados na estrutura atualizada do HTML
     const inputTelefone = document.getElementById('filtro-telefone');
     const inputNome = document.getElementById('filtro-nome');
     const inputCodigo = document.getElementById('filtro-codigo');
@@ -19,9 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const detalhesEndereco = document.getElementById('detalhes-endereco-box');
 
-    let cacheClientes = {}; // Armazena os clientes e seus tickets agrupados
+    let cacheClientes = {};
 
-    // Função principal para buscar dados da API
     async function realizarBusca() {
         const nome = inputNome.value.trim();
         const telefone = inputTelefone.value.trim();
@@ -44,7 +42,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Agrupa os tickets retornados por Cliente (Nome + Telefone)
             cacheClientes = {};
             resultado.dados.forEach(ticket => {
                 const clienteNome = ticket.cliente || 'CLIENTE NÃO IDENTIFICADO';
@@ -73,7 +70,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Renderiza a lista de clientes encontrados no painel esquerdo
     function renderizarListaClientes() {
         listBox.innerHTML = '';
         const chaves = Object.keys(cacheClientes);
@@ -101,7 +97,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Preenche os campos do cliente selecionado e separa os tickets nas tabelas corretas
     function preencherDadosCliente(clienteObj) {
         if (tabelaAbertos) tabelaAbertos.innerHTML = '';
         if (tabelaEntregues) tabelaEntregues.innerHTML = '';
@@ -139,18 +134,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const dataEmissaoFormatada = ticket.data_emissao ? ticket.data_emissao.split(' ')[0] : '';
             const temObs = ticket.observacao_geral ? '*' : '';
 
-            const isPago = ticket.pago === true; 
+            // Validação segura do status de pagamento (aceita true, 1 ou 'S')
+            const isPago = ticket.pago === true || ticket.pago === 1 || ticket.pago === 'S';
             const isDelivery = ticket.delivery === true;
             const isOrcamento = ticket.tipo === 'ORCAMENTO';
             const isOrcNaoAprovado = ticket.status_orcamento === 'NAO_APROVADO';
 
-            // --- CORREÇÃO DA APLICAÇÃO DAS CLASSES ---
+            // Definição exata das classes baseada nas regras de status
             if (ehAnulado) {
-                tr.className = 'status-anulado'; // Cor: Anulado (#fce4d6)
+                tr.className = 'status-anulado';
             } else if (isDelivery) {
-                tr.className = 'status-delivery'; // Cor: Delivery (#f8cbad)
+                tr.className = 'status-delivery';
             } else if (ehEntregue) {
-                // Se for entregue, verifica se está pago ou não pago para usar a cor exata da legenda
+                // Aqui pinta de Verde-alface (#c6efce) se pago, ou Amarelo-pálido se não pago
                 tr.className = isPago ? 'status-entregue-pago' : 'status-entregue-nao-pago';
             } else if (isOrcNaoAprovado) {
                 tr.className = 'status-orc-nao-aprovado';
@@ -160,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 tr.className = isPago ? 'status-pago' : 'status-nao-pago';
             }
 
-            // Lógica para preencher a tabela de Entregues/Anulados
+            // Inserção na tabela correta
             if (ehAnulado || ehEntregue) {
                 const indicador = ehAnulado ? 'X' : (temObs || '*');
                 tr.innerHTML = `

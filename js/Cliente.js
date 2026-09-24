@@ -4,22 +4,20 @@ import { supabase } from "./supabase.js";
 const API_URL = 'http://localhost:3000';
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Seleção dos elementos do DOM baseados na estrutura do Cliente.html
-    const inputs = document.querySelectorAll('.search-panel input');
-    const inputTelefone = inputs[0];
-    const inputNome = inputs[1];
-    const inputCodigo = inputs[2];
-    const inputEndereco = inputs[3];
-    const inputCpfCnpj = inputs[4];
+    // Seleção dos elementos do DOM baseados na estrutura atualizada do HTML
+    const inputTelefone = document.getElementById('filtro-telefone');
+    const inputNome = document.getElementById('filtro-nome');
+    const inputCodigo = document.getElementById('filtro-codigo');
+    const inputEndereco = document.getElementById('filtro-endereco');
+    const inputCpfCnpj = document.getElementById('filtro-cpf');
 
-    const btnSearch = document.querySelector('.btn-search');
-    const listBox = document.querySelector('.list-box');
+    const btnSearch = document.getElementById('btn-pesquisar');
+    const listBox = document.getElementById('lista-resultados');
     
-    const tabelasContainer = document.querySelectorAll('.table-container');
-    const tabelaAbertos = tabelasContainer[0] ? tabelasContainer[0].querySelector('tbody') : null;
-    const tabelaEntregues = tabelasContainer[1] ? tabelasContainer[1].querySelector('tbody') : null;
+    const tabelaAbertos = document.getElementById('tabela-abertos-body');
+    const tabelaEntregues = document.getElementById('tabela-entregues-body');
     
-    const detalhesEndereco = document.querySelector('.details-box');
+    const detalhesEndereco = document.getElementById('detalhes-endereco-box');
 
     let cacheClientes = {}; // Armazena os clientes e seus tickets agrupados
 
@@ -119,9 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
         clienteObj.tickets.forEach(ticket => {
             let ehEntregue = false;
             let ehAnulado = false;
-            let ehOrcamento = false;
-            let ehOrcNaoAprovado = false;
-            let ehPago = false; // Defina aqui se houver regra de pagamento no ticket/serviço
 
             if (ticket.pecas && ticket.pecas.length > 0) {
                 const todosAnulados = ticket.pecas.every(p => 
@@ -144,22 +139,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const dataEmissaoFormatada = ticket.data_emissao ? ticket.data_emissao.split(' ')[0] : '';
             const temObs = ticket.observacao_geral ? '*' : '';
 
-            // Regras de Cores com base na sua tabela:
-            if (ehAnulado) {
-                tr.className = 'status-anulado'; // Laranja / Salmão
+            // Mapeamento de regras para definir qual classe de cor aplicar
+            // Ajuste as propriedades booleanas (como ticket.pago, ticket.delivery, etc.) conforme a estrutura do seu objeto backend
+            const isPago = ticket.pago === true; 
+            const isDelivery = ticket.delivery === true;
+            const isOrcamento = ticket.tipo === 'ORCAMENTO';
+            const isOrcNaoAprovado = ticket.status_orcamento === 'NAO_APROVADO';
+
+            if (ehAnulado || isDelivery) {
+                tr.className = 'status-anulado'; // Laranja / Salmão (Anulado ou Delivery compartilham tom)
             } else if (ehEntregue) {
-                // Se entregue, verifica se foi pago ou não pago
-                tr.className = ehPago ? 'status-entregue-pago' : 'status-entregue-nao-pago'; // Verde-alface ou Amarelo-pálido
-            } else if (ehOrcNaoAprovado) {
-                tr.className = 'status-orc-nao-aprovado'; // Laranja-claro / Pêssego
-            } else if (ehOrcamento) {
-                tr.className = 'status-orcamento'; // Azul-celeste / Ciano
+                tr.className = isPago ? 'status-entregue-pago' : 'status-entregue-nao-pago';
+            } else if (isOrcNaoAprovado) {
+                tr.className = 'status-orc-nao-aprovado';
+            } else if (isOrcamento) {
+                tr.className = 'status-orcamento';
             } else {
-                // Em aberto padrão (Pago vs Não Pago)
-                tr.className = ehPago ? 'status-pago' : 'status-nao-pago'; // Cinzento ou Amarelo-claro
+                tr.className = isPago ? 'status-pago' : 'status-nao-pago';
             }
 
-            // Atribuição de colunas e dados conforme tabela
             if (ehAnulado || ehEntregue) {
                 const indicador = ehAnulado ? 'X' : (temObs || '*');
                 tr.innerHTML = `

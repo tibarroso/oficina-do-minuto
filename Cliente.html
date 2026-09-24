@@ -184,25 +184,27 @@
       border: 1px solid #7f9db9;
     }
 
-    /* Cores das Legendas */
-    .bg-pago { background-color: #c6d9f1; }
-    .bg-nao-pago { background-color: #ffeb9c; }
-    .bg-anulado { background-color: #fce4d6; }
-    .bg-entregue-pago { background-color: #c6efce; }
-    .bg-orcamento { background-color: #b4e6eb; }
-    .bg-delivery { background-color: #f8cbad; }
-    .bg-entregue-nao-pago { background-color: #fff2cc; }
-    .bg-orc-nao-aprovado { background-color: #f4b084; }
+    /* Cores das Legendas e das Linhas (Mapeadas exatamente conforme solicitado) */
+    .bg-pago { background-color: #d9d9d9; }                  /* Cinzento */
+    .bg-nao-pago { background-color: #ffeb9c; }              /* Amarelo-claro */
+    .bg-anulado { background-color: #f4b084; }               /* Laranja */
+    .bg-entregue-pago { background-color: #c6efce; }         /* Verde-alface */
+    
+    .bg-orcamento { background-color: #b4e6eb; }             /* Azul-celeste */
+    .bg-delivery { background-color: #f4b084; }              /* Laranja */
+    .bg-entregue-nao-pago { background-color: #fff2cc; }     /* Amarelo-pálido */
+    .bg-orc-nao-aprovado { background-color: #f8cbad; }      /* Laranja-claro */
 
-    /* Mapeamento de Cores para as Linhas da Tabela (tr) */
-    tr.status-pago td { background-color: #c6d9f1 !important; color: #000 !important; }
+    /* Mapeamento para as Linhas da Tabela (tr) */
+    tr.status-pago td { background-color: #d9d9d9 !important; color: #000 !important; }
     tr.status-nao-pago td { background-color: #ffeb9c !important; color: #000 !important; }
-    tr.status-anulado td { background-color: #fce4d6 !important; color: #000 !important; }
+    tr.status-anulado td { background-color: #f4b084 !important; color: #000 !important; }
     tr.status-entregue-pago td { background-color: #c6efce !important; color: #000 !important; }
+    
     tr.status-orcamento td { background-color: #b4e6eb !important; color: #000 !important; }
-    tr.status-delivery td { background-color: #f8cbad !important; color: #000 !important; }
+    tr.status-delivery td { background-color: #f4b084 !important; color: #000 !important; }
     tr.status-entregue-nao-pago td { background-color: #fff2cc !important; color: #000 !important; }
-    tr.status-orc-nao-aprovado td { background-color: #f4b084 !important; color: #000 !important; }
+    tr.status-orc-nao-aprovado td { background-color: #f8cbad !important; color: #000 !important; }
   </style>
 </head>
 <body>

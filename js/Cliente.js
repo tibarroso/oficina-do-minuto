@@ -139,16 +139,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const dataEmissaoFormatada = ticket.data_emissao ? ticket.data_emissao.split(' ')[0] : '';
             const temObs = ticket.observacao_geral ? '*' : '';
 
-            // Mapeamento de regras para definir qual classe de cor aplicar
-            // Ajuste as propriedades booleanas (como ticket.pago, ticket.delivery, etc.) conforme a estrutura do seu objeto backend
             const isPago = ticket.pago === true; 
             const isDelivery = ticket.delivery === true;
             const isOrcamento = ticket.tipo === 'ORCAMENTO';
             const isOrcNaoAprovado = ticket.status_orcamento === 'NAO_APROVADO';
 
-            if (ehAnulado || isDelivery) {
-                tr.className = 'status-anulado'; // Laranja / Salmão (Anulado ou Delivery compartilham tom)
+            // --- CORREÇÃO DA APLICAÇÃO DAS CLASSES ---
+            if (ehAnulado) {
+                tr.className = 'status-anulado'; // Cor: Anulado (#fce4d6)
+            } else if (isDelivery) {
+                tr.className = 'status-delivery'; // Cor: Delivery (#f8cbad)
             } else if (ehEntregue) {
+                // Se for entregue, verifica se está pago ou não pago para usar a cor exata da legenda
                 tr.className = isPago ? 'status-entregue-pago' : 'status-entregue-nao-pago';
             } else if (isOrcNaoAprovado) {
                 tr.className = 'status-orc-nao-aprovado';
@@ -158,6 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 tr.className = isPago ? 'status-pago' : 'status-nao-pago';
             }
 
+            // Lógica para preencher a tabela de Entregues/Anulados
             if (ehAnulado || ehEntregue) {
                 const indicador = ehAnulado ? 'X' : (temObs || '*');
                 tr.innerHTML = `

@@ -124,22 +124,47 @@ document.addEventListener('DOMContentLoaded', () => {
         // Separa os tickets nas tabelas correspondentes
         clienteObj.tickets.forEach(ticket => {
             let ehEntregue = false;
+            let ehAnulado = false;
 
-            // Se todas as peças/serviços estiverem entregues, vai para a tabela de entregues
+            // Verifica se as peças/serviços estão entregues ou anulados ('X')
             if (ticket.pecas && ticket.pecas.length > 0) {
-                ehEntregue = ticket.pecas.every(p => 
-                    p.servicos.every(s => s.status && s.status.toLowerCase() === 'entregue')
+                const todosAnulados = ticket.pecas.every(p => 
+                    p.servicos.every(s => s.status && s.status.toUpperCase() === 'X')
                 );
+
+                if (todosAnulados) {
+                    ehAnulado = true;
+                } else {
+                    ehEntregue = ticket.pecas.every(p => 
+                        p.servicos.every(s => {
+                            const st = s.status ? s.status.toUpperCase() : '';
+                            return st === 'ENTREGUE' || st === 'X';
+                        })
+                    );
+                }
             }
 
             const tr = document.createElement('tr');
             const dataEmissaoFormatada = ticket.data_emissao ? ticket.data_emissao.split(' ')[0] : '';
             const temObs = ticket.observacao_geral ? '*' : '';
 
-            if (!ehEntregue) {
+            // Se for Anulado ('X') ou Entregue, vai para a tabela de baixo (Entregues/Anulados)
+            if (ehAnulado || ehEntregue) {
+                tr.className = ehAnulado ? 'highlight-cancelled' : 'highlight-green';
+                const indicadorAnulado = ehAnulado ? 'X' : (temObs || '*');
+
+                tr.innerHTML = `
+                    <td>${ticket.serie || 1}</td>
+                    <td>${ticket.numero}</td>
+                    <td>${dataEmissaoFormatada}</td>
+                    <td>${indicadorAnulado}</td>
+                `;
+                if (tabelaEntregues) tabelaEntregues.appendChild(tr);
+            } else {
+                // Caso contrário, continua na tabela de abertos
                 tr.className = 'highlight-purple';
-                // Verifica se tem algum serviço disponível ('Disponível') para adicionar o 'D'
                 let temDisponivel = false;
+                
                 if (ticket.pecas) {
                     ticket.pecas.forEach(p => {
                         p.servicos.forEach(s => {
@@ -157,15 +182,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>${indicadorStatus}</td>
                 `;
                 if (tabelaAbertos) tabelaAbertos.appendChild(tr);
-            } else {
-                tr.className = 'highlight-green';
-                tr.innerHTML = `
-                    <td>${ticket.serie || 1}</td>
-                    <td>${ticket.numero}</td>
-                    <td>${dataEmissaoFormatada}</td>
-                    <td>${temObs || '*'}</td>
-                `;
-                if (tabelaEntregues) tabelaEntregues.appendChild(tr);
             }
         });
     }

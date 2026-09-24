@@ -84,18 +84,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const clienteObj = cacheClientes[chave];
             const div = document.createElement('div');
             
-            // Exibe o formato idêntico ao layout de referência
             const telFormatado = clienteObj.telefone ? ` (${clienteObj.telefone})` : '';
             div.textContent = `${clienteObj.nome}${telFormatado}`;
-            div.title = `${clienteObj.nome}${telFormatado}`; // Tooltip para nome completo
+            div.title = `${clienteObj.nome}${telFormatado}`;
 
-            // Seleciona o primeiro cliente por padrão
             if (index === 0) {
                 div.classList.add('selected');
                 preencherDadosCliente(clienteObj);
             }
 
-            // Evento de clique para trocar de cliente
             div.addEventListener('click', () => {
                 document.querySelectorAll('.list-box div').forEach(el => el.classList.remove('selected'));
                 div.classList.add('selected');
@@ -111,22 +108,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tabelaAbertos) tabelaAbertos.innerHTML = '';
         if (tabelaEntregues) tabelaEntregues.innerHTML = '';
 
-        // Preenche inputs adicionais do topo, caso existam
         if (inputEndereco) inputEndereco.value = clienteObj.endereco || '';
         if (inputCpfCnpj) inputCpfCnpj.value = clienteObj.cpfCnpj || '';
         if (inputCodigo) inputCodigo.value = clienteObj.codigo || '';
 
-        // Preenche a caixa de detalhes de endereço inferior
         if (detalhesEndereco) {
             detalhesEndereco.textContent = clienteObj.endereco;
         }
 
-        // Separa os tickets nas tabelas correspondentes
         clienteObj.tickets.forEach(ticket => {
             let ehEntregue = false;
             let ehAnulado = false;
+            let ehOrcamento = false;
+            let ehOrcNaoAprovado = false;
+            let ehPago = false; // Defina aqui se houver regra de pagamento no ticket/serviço
 
-            // Verifica se as peças/serviços estão entregues ou anulados ('X')
             if (ticket.pecas && ticket.pecas.length > 0) {
                 const todosAnulados = ticket.pecas.every(p => 
                     p.servicos.every(s => s.status && s.status.toUpperCase() === 'X')
@@ -148,23 +144,33 @@ document.addEventListener('DOMContentLoaded', () => {
             const dataEmissaoFormatada = ticket.data_emissao ? ticket.data_emissao.split(' ')[0] : '';
             const temObs = ticket.observacao_geral ? '*' : '';
 
-            // Se for Anulado ('X') ou Entregue, vai para a tabela de baixo (Entregues/Anulados)
-            if (ehAnulado || ehEntregue) {
-                tr.className = ehAnulado ? 'highlight-cancelled' : 'highlight-green';
-                const indicadorAnulado = ehAnulado ? 'X' : (temObs || '*');
+            // Regras de Cores com base na sua tabela:
+            if (ehAnulado) {
+                tr.className = 'status-anulado'; // Laranja / Salmão
+            } else if (ehEntregue) {
+                // Se entregue, verifica se foi pago ou não pago
+                tr.className = ehPago ? 'status-entregue-pago' : 'status-entregue-nao-pago'; // Verde-alface ou Amarelo-pálido
+            } else if (ehOrcNaoAprovado) {
+                tr.className = 'status-orc-nao-aprovado'; // Laranja-claro / Pêssego
+            } else if (ehOrcamento) {
+                tr.className = 'status-orcamento'; // Azul-celeste / Ciano
+            } else {
+                // Em aberto padrão (Pago vs Não Pago)
+                tr.className = ehPago ? 'status-pago' : 'status-nao-pago'; // Cinzento ou Amarelo-claro
+            }
 
+            // Atribuição de colunas e dados conforme tabela
+            if (ehAnulado || ehEntregue) {
+                const indicador = ehAnulado ? 'X' : (temObs || '*');
                 tr.innerHTML = `
                     <td>${ticket.serie || 1}</td>
                     <td>${ticket.numero}</td>
                     <td>${dataEmissaoFormatada}</td>
-                    <td>${indicadorAnulado}</td>
+                    <td>${indicador}</td>
                 `;
                 if (tabelaEntregues) tabelaEntregues.appendChild(tr);
             } else {
-                // Caso contrário, continua na tabela de abertos
-                tr.className = 'highlight-purple';
                 let temDisponivel = false;
-                
                 if (ticket.pecas) {
                     ticket.pecas.forEach(p => {
                         p.servicos.forEach(s => {
@@ -195,7 +201,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (inputCodigo) inputCodigo.value = '';
     }
 
-    // Associa eventos de busca
     if (btnSearch) {
         btnSearch.addEventListener('click', realizarBusca);
     }
@@ -212,7 +217,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Executa a busca automática ao carregar caso já exista valor preenchido no input de nome
     if (inputNome && inputNome.value.trim()) {
         realizarBusca();
     }

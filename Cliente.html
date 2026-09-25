@@ -2,70 +2,145 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Oficina do Minuto-Cliente</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oficina do Minuto - Consulta Cliente</title>
   <style>
+    /* RESET & VARIÁVEIS DE TEMA CLASSIC WINFORMS / ERP */
+    :root {
+      --bg-main: #f0f4f8;
+      --panel-bg: #e8eef5;
+      --border-color: #7f9db9;
+      --border-light: #b4c6e7;
+      --border-soft: #d3dfee;
+      --primary-navy: #000080;
+      --primary-navy-dark: #000055;
+      --text-dark: #1f2937;
+      --header-bg: #c6d9f1;
+      --input-bg: #ffffff;
+      --input-readonly: #f0f0f0;
+      --hover-row: #e2ebf5;
+      --selected-bg: #000080;
+      --selected-text: #ffffff;
+
+      /* CORES DAS LEGENDAS E STATUS */
+      --color-pago: #d9d9d9;
+      --color-nao-pago: #749ab5;
+      --color-anulado: #f4b084;
+      --color-entregue-pago: #c6efce;
+      --color-orcamento: #b4e6eb;
+      --color-delivery: #f4b084;
+      --color-entregue-nao-pago: #8ede76;
+      --color-orc-nao-aprovado: #f8cbad;
+    }
+
     * {
       box-sizing: border-box;
-      font-family: Arial, sans-serif;
+      font-family: "Segoe UI", Arial, Tahoma, sans-serif;
       font-size: 11px;
+      margin: 0;
+      padding: 0;
     }
 
     body {
-      background-color: #f0f4f8;
-      margin: 10px;
+      background-color: var(--bg-main);
+      color: var(--text-dark);
+      padding: 10px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
 
+    /* TOP BAR - SELEÇÃO DE LOJA */
     .top-bar {
       font-weight: bold;
-      margin-bottom: 5px;
-      color: #333;
+      color: var(--primary-navy);
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
+      background-color: var(--panel-bg);
+      padding: 6px 10px;
+      border: 1px solid var(--border-light);
+      border-radius: 3px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .top-bar label {
+      letter-spacing: 0.5px;
     }
 
     .top-bar select {
-      padding: 2px 5px;
-      border: 1px solid #7f9db9;
-      background-color: #fff;
+      padding: 3px 8px;
+      border: 1px solid var(--border-color);
+      background-color: var(--input-bg);
       font-weight: bold;
-      color: #000080;
+      color: var(--primary-navy);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
     }
 
-    /* Form Topo */
+    .top-bar select:focus {
+      border-color: var(--primary-navy);
+    }
+
+    /* PAINEL DE BUSCA (SEARCH PANEL) - GRID REFINADO */
     .search-panel {
       display: grid;
-      grid-template-columns: 150px 220px 150px 1fr 100px;
-      gap: 5px 10px;
-      align-items: center;
-      background-color: #f0f4f8;
-      padding: 5px;
-      border: 1px solid #b4c6e7;
-      margin-bottom: 5px;
+      grid-template-columns: repeat(4, 1fr) 90px;
+      gap: 6px 10px;
+      align-items: end;
+      background-color: var(--panel-bg);
+      padding: 8px 10px;
+      border: 1px solid var(--border-light);
+      border-radius: 3px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
 
     .form-group {
       display: flex;
       flex-direction: column;
+      gap: 2px;
+    }
+
+    .form-group.col-span-2 {
+      grid-column: span 2;
     }
 
     .form-group label {
       font-weight: bold;
-      color: #000080;
-      margin-bottom: 2px;
+      color: var(--primary-navy);
+      display: flex;
+      align-items: center;
+      gap: 3px;
     }
 
     .form-group input {
-      border: 1px solid #7f9db9;
-      padding: 2px 4px;
-      height: 22px;
-      background-color: #fff;
+      border: 1px solid var(--border-color);
+      padding: 2px 6px;
+      height: 24px;
+      background-color: var(--input-bg);
+      border-radius: 2px;
+      outline: none;
+      color: #000;
     }
 
+    .form-group input[readonly] {
+      background-color: var(--input-readonly);
+      color: #555;
+    }
+
+    .form-group input:focus:not([readonly]) {
+      border-color: var(--primary-navy);
+      box-shadow: 0 0 2px rgba(0, 0, 128, 0.4);
+    }
+
+    /* BOTÕES CLASSICOS */
     .btn-search {
-      height: 45px;
-      background: linear-gradient(to bottom, #ffffff, #dce6f1);
-      border: 1px solid #7f9db9;
+      height: 100%;
+      min-height: 50px;
+      background: linear-gradient(to bottom, #ffffff 0%, #e2ebf5 50%, #d3dfee 100%);
+      border: 1px solid var(--border-color);
       border-radius: 3px;
       cursor: pointer;
       display: flex;
@@ -73,155 +148,278 @@
       align-items: center;
       justify-content: center;
       font-weight: bold;
-      color: #000080;
+      color: var(--primary-navy);
+      gap: 2px;
+      box-shadow: inset 0 1px 0 #fff, 0 1px 1px rgba(0,0,0,0.1);
+      transition: all 0.1s ease;
+      user-select: none;
     }
 
     .btn-search:hover {
-      background: #c6d9f1;
+      background: linear-gradient(to bottom, #ffffff 0%, #c6d9f1 100%);
+      border-color: var(--primary-navy);
     }
 
-    /* Main Container */
+    .btn-search:active {
+      background: #b4c6e7;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .btn-search .icon {
+      font-size: 14px;
+    }
+
+    /* MAIN GRID - LAYOUT PRINCIPAL */
     .main-grid {
       display: grid;
-      grid-template-columns: 320px 60px 260px 1fr 90px;
-      gap: 5px;
+      grid-template-columns: 280px 45px minmax(200px, 1fr) minmax(200px, 1fr) 90px;
+      gap: 8px;
       align-items: start;
     }
 
     .section-title {
       font-weight: bold;
-      color: #000080;
-      margin-bottom: 2px;
+      color: var(--primary-navy);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 16px;
     }
 
-    /* Lista Resultados */
+    /* LISTA DE RESULTADOS */
     .list-box {
-      border: 1px solid #7f9db9;
-      background-color: #fff;
+      border: 1px solid var(--border-color);
+      background-color: var(--input-bg);
       height: 380px;
       overflow-y: auto;
+      border-radius: 2px;
     }
 
     .list-box div {
-      padding: 3px 5px;
+      padding: 4px 6px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       cursor: pointer;
+      border-bottom: 1px solid #f0f0f0;
+      transition: background-color 0.1s;
+    }
+
+    .list-box div:hover {
+      background-color: var(--hover-row);
     }
 
     .list-box div.selected {
-      background-color: #000080;
-      color: #fff;
+      background-color: var(--selected-bg);
+      color: var(--selected-text);
     }
 
-    /* Botões Navegação Lateral */
+    /* BOTÕES DE NAVEGAÇÃO LATERAL (OCPIONAL/SUPORTE) */
     .nav-buttons {
       display: flex;
       flex-direction: column;
-      gap: 15px;
-      padding-top: 10px;
+      gap: 10px;
+      padding-top: 20px;
     }
 
     .btn-nav {
       background: linear-gradient(to bottom, #ffffff, #dce6f1);
-      border: 1px solid #7f9db9;
-      padding: 5px 2px;
+      border: 1px solid var(--border-color);
+      padding: 6px 2px;
       text-align: center;
       font-size: 10px;
-      color: #000080;
+      font-weight: bold;
+      color: var(--primary-navy);
       cursor: pointer;
       border-radius: 3px;
+      box-shadow: inset 0 1px 0 #fff;
     }
 
-    /* Tabelas de Tickets */
+    .btn-nav:hover {
+      background: #c6d9f1;
+    }
+
+    /* TABELAS DE TICKETS */
     .table-container {
-      border: 1px solid #7f9db9;
-      background-color: #fff;
+      border: 1px solid var(--border-color);
+      background-color: var(--input-bg);
       height: 380px;
       overflow: auto;
+      border-radius: 2px;
+      position: relative;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
+      table-layout: fixed;
     }
 
     th {
-      background-color: #c6d9f1;
-      border: 1px solid #7f9db9;
-      padding: 3px;
+      position: sticky;
+      top: 0;
+      background: linear-gradient(to bottom, #dbe6f5, var(--header-bg));
+      border-bottom: 1px solid var(--border-color);
+      border-right: 1px solid var(--border-light);
+      padding: 4px 2px;
       text-align: center;
-      font-weight: normal;
+      font-weight: bold;
+      color: var(--primary-navy);
+      z-index: 2;
+    }
+
+    th:last-child {
+      border-right: none;
     }
 
     td {
-      border: 1px solid #e0e0e0;
-      padding: 3px;
+      border-bottom: 1px solid #e0e0e0;
+      border-right: 1px solid #f0f0f0;
+      padding: 4px 2px;
       text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    /* Detalhes Endereço */
+    td:last-child {
+      border-right: none;
+    }
+
+    tbody tr:hover td {
+      filter: brightness(0.96);
+      cursor: pointer;
+    }
+
+    /* BOTÃO TICKET LATERAL */
+    .ticket-btn-col {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding-top: 20px;
+    }
+
+    /* DETALHES ENDEREÇO */
+    .details-box-container {
+      grid-column: 1 / span 2;
+      margin-top: 4px;
+    }
+
     .details-box {
-      border: 1px solid #7f9db9;
-      background-color: #f9f9f9;
-      padding: 5px;
+      border: 1px solid var(--border-color);
+      background-color: #fafbfc;
+      padding: 6px 8px;
       height: 60px;
-      margin-top: 5px;
-      grid-column: span 1;
+      overflow-y: auto;
+      border-radius: 2px;
+      line-height: 1.4;
+      color: #333;
     }
 
-    /* Legendas */
+    /* LEGENDAS EM GRADE REFINADA (4 COLUNAS) */
     .legend-container {
       grid-column: 3 / span 3;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+      background-color: var(--panel-bg);
+      padding: 8px 10px;
+      border: 1px solid var(--border-light);
+      border-radius: 3px;
+    }
+
+    .legend-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 5px;
-      margin-top: 5px;
-      background-color: #e8eef5;
-      padding: 5px;
-      border: 1px solid #b4c6e7;
+      gap: 6px 12px;
     }
 
     .legend-item {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-dark);
     }
 
     .legend-box {
-      width: 15px;
-      height: 15px;
-      border: 1px solid #7f9db9;
+      width: 16px;
+      height: 14px;
+      border: 1px solid rgba(0, 0, 0, 0.25);
+      border-radius: 2px;
+      flex-shrink: 0;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
     }
 
-    /* Cores das Legendas (Exatamente como solicitado) */
-    .bg-pago { background-color: #d9d9d9; }                   /* Cinzento */
-    .bg-nao-pago { background-color: #749ab5; }                /* Azul acinzentado / Não Pago */
-    .bg-anulado { background-color: #f4b084; }                 /* Laranja */
-    .bg-entregue-pago { background-color: #c6efce; }           /* Verde-alface */
-    
-    .bg-orcamento { background-color: #b4e6eb; }               /* Azul-celeste */
-    .bg-delivery { background-color: #f4b084; }                /* Laranja */
-    .bg-entregue-nao-pago { background-color: #8ede76; }       /* Verde claro */
-    .bg-orc-nao-aprovado { background-color: #f8cbad; }        /* Laranja-claro */
+    .legend-footer {
+      font-weight: bold;
+      color: var(--primary-navy);
+      border-top: 1px solid var(--border-soft);
+      padding-top: 4px;
+      margin-top: 2px;
+      font-size: 10px;
+    }
 
-    /* Mapeamento para as Linhas da Tabela (tr) - Sincronizado perfeitamente com as legendas */
-    tr.status-pago td { background-color: #d9d9d9 !important; color: #000 !important; }
-    tr.status-nao-pago td { background-color: #749ab5 !important; color: #000 !important; }
-    tr.status-anulado td { background-color: #f4b084 !important; color: #000 !important; }
-    tr.status-entregue-pago td { background-color: #c6efce !important; color: #000 !important; }
-    
-    tr.status-orcamento td { background-color: #b4e6eb !important; color: #000 !important; }
-    tr.status-delivery td { background-color: #f4b084 !important; color: #000 !important; }
-    tr.status-entregue-nao-pago td { background-color: #8ede76 !important; color: #000 !important; }
-    tr.status-orc-nao-aprovado td { background-color: #f8cbad !important; color: #000 !important; }
+    /* CLASSES DE CORES DA LEGENDA */
+    .bg-pago { background-color: var(--color-pago); }
+    .bg-nao-pago { background-color: var(--color-nao-pago); }
+    .bg-anulado { background-color: var(--color-anulado); }
+    .bg-entregue-pago { background-color: var(--color-entregue-pago); }
+
+    .bg-orcamento { background-color: var(--color-orcamento); }
+    .bg-delivery { background-color: var(--color-delivery); }
+    .bg-entregue-nao-pago { background-color: var(--color-entregue-nao-pago); }
+    .bg-orc-nao-aprovado { background-color: var(--color-orc-nao-aprovado); }
+
+    /* MAPEAMENTO DE CORES NAS LINHAS DA TABELA */
+    tr.status-pago td { background-color: var(--color-pago) !important; color: #000 !important; }
+    tr.status-nao-pago td { background-color: var(--color-nao-pago) !important; color: #000 !important; }
+    tr.status-anulado td { background-color: var(--color-anulado) !important; color: #000 !important; }
+    tr.status-entregue-pago td { background-color: var(--color-entregue-pago) !important; color: #000 !important; }
+
+    tr.status-orcamento td { background-color: var(--color-orcamento) !important; color: #000 !important; }
+    tr.status-delivery td { background-color: var(--color-delivery) !important; color: #000 !important; }
+    tr.status-entregue-nao-pago td { background-color: var(--color-entregue-nao-pago) !important; color: #000 !important; }
+    tr.status-orc-nao-aprovado td { background-color: var(--color-orc-nao-aprovado) !important; color: #000 !important; }
+
+    /* MEDIA QUERIES PARA RESPONSIVIDADE E ADAPTAÇÃO */
+    @media (max-width: 1024px) {
+      .main-grid {
+        grid-template-columns: 240px 40px 1fr 1fr 80px;
+      }
+      .legend-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .search-panel {
+        grid-template-columns: 1fr 1fr;
+      }
+      .btn-search {
+        grid-column: span 2;
+        height: 36px;
+      }
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+      .details-box-container {
+        grid-column: 1;
+      }
+      .legend-container {
+        grid-column: 1;
+      }
+    }
   </style>
 </head>
 <body>
 
+  <!-- BARRA SUPERIOR DE SELEÇÃO DE LOJA -->
   <div class="top-bar">
-    <span>LOJA:</span>
+    <label for="select-loja">LOJA:</label>
     <select id="select-loja">
       <option value="100">100 - Oficina do Minuto I</option>
       <option value="101">101 - Oficina do Minuto II</option>
@@ -230,125 +428,140 @@
     </select>
   </div>
 
-  <!-- Form de Busca -->
+  <!-- FORMULÁRIO DE PAINEL DE PESQUISA -->
   <div class="search-panel">
     <div class="form-group">
-      <label>Telefone</label>
-      <input type="text" id="filtro-telefone">
+      <label for="filtro-telefone">Telefone</label>
+      <input type="text" id="filtro-telefone" autocomplete="off">
     </div>
     <div class="form-group">
-      <label>Nome 💡</label>
-      <input type="text" id="filtro-nome">
+      <label for="filtro-nome">Nome 💡</label>
+      <input type="text" id="filtro-nome" autocomplete="off">
     </div>
     <div class="form-group">
-      <label>Código</label>
-      <input type="text" id="filtro-codigo" readonly>
+      <label for="filtro-codigo">Código</label>
+      <input type="text" id="filtro-codigo" readonly tabindex="-1">
     </div>
     <div></div>
-    <button class="btn-search" id="btn-pesquisar">
-      🔍<br> Pesquisar
+    
+    <button class="btn-search" id="btn-pesquisar" type="button">
+      <span class="icon">🔍</span>
+      <span>Pesquisar</span>
     </button>
 
-    <div class="form-group" style="grid-column: span 2;">
-      <label>Endereço</label>
-      <input type="text" id="filtro-endereco" readonly>
+    <div class="form-group col-span-2">
+      <label for="filtro-endereco">Endereço</label>
+      <input type="text" id="filtro-endereco" readonly tabindex="-1">
     </div>
-    <div class="form-group" style="grid-column: span 2;">
-      <label>CPF/CNPJ</label>
-      <input type="text" id="filtro-cpf" readonly>
+    <div class="form-group col-span-2">
+      <label for="filtro-cpf">CPF/CNPJ</label>
+      <input type="text" id="filtro-cpf" readonly tabindex="-1">
     </div>
   </div>
 
-  <!-- Conteúdo Principal -->
+  <!-- CONTEÚDO PRINCIPAL (GRID) -->
   <div class="main-grid">
     
-    <!-- Coluna Resultado -->
+    <!-- COLUNA RESULTADOS DA BUSCA -->
     <div>
-      <div class="section-title">Resultado</div>
+      <div class="section-title">
+        <span>Resultado</span>
+      </div>
       <div class="list-box" id="lista-resultados">
-        <!-- Vazio por padrão, preenchido via JS -->
+        <!-- Preenchido via JavaScript -->
       </div>
     </div>
 
+    <!-- PAINEL DE NAVEGAÇÃO / BOTÕES LATERAIS (SE NECESSÁRIO) -->
+    <div class="nav-buttons">
+      <!-- Reservado para botões de ordenação ou acionamento adicional -->
+    </div>
 
-
-    <!-- Tabela Tickets em Aberto -->
+    <!-- TABELA 1: TICKETS EM ABERTO -->
     <div>
-      <div class="section-title">Tickets em Aberto</div>
+      <div class="section-title">
+        <span>Tickets em Aberto</span>
+      </div>
       <div class="table-container">
         <table>
           <thead>
             <tr>
-              <th>Série</th>
-              <th>Ticket</th>
-              <th>Emissão</th>
-              <th>Pos.</th>
-              <th>*</th>
+              <th style="width: 22%;">Série</th>
+              <th style="width: 28%;">Ticket</th>
+              <th style="width: 28%;">Emissão</th>
+              <th style="width: 12%;">Pos.</th>
+              <th style="width: 10%;">*</th>
             </tr>
           </thead>
           <tbody id="tabela-abertos-body">
-            <!-- Vazio por padrão -->
+            <!-- Preenchido via JavaScript -->
           </tbody>
         </table>
       </div>
     </div>
 
-    <!-- Tabela Tickets Entregues/Anulados -->
+    <!-- TABELA 2: TICKETS ENTREGUES / ANULADOS -->
     <div>
-      <div class="section-title">Tickets Entregues/Anulados</div>
+      <div class="section-title">
+        <span>Tickets Entregues/Anulados</span>
+      </div>
       <div class="table-container">
         <table>
           <thead>
             <tr>
-              <th>Série</th>
-              <th>Ticket</th>
-              <th>Emissão</th>
-              <th>*</th>
+              <th style="width: 25%;">Série</th>
+              <th style="width: 32%;">Ticket</th>
+              <th style="width: 31%;">Emissão</th>
+              <th style="width: 12%;">*</th>
             </tr>
           </thead>
           <tbody id="tabela-entregues-body">
-            <!-- Vazio por padrão -->
+            <!-- Preenchido via JavaScript -->
           </tbody>
         </table>
       </div>
     </div>
 
-    <!-- Botão Ticket Lateral -->
-    <div>
-      <br>
-      <button class="btn-search" style="width: 100%;">
-        🔍<br> Ticket
+    <!-- BOTÃO DE AÇÃO LATERAL PARA TICKET -->
+    <div class="ticket-btn-col">
+      <button class="btn-search" style="width: 100%; height: 60px;" type="button">
+        <span class="icon">🔍</span>
+        <span>Ticket</span>
       </button>
     </div>
 
-    <!-- Detalhes do Endereço -->
-    <div>
-      <div class="section-title">Detalhes Endereço</div>
+    <!-- DETALHES DO ENDEREÇO -->
+    <div class="details-box-container">
+      <div class="section-title">
+        <span>Detalhes Endereço</span>
+      </div>
       <div class="details-box" id="detalhes-endereco-box">
-        <!-- Vazio por padrão -->
+        <!-- Preenchido via JavaScript -->
       </div>
     </div>
 
-    <!-- Legenda de Status -->
+    <!-- PAINEL DE LEGENDAS -->
     <div class="legend-container">
-      <div class="legend-item"><div class="legend-box bg-pago"></div> Pago</div>
-      <div class="legend-item"><div class="legend-box bg-nao-pago"></div> Não Pago</div>
-      <div class="legend-item"><div class="legend-box bg-anulado"></div> Anulado</div>
-      <div class="legend-item"><div class="legend-box bg-entregue-pago"></div> Entregue Pago</div>
-      
-      <div class="legend-item"><div class="legend-box bg-orcamento"></div> Orçamento</div>
-      <div class="legend-item"><div class="legend-box bg-delivery"></div> Delivery</div>
-      <div class="legend-item"><div class="legend-box bg-entregue-nao-pago"></div> Entregue Não Pago</div>
-      <div class="legend-item"><div class="legend-box bg-orc-nao-aprovado"></div> Orç. Não Aprovado</div>
+      <div class="legend-grid">
+        <div class="legend-item"><div class="legend-box bg-pago"></div> Pago</div>
+        <div class="legend-item"><div class="legend-box bg-nao-pago"></div> Não Pago</div>
+        <div class="legend-item"><div class="legend-box bg-anulado"></div> Anulado</div>
+        <div class="legend-item"><div class="legend-box bg-entregue-pago"></div> Entregue Pago</div>
+        
+        <div class="legend-item"><div class="legend-box bg-orcamento"></div> Orçamento</div>
+        <div class="legend-item"><div class="legend-box bg-delivery"></div> Delivery</div>
+        <div class="legend-item"><div class="legend-box bg-entregue-nao-pago"></div> Entregue Não Pago</div>
+        <div class="legend-item"><div class="legend-box bg-orc-nao-aprovado"></div> Orç. Não Aprovado</div>
+      </div>
 
-      <div style="grid-column: span 4; font-weight: bold; margin-top: 3px;">
-        (*)Tck c/ Observação, (D)Disp.
+      <div class="legend-footer">
+        (*) Tck c/ Observação, (D) Disp.
       </div>
     </div>
 
   </div>
 
-  <!-- Script de Conexão com o Back-end -->
+  <!-- SCRIPT DE INTEGRAÇÃO DE NEGÓCIO -->
   <script type="module" src="./js/Cliente.js"></script>
 </body>
 </html>

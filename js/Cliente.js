@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputCodigo = document.getElementById('filtro-codigo');
     const inputEndereco = document.getElementById('filtro-endereco');
     const inputCpfCnpj = document.getElementById('filtro-cpf');
-    const selectLoja = document.getElementById('select-loja'); // Elemento <select> da loja
+    const selectLoja = document.getElementById('select-loja');
 
     const btnSearch = document.getElementById('btn-pesquisar');
     const listBox = document.getElementById('lista-resultados');
@@ -19,39 +19,42 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const detalhesEndereco = document.getElementById('detalhes-endereco-box');
 
-    let cacheClientes = {};
+    // Elementos do Modal Flutuante e Botão Ticket
+    const modalTicket = document.getElementById('modal-ticket');
+    const modalTitulo = document.getElementById('modal-ticket-titulo');
+    const modalCorpo = document.getElementById('modal-ticket-corpo');
+    const btnFecharModal = document.getElementById('btn-fechar-modal');
+    
+    // Procura o botão "Ticket"
+    const btnAbrirTicket = Array.from(document.querySelectorAll('button')).find(
+        btn => btn.textContent.includes('Ticket') && btn.id !== 'btn-pesquisar'
+    );
 
-    // Função auxiliar para padronizar com zero à esquerda
+    let cacheClientes = {};
+    let ticketSelecionado = null; // Guarda { loja, serie, numero } do ticket selecionado
+
     const pad = (n) => String(n).padStart(2, '0');
 
-    // Função inteligente para formatar a data que vem do banco
     function formatarData(dataStr) {
         if (!dataStr) return '';
-        
-        // Se a string já vier no formato YYYY-MM-DD ou YYYY-MM-DD HH:mm:ss
         const limpa = String(dataStr).split(' ')[0];
         const partes = limpa.split('-');
-        
         if (partes.length === 3) {
-            // Inverte Ano-Mês-Dia para Dia/Mês/Ano
             return `${partes[2]}/${partes[1]}/${partes[0]}`;
         }
-        
-        // Fallback para objeto Date ou ISO
         const d = new Date(dataStr);
         if (!isNaN(d.getTime())) {
             return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
         }
-        
         return dataStr;
     }
 
-    // Limpa os resultados se o usuário trocar a loja no select
     if (selectLoja) {
         selectLoja.addEventListener('change', () => {
             limparTabelasETela();
             listBox.innerHTML = '';
             cacheClientes = {};
+            ticketSelecionado = null;
         });
     }
 
@@ -141,6 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function preencherDadosCliente(clienteObj) {
         if (tabelaAbertos) tabelaAbertos.innerHTML = '';
         if (tabelaEntregues) tabelaEntregues.innerHTML = '';
+        ticketSelecionado = null;
 
         if (inputEndereco) inputEndereco.value = clienteObj.endereco || '';
         if (inputCpfCnpj) inputCpfCnpj.value = clienteObj.cpfCnpj || '';
@@ -149,6 +153,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (detalhesEndereco) {
             detalhesEndereco.textContent = clienteObj.endereco;
         }
+
+        const lojaId = selectLoja ? selectLoja.value : 100;
 
         clienteObj.tickets.forEach(ticket => {
             let ehEntregue = false;
@@ -172,10 +178,28 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const tr = document.createElement('tr');
+            tr.style.cursor = 'pointer';
+
+            // Evento para SELEÇÃO DO TICKET
+            tr.addEventListener('click', () => {
+                document.querySelectorAll('tr.selected-row').forEach(el => el.classList.remove('selected-row'));
+                tr.classList.add('selected-row');
+
+                ticketSelecionado = {
+                    loja: ticket.loja || lojaId,
+                    serie: ticket.serie || 1,
+                    numero: ticket.numero
+                };
+            });
+
+            // Duplo clique já abre o modal do ticket diretamente
+            tr.addEventListener('dblclick', () => {
+                carregarEAbrirModalTicket(ticket.loja || lojaId, ticket.serie || 1, ticket.numero);
+            });
+
             const dataEmissaoFormatada = formatarData(ticket.data_emissao);
             const temObs = ticket.observacao_geral ? '*' : '';
 
-            // Validação do status de pagamento
             const valorPago = ticket.pago !== undefined ? ticket.pago : ticket.status_pagamento;
             const isPago = 
                 valorPago === true || 
@@ -187,7 +211,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const isOrcamento = ticket.tipo === 'ORCAMENTO';
             const isOrcNaoAprovado = ticket.status_orcamento === 'NAO_APROVADO';
 
-            // Ordem de prioridade para a classe visual
             if (ehAnulado) {
                 tr.className = 'status-anulado';
             } else if (ehEntregue) {
@@ -202,7 +225,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 tr.className = isPago ? 'status-pago' : 'status-nao-pago';
             }
 
-            // Inserção na tabela
             if (ehAnulado || ehEntregue) {
                 const indicador = ehAnulado ? 'X' : (temObs || '');
                 tr.innerHTML = `
@@ -237,6 +259,128 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- LÓGICA DO MODAL DE TICKET ---
+
+    async function carregarEAbrirModalTicket(loja, serie, numero) {
+        if (!modalTicket) return;
+
+        modalTicket.style.display = 'flex';
+        modalTitulo.textContent = `Ticket nº ${numero} (Série ${serie})`;
+        modalCorpo.innerHTML = '<div style="text-align: center; padding: 20px;">Carregando detalhes...</div>';
+
+        try {
+            const response = await fetch(`${API_URL}/oficina/ticket/${loja}/${serie}/${numero}`);
+            if (!response.ok) throw new Error('Não foi possível carregar o ticket.');
+
+            const dados = await response.json();
+            renderizarDetalhesModal(dados);
+
+        } catch (error) {
+            console.error('❌ Erro ao buscar ticket:', error);
+            modalCorpo.innerHTML = `<div style="color: red; text-align: center; padding: 15px;">
+                Erro ao carregar detalhes do ticket.<br><small>${error.message}</small>
+            </div>`;
+        }
+    }
+
+    function renderizarDetalhesModal(tck) {
+        let pecasHtml = '';
+
+        if (tck.pecas && tck.pecas.length > 0) {
+            pecasHtml = tck.pecas.map(peca => {
+                let servicosRows = '';
+                if (peca.servicos && peca.servicos.length > 0) {
+                    servicosRows = peca.servicos.map(s => `
+                        <tr>
+                            <td>${s.descricao || '-'}</td>
+                            <td>${s.quantidade || 1}</td>
+                            <td>R$ ${(s.preco || 0).toFixed(2)}</td>
+                            <td>${s.status || '-'}</td>
+                            <td>${s.executor || '-'}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    servicosRows = `<tr><td colspan="5">Nenhum serviço associado</td></tr>`;
+                }
+
+                return `
+                    <div class="peca-card">
+                        <div class="peca-header">
+                            Item ${peca.item}: ${peca.descricao} 
+                            ${peca.cor ? ` | Cor: ${peca.cor}` : ''} 
+                            ${peca.marca ? ` | Marca: ${peca.marca}` : ''}
+                        </div>
+                        ${peca.observacao_peca ? `<div style="font-style: italic; color: #555;">Obs: ${peca.observacao_peca}</div>` : ''}
+                        <table class="tabela-servicos">
+                            <thead>
+                                <tr>
+                                    <th>Serviço</th>
+                                    <th>Qtd</th>
+                                    <th>Preço</th>
+                                    <th>Status</th>
+                                    <th>Executor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${servicosRows}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            pecasHtml = '<div style="padding: 10px;">Nenhuma peça/item cadastrado.</div>';
+        }
+
+        modalCorpo.innerHTML = `
+            <div class="ticket-info-grid">
+                <div class="ticket-info-item"><span>Oficina:</span> ${tck.nome_oficina || '-'}</div>
+                <div class="ticket-info-item"><span>Cliente:</span> ${tck.cliente || '-'}</div>
+                <div class="ticket-info-item"><span>Telefone:</span> ${tck.telefone || '-'}</div>
+                <div class="ticket-info-item"><span>Emissão:</span> ${tck.data_emissao || '-'}</div>
+                <div class="ticket-info-item"><span>Previsão:</span> ${tck.data_prevista || '-'}</div>
+                <div class="ticket-info-item"><span>Posição:</span> ${tck.posicao || '-'}</div>
+                <div class="ticket-info-item"><span>Valor Total:</span> R$ ${(tck.valor_final || 0).toFixed(2)}</div>
+            </div>
+
+            ${tck.observacao_geral ? `
+                <div style="background: #fff3cd; border: 1px solid #ffeeba; padding: 6px; margin-bottom: 10px; border-radius: 3px;">
+                    <strong>Obs. Geral:</strong> ${tck.observacao_geral}
+                </div>
+            ` : ''}
+
+            <div class="section-title">Itens / Peças do Ticket</div>
+            <div class="pecas-container">
+                ${pecasHtml}
+            </div>
+        `;
+    }
+
+    // Clique no botão "Ticket"
+    if (btnAbrirTicket) {
+        btnAbrirTicket.addEventListener('click', () => {
+            if (!ticketSelecionado) {
+                alert('Por favor, clique sobre uma linha de ticket da tabela para selecionar.');
+                return;
+            }
+            carregarEAbrirModalTicket(ticketSelecionado.loja, ticketSelecionado.serie, ticketSelecionado.numero);
+        });
+    }
+
+    // Fechar Modal
+    if (btnFecharModal) {
+        btnFecharModal.addEventListener('click', () => {
+            modalTicket.style.display = 'none';
+        });
+    }
+
+    // Fechar ao clicar fora da janela modal
+    window.addEventListener('click', (e) => {
+        if (e.target === modalTicket) {
+            modalTicket.style.display = 'none';
+        }
+    });
+
     function limparTabelasETela() {
         if (tabelaAbertos) tabelaAbertos.innerHTML = '';
         if (tabelaEntregues) tabelaEntregues.innerHTML = '';
@@ -244,6 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (inputEndereco) inputEndereco.value = '';
         if (inputCpfCnpj) inputCpfCnpj.value = '';
         if (inputCodigo) inputCodigo.value = '';
+        ticketSelecionado = null;
     }
 
     if (btnSearch) {

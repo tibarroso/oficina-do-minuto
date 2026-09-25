@@ -28,22 +28,22 @@ document.addEventListener('DOMContentLoaded', () => {
     function formatarData(dataStr) {
         if (!dataStr) return '';
         
-        // Se a string já vier no formato YYYY-MM-DD (ex: 2026-06-07) ou YYYY-MM-DD HH:mm:ss
-        const limpa = dataStr.split(' ')[0];
+        // Se a string já vier no formato YYYY-MM-DD ou YYYY-MM-DD HH:mm:ss
+        const limpa = String(dataStr).split(' ')[0];
         const partes = limpa.split('-');
         
         if (partes.length === 3) {
-            // Se estiver como Ano-Mês-Dia, inverte para Dia/Mês/Ano
+            // Inverte Ano-Mês-Dia para Dia/Mês/Ano
             return `${partes[2]}/${partes[1]}/${partes[0]}`;
         }
         
-        // Fallback caso venha como objeto Date ou outro formato
+        // Fallback para objeto Date ou ISO
         const d = new Date(dataStr);
         if (!isNaN(d.getTime())) {
             return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
         }
         
-        return dataStr; // Retorna original se não conseguir tratar
+        return dataStr;
     }
 
     // Limpa os resultados se o usuário trocar a loja no select
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function realizarBusca() {
         const nome = inputNome ? inputNome.value.trim() : '';
         const telefone = inputTelefone ? inputTelefone.value.trim() : '';
-        const lojaId = selectLoja ? selectLoja.value : ''; // Pega o ID da loja selecionada
+        const lojaId = selectLoja ? selectLoja.value : '';
 
         if (!lojaId) {
             alert('Por favor, selecione uma loja antes de pesquisar.');
@@ -73,7 +73,6 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             listBox.innerHTML = '<div style="padding: 5px; color: #666;">Pesquisando...</div>';
             
-            // Passando o parâmetro 'loja' junto na requisição para a API
             const url = `${API_URL}/api/oficina/buscar?nome=${encodeURIComponent(nome)}&telefone=${encodeURIComponent(telefone)}&loja=${encodeURIComponent(lojaId)}`;
             const response = await fetch(url);
             const resultado = await response.json();
@@ -157,14 +156,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (ticket.pecas && ticket.pecas.length > 0) {
                 const todosAnulados = ticket.pecas.every(p => 
-                    p.servicos.every(s => s.status && s.status.toUpperCase() === 'X')
+                    p.servicos && p.servicos.every(s => s.status && s.status.toUpperCase() === 'X')
                 );
 
                 if (todosAnulados) {
                     ehAnulado = true;
                 } else {
                     ehEntregue = ticket.pecas.every(p => 
-                        p.servicos.every(s => {
+                        p.servicos && p.servicos.every(s => {
                             const st = s.status ? s.status.toUpperCase() : '';
                             return st === 'ENTREGUE' || st === 'X';
                         })
@@ -173,11 +172,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const tr = document.createElement('tr');
-            // Formata a data de emissão utilizando a função inteligente baseada em pad
             const dataEmissaoFormatada = formatarData(ticket.data_emissao);
             const temObs = ticket.observacao_geral ? '*' : '';
 
-            // Validação ultra-flexível do status de pagamento
+            // Validação do status de pagamento
             const valorPago = ticket.pago !== undefined ? ticket.pago : ticket.status_pagamento;
             const isPago = 
                 valorPago === true || 
@@ -189,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const isOrcamento = ticket.tipo === 'ORCAMENTO';
             const isOrcNaoAprovado = ticket.status_orcamento === 'NAO_APROVADO';
 
-            // --- ORDEM DE PRIORIDADE CORRIGIDA ---
+            // Ordem de prioridade para a classe visual
             if (ehAnulado) {
                 tr.className = 'status-anulado';
             } else if (ehEntregue) {
@@ -204,9 +202,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 tr.className = isPago ? 'status-pago' : 'status-nao-pago';
             }
 
-            // Inserção na tabela correta
+            // Inserção na tabela
             if (ehAnulado || ehEntregue) {
-                const indicador = ehAnulado ? 'X' : (temObs || '*');
+                const indicador = ehAnulado ? 'X' : (temObs || '');
                 tr.innerHTML = `
                     <td>${ticket.serie || 1}</td>
                     <td>${ticket.numero}</td>
@@ -218,9 +216,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 let temDisponivel = false;
                 if (ticket.pecas) {
                     ticket.pecas.forEach(p => {
-                        p.servicos.forEach(s => {
-                            if (s.status && s.status.toLowerCase().includes('disponível')) temDisponivel = true;
-                        });
+                        if (p.servicos) {
+                            p.servicos.forEach(s => {
+                                if (s.status && s.status.toLowerCase().includes('disponível')) temDisponivel = true;
+                            });
+                        }
                     });
                 }
                 const indicadorStatus = temObs + (temDisponivel ? 'D' : '');

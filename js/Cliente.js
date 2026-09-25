@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const tr = document.createElement('tr');
-            // Mantido exatamente como você pediu (data original com split)
+            // Mantido data original com split
             const dataEmissaoFormatada = ticket.data_emissao ? ticket.data_emissao.split(' ')[0] : '';
             const temObs = ticket.observacao_geral ? '*' : '';
 

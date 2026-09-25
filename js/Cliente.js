@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputCodigo = document.getElementById('filtro-codigo');
     const inputEndereco = document.getElementById('filtro-endereco');
     const inputCpfCnpj = document.getElementById('filtro-cpf');
+    const selectLoja = document.getElementById('select-loja'); // Elemento <select> da loja
 
     const btnSearch = document.getElementById('btn-pesquisar');
     const listBox = document.getElementById('lista-resultados');
@@ -20,9 +21,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let cacheClientes = {};
 
+    // Limpa os resultados se o usuário trocar a loja no select
+    if (selectLoja) {
+        selectLoja.addEventListener('change', () => {
+            limparTabelasETela();
+            listBox.innerHTML = '';
+            cacheClientes = {};
+        });
+    }
+
     async function realizarBusca() {
-        const nome = inputNome.value.trim();
-        const telefone = inputTelefone.value.trim();
+        const nome = inputNome ? inputNome.value.trim() : '';
+        const telefone = inputTelefone ? inputTelefone.value.trim() : '';
+        const lojaId = selectLoja ? selectLoja.value : ''; // Pega o ID da loja selecionada
+
+        if (!lojaId) {
+            alert('Por favor, selecione uma loja antes de pesquisar.');
+            return;
+        }
 
         if (!nome && !telefone) {
             alert('Por favor, informe ao menos o Nome ou o Telefone para pesquisar.');
@@ -32,7 +48,8 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             listBox.innerHTML = '<div style="padding: 5px; color: #666;">Pesquisando...</div>';
             
-            const url = `${API_URL}/api/oficina/buscar?nome=${encodeURIComponent(nome)}&telefone=${encodeURIComponent(telefone)}`;
+            // Passando o parâmetro 'loja' junto na requisição para a API
+            const url = `${API_URL}/api/oficina/buscar?nome=${encodeURIComponent(nome)}&telefone=${encodeURIComponent(telefone)}&loja=${encodeURIComponent(lojaId)}`;
             const response = await fetch(url);
             const resultado = await response.json();
 

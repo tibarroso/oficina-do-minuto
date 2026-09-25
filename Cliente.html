@@ -19,6 +19,17 @@
       font-weight: bold;
       margin-bottom: 5px;
       color: #333;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .top-bar select {
+      padding: 2px 5px;
+      border: 1px solid #7f9db9;
+      background-color: #fff;
+      font-weight: bold;
+      color: #000080;
     }
 
     /* Form Topo */
@@ -184,18 +195,18 @@
       border: 1px solid #7f9db9;
     }
 
-    /* Cores das Legendas e das Linhas (Mapeadas exatamente conforme solicitado) */
-    .bg-pago { background-color: #749ab5; }                  /* Cinzento 8ede76*/
-    .bg-nao-pago { background-color: #ffeb9c; }              /* Amarelo-claro #ffeb9c*/
-    .bg-anulado { background-color: #f4b084; }               /* Laranja */
-    .bg-entregue-pago { background-color: #8ede76; }         /* Verde-alface c6efce*/
+    /* Cores das Legendas (Exatamente como solicitado) */
+    .bg-pago { background-color: #d9d9d9; }                   /* Cinzento */
+    .bg-nao-pago { background-color: #749ab5; }                /* Azul acinzentado / Não Pago */
+    .bg-anulado { background-color: #f4b084; }                 /* Laranja */
+    .bg-entregue-pago { background-color: #c6efce; }           /* Verde-alface */
     
-    .bg-orcamento { background-color: #b4e6eb; }             /* Azul-celeste */
-    .bg-delivery { background-color: #f4b084; }              /* Laranja */
-    .bg-entregue-nao-pago { background-color: #fff2cc; }     /* Amarelo-pálido */
-    .bg-orc-nao-aprovado { background-color: #f8cbad; }      /* Laranja-claro */
+    .bg-orcamento { background-color: #b4e6eb; }               /* Azul-celeste */
+    .bg-delivery { background-color: #f4b084; }                /* Laranja */
+    .bg-entregue-nao-pago { background-color: #8ede76; }       /* Verde claro */
+    .bg-orc-nao-aprovado { background-color: #f8cbad; }        /* Laranja-claro */
 
-    /* Mapeamento para as Linhas da Tabela (tr) */
+    /* Mapeamento para as Linhas da Tabela (tr) - Sincronizado perfeitamente com as legendas */
     tr.status-pago td { background-color: #d9d9d9 !important; color: #000 !important; }
     tr.status-nao-pago td { background-color: #749ab5 !important; color: #000 !important; }
     tr.status-anulado td { background-color: #f4b084 !important; color: #000 !important; }
@@ -209,7 +220,13 @@
 </head>
 <body>
 
-  <div class="top-bar">LOJA: 100 - OFICINA DO MINUTO I</div>
+  <div class="top-bar">
+    <span>LOJA:</span>
+    <select id="select-loja">
+      <option value="100">100 - Oficina do Minuto I</option>
+      <option value="101">101 - Oficina do Minuto II</option>
+    </select>
+  </div>
 
   <!-- Form de Busca -->
   <div class="search-panel">

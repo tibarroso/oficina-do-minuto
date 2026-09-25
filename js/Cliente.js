@@ -21,6 +21,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let cacheClientes = {};
 
+    // Função auxiliar para padronizar com zero à esquerda
+    const pad = (n) => String(n).padStart(2, '0');
+
+    // Função inteligente para formatar a data que vem do banco
+    function formatarData(dataStr) {
+        if (!dataStr) return '';
+        
+        // Se a string já vier no formato YYYY-MM-DD (ex: 2026-06-07) ou YYYY-MM-DD HH:mm:ss
+        const limpa = dataStr.split(' ')[0];
+        const partes = limpa.split('-');
+        
+        if (partes.length === 3) {
+            // Se estiver como Ano-Mês-Dia, inverte para Dia/Mês/Ano
+            return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+        
+        // Fallback caso venha como objeto Date ou outro formato
+        const d = new Date(dataStr);
+        if (!isNaN(d.getTime())) {
+            return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+        }
+        
+        return dataStr; // Retorna original se não conseguir tratar
+    }
+
     // Limpa os resultados se o usuário trocar a loja no select
     if (selectLoja) {
         selectLoja.addEventListener('change', () => {
@@ -148,8 +173,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const tr = document.createElement('tr');
-            // Mantido data original com split
-            const dataEmissaoFormatada = ticket.data_emissao ? ticket.data_emissao.split(' ')[0] : '';
+            // Formata a data de emissão utilizando a função inteligente baseada em pad
+            const dataEmissaoFormatada = formatarData(ticket.data_emissao);
             const temObs = ticket.observacao_geral ? '*' : '';
 
             // Validação ultra-flexível do status de pagamento

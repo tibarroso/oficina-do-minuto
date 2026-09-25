@@ -8,26 +8,20 @@ function pad(n) {
     return n < 10 ? '0' + n : n;
 }
 
-// Função para formatar a data vinda do banco para DD/MM/AAAA
-function formatarData(dataString) {
+// Função para formatar a data e hora vinda do banco para DD/MM/AAAA HH:MM
+function formatarDataHora(dataString) {
     if (!dataString) return '';
     
-    // Pega apenas a parte da data se vier timestamp (YYYY-MM-DD)
-    const dataPart = dataString.split('T')[0].split(' ')[0];
-    const partes = dataPart.split('-');
-    
-    if (partes.length === 3) {
-        const ano = partes[0];
-        const mes = partes[1];
-        const dia = partes[2];
-        return `${dia}/${mes}/${ano}`;
-    }
-    
-    // Fallback caso venha em outro formato
     const d = new Date(dataString);
-    if (isNaN(d.getTime())) return dataString;
+    if (isNaN(d.getTime())) return dataString; // Retorna original se inválida
     
-    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+    const dia = pad(d.getDate());
+    const mes = pad(d.getMonth() + 1);
+    const ano = d.getFullYear();
+    const horas = pad(d.getHours());
+    const minutos = pad(d.getMinutes());
+    
+    return `${dia}/${mes}/${ano} ${horas}:${minutos}`;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -175,8 +169,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const tr = document.createElement('tr');
-            // Uso da função formatarData para exibir corretamente no padrão brasileiro
-            const dataEmissaoFormatada = formatarData(ticket.data_emissao);
+            // Formatação correta combinando data e hora com pad()
+            const dataEmissaoFormatada = formatarDataHora(ticket.data_emissao);
             const temObs = ticket.observacao_geral ? '*' : '';
 
             // Validação ultra-flexível do status de pagamento
@@ -195,7 +189,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (ehAnulado) {
                 tr.className = 'status-anulado';
             } else if (ehEntregue) {
-                // Garante que entregue pago fique com verde-alface (#c6efce)
                 tr.className = isPago ? 'status-entregue-pago' : 'status-entregue-nao-pago';
             } else if (isDelivery) {
                 tr.className = 'status-delivery';

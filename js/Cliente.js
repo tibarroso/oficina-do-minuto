@@ -3,27 +3,6 @@ import { supabase } from "./supabase.js";
 // Configuração da URL da API (ambiente local)
 const API_URL = 'http://localhost:3000';
 
-// Função auxiliar para garantir o zero à esquerda (ex: 5 vira '05')
-function pad(n) {
-    return n < 10 ? '0' + n : n;
-}
-
-// Função para formatar a data e hora vinda do banco para DD/MM/AAAA HH:MM
-function formatarDataHora(dataString) {
-    if (!dataString) return '';
-    
-    const d = new Date(dataString);
-    if (isNaN(d.getTime())) return dataString; // Retorna original se inválida
-    
-    const dia = pad(d.getDate());
-    const mes = pad(d.getMonth() + 1);
-    const ano = d.getFullYear();
-    const horas = pad(d.getHours());
-    const minutos = pad(d.getMinutes());
-    
-    return `${dia}/${mes}/${ano} ${horas}:${minutos}`;
-}
-
 document.addEventListener('DOMContentLoaded', () => {
     const inputTelefone = document.getElementById('filtro-telefone');
     const inputNome = document.getElementById('filtro-nome');
@@ -169,8 +148,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const tr = document.createElement('tr');
-            // Formatação correta combinando data e hora com pad()
-            const dataEmissaoFormatada = formatarDataHora(ticket.data_emissao);
+            // Mantido exatamente como você pediu (data original com split)
+            const dataEmissaoFormatada = ticket.data_emissao ? ticket.data_emissao.split(' ')[0] : '';
             const temObs = ticket.observacao_geral ? '*' : '';
 
             // Validação ultra-flexível do status de pagamento

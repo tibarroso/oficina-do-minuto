@@ -184,6 +184,12 @@
       text-align: center;
     }
 
+    /* Seleção de Linha na Tabela */
+    tr.selected-row td {
+      outline: 2px solid #000080;
+      font-weight: bold;
+    }
+
     /* Detalhes */
     .details-box {
       border: 1px solid #7f9db9;
@@ -246,7 +252,113 @@
     tr.status-entregue-nao-pago td { background-color: #8ede76 !important; color: #000 !important; }
     tr.status-orc-nao-aprovado td { background-color: #f8cbad !important; color: #000 !important; }
 
-    /* Ajustes específicos para telas muito pequenas (Smartphones) */
+    /* Modal Flutuante */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .modal-content {
+      background: #fff;
+      border: 2px solid #000080;
+      border-radius: 4px;
+      width: 90%;
+      max-width: 750px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .modal-header {
+      background: #000080;
+      color: #fff;
+      padding: 8px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .modal-body {
+      padding: 12px;
+      overflow-y: auto;
+      font-size: 11px;
+    }
+
+    .ticket-info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 6px;
+      background: #f0f4f8;
+      padding: 8px;
+      border: 1px solid #b4c6e7;
+      margin-bottom: 10px;
+    }
+
+    .ticket-info-item span {
+      font-weight: bold;
+      color: #000080;
+    }
+
+    .pecas-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .peca-card {
+      border: 1px solid #7f9db9;
+      border-radius: 3px;
+      padding: 8px;
+      background: #fafafa;
+    }
+
+    .peca-header {
+      font-weight: bold;
+      color: #000080;
+      margin-bottom: 4px;
+      border-bottom: 1px solid #dcdcdc;
+      padding-bottom: 2px;
+    }
+
+    .tabela-servicos {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 4px;
+    }
+
+    .tabela-servicos th {
+      background: #dce6f1;
+      border: 1px solid #b4c6e7;
+      padding: 3px;
+      font-size: 10px;
+    }
+
+    .tabela-servicos td {
+      border: 1px solid #e0e0e0;
+      padding: 3px;
+      font-size: 10px;
+    }
+
+    /* Ajustes específicos para smartphones */
     @media (max-width: 600px) {
       .form-group.span-2 {
         grid-column: span 1;
@@ -357,7 +469,7 @@
     <div style="display: flex; flex-direction: column; gap: 8px;">
       <div>
         <div class="section-title">&nbsp;</div>
-        <button class="btn-search">
+        <button class="btn-search" id="btn-abrir-ticket">
           🔍<br> Ticket
         </button>
       </div>
@@ -387,6 +499,19 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- Modal Detalhes do Ticket (Flutuante) -->
+  <div id="modal-ticket" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title" id="modal-ticket-titulo">Detalhes do Ticket</span>
+        <button class="modal-close" id="btn-fechar-modal">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-ticket-corpo">
+        <div style="text-align: center; padding: 20px;">Carregando...</div>
+      </div>
+    </div>
   </div>
 
   <!-- Script de Conexão com o Back-end -->

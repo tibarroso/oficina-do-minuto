@@ -3,6 +3,33 @@ import { supabase } from "./supabase.js";
 // Configuração da URL da API (ambiente local)
 const API_URL = 'http://localhost:3000';
 
+// Função auxiliar para garantir o zero à esquerda (ex: 5 vira '05')
+function pad(n) {
+    return n < 10 ? '0' + n : n;
+}
+
+// Função para formatar a data vinda do banco para DD/MM/AAAA
+function formatarData(dataString) {
+    if (!dataString) return '';
+    
+    // Pega apenas a parte da data se vier timestamp (YYYY-MM-DD)
+    const dataPart = dataString.split('T')[0].split(' ')[0];
+    const partes = dataPart.split('-');
+    
+    if (partes.length === 3) {
+        const ano = partes[0];
+        const mes = partes[1];
+        const dia = partes[2];
+        return `${dia}/${mes}/${ano}`;
+    }
+    
+    // Fallback caso venha em outro formato
+    const d = new Date(dataString);
+    if (isNaN(d.getTime())) return dataString;
+    
+    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const inputTelefone = document.getElementById('filtro-telefone');
     const inputNome = document.getElementById('filtro-nome');
@@ -148,7 +175,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const tr = document.createElement('tr');
-            const dataEmissaoFormatada = ticket.data_emissao ? ticket.data_emissao.split(' ')[0] : '';
+            // Uso da função formatarData para exibir corretamente no padrão brasileiro
+            const dataEmissaoFormatada = formatarData(ticket.data_emissao);
             const temObs = ticket.observacao_geral ? '*' : '';
 
             // Validação ultra-flexível do status de pagamento

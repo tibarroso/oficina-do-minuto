@@ -309,6 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             Item ${peca.item}: ${peca.descricao} 
                             ${peca.cor ? ` | Cor: ${peca.cor}` : ''} 
                             ${peca.marca ? ` | Marca: ${peca.marca}` : ''}
+                             ${peca.data_entrega ? ` | data_entrega: ${peca.data_entrega}` : ''}
                         </div>
                         ${peca.observacao_peca ? `<div style="font-style: italic; color: #555;">Obs: ${peca.observacao_peca}</div>` : ''}
                         <table class="tabela-servicos">

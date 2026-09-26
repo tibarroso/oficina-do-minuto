@@ -375,11 +375,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Fechar ao clicar fora da janela modal
+//    window.addEventListener('click', (e) => {
+//        if (e.target === modalTicket) {
+//            modalTicket.style.display = 'none';
+//        }
+//    });
+
     window.addEventListener('click', (e) => {
-        if (e.target === modalTicket) {
-            modalTicket.style.display = 'none';
+    if (e.target === modalTicket) {
+        // Se a janela estiver aberta e o usuário clicar fora, não faz nada
+         return;
         }
     });
+
+    
 
     function limparTabelasETela() {
         if (tabelaAbertos) tabelaAbertos.innerHTML = '';

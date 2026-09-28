@@ -372,23 +372,12 @@
 </head>
 <body>
 
-  
-<!--  <div class="top-bar">
-    <span>LOJA:</span>
-    <select id="select-loja">
-      <option value="100">100 - Oficina do Minuto I</option>
-      <option value="101">101 - Oficina do Minuto II</option>
-      <option value="102">102 - Oficina do Minuto III</option>
-      <option value="103">103 - Oficina do Minuto IV</option>
-    </select>
-  </div> -->
-  
   <div class="top-bar">
     <span>LOJA:</span>
     <select id="select-loja">
       <option value="">Carregando lojas...</option>
     </select>
-</div>
+  </div>
   
   <!-- Form de Busca -->
   <div class="search-panel">
@@ -418,6 +407,15 @@
     <div class="form-group span-2">
       <label>CPF/CNPJ</label>
       <input type="text" id="filtro-cpf" readonly>
+    </div>
+
+    <!-- Campos de endereço complementares exigidos pelo JS para montar a caixa de Detalhes Endereço -->
+    <div style="display: none;">
+      <input type="text" id="filtro-cep">
+      <input type="text" id="filtro-numero-endereco">
+      <input type="text" id="filtro-bairro">
+      <input type="text" id="filtro-cidade">
+      <input type="text" id="filtro-uf">
     </div>
   </div>
 

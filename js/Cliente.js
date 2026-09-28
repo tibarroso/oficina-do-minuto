@@ -136,14 +136,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     cacheClientes[chaveCliente] = {
                         nome: clienteNome,
                         telefone: clienteTelefone,
-                        endereco: ticket.cliente_endereco || ticket.endereco || ticket.logradouro || ticket.rua || '',
-                        cep: ticket.cliente_cep || ticket.cep || ticket.codigo_postal || '',
-                        numeroEndereco: ticket.cliente_numero || ticket.numero_endereco || ticket.numero || ticket.num || '',
-                        bairro: ticket.cliente_bairro || ticket.bairro || ticket.nm_bairro || '',
-                        cidade: ticket.cliente_cidade || ticket.cidade || ticket.municipio || '',
-                        uf: ticket.cliente_uf || ticket.uf || ticket.estado || '',
-                        cpfCnpj: ticket.cliente_cpf_cnpj || ticket.cpf_cnpj || ticket.cpf || ticket.cnpj || '',
-                        codigo: ticket.cliente_codigo_loja || ticket.codigo_cliente || ticket.codigo || '',
+                        endereco: ticket.endereco || ticket.cliente_endereco || '',
+                        cep: ticket.cliente_cep || ticket.cep || '',
+                        numeroEndereco: ticket.cliente_numero || ticket.numero_endereco || '',
+                        bairro: ticket.cliente_bairro || ticket.bairro || '',
+                        cidade: ticket.cliente_cidade || ticket.cidade || '',
+                        uf: ticket.cliente_uf || ticket.uf || '',
+                        cpfCnpj: ticket.cpf_cnpj || ticket.cliente_cpf_cnpj || '',
+                        codigo: ticket.codigo_cliente || ticket.codigo || '',
                         tickets: []
                     };
                 }
@@ -220,8 +220,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (inputCidade) inputCidade.value = clienteObj.cidade || '';
         if (inputUf) inputUf.value = clienteObj.uf || '';
 
-        // --- MONTAGEM COMPLETA DA CAIXA "DETALHES ENDEREÇO" ---
+        // --- MONTAGEM COMPLETA DO CADASTRO NA CAIXA "DETALHES ENDEREÇO" ---
         if (detalhesEndereco) {
+            let codigo = clienteObj.codigo ? `Cód: ${clienteObj.codigo}` : '';
+            let cpfCnpj = clienteObj.cpfCnpj ? `CPF/CNPJ: ${clienteObj.cpfCnpj}` : '';
+            let telefone = clienteObj.telefone ? `Tel: ${clienteObj.telefone}` : '';
             let logradouro = enderecoCompleto;
             let numero = numeroEnd ? `Nº ${numeroEnd}` : '';
             let bairro = clienteObj.bairro ? `Bairro: ${clienteObj.bairro}` : '';
@@ -230,11 +233,11 @@ document.addEventListener('DOMContentLoaded', () => {
             let cidadeUf = (cidade && uf) ? `${cidade} - ${uf}` : (cidade || uf);
             let cep = clienteObj.cep ? `CEP: ${clienteObj.cep}` : '';
 
-            let partesEndereco = [logradouro, numero, bairro, cidadeUf, cep]
+            let partesCadastro = [codigo, cpfCnpj, telefone, logradouro, numero, bairro, cidadeUf, cep]
                 .map(item => String(item).trim())
                 .filter(item => item !== '' && item !== 'undefined' && item !== 'null');
 
-            detalhesEndereco.textContent = partesEndereco.length > 0 ? partesEndereco.join(', ') : 'Endereço não informado';
+            detalhesEndereco.textContent = partesCadastro.length > 0 ? partesCadastro.join(' | ') : 'Cadastro completo não informado';
         }
 
         const lojaId = selectLoja ? selectLoja.value : 100;

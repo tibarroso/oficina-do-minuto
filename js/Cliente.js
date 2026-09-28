@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     cacheClientes[chaveCliente] = {
                         nome: clienteNome,
                         telefone: clienteTelefone,
-                        endereco: ticket.endereco || 'Endereço não informado',
+                        endereco: ticket.endereco || '',
                         cep: ticket.cep || '',
                         numeroEndereco: ticket.numero_endereco || '',
                         bairro: ticket.bairro || '',
@@ -204,24 +204,27 @@ document.addEventListener('DOMContentLoaded', () => {
         if (inputCpfCnpj) inputCpfCnpj.value = clienteObj.cpfCnpj || '';
         if (inputCodigo) inputCodigo.value = clienteObj.codigo || '';
 
-        // Preenchendo os campos detalhados de endereço
+        // Preenchendo os campos detalhados de endereço nos inputs
         if (inputCep) inputCep.value = clienteObj.cep || '';
         if (inputNumeroEndereco) inputNumeroEndereco.value = clienteObj.numeroEndereco || '';
         if (inputBairro) inputBairro.value = clienteObj.bairro || '';
         if (inputCidade) inputCidade.value = clienteObj.cidade || '';
         if (inputUf) inputUf.value = clienteObj.uf || '';
 
+        // Montando o endereço detalhado para exibição na caixa de texto/div
         if (detalhesEndereco) {
-            const partesEndereco = [
-                clienteObj.endereco,
-                clienteObj.numeroEndereco ? `Nº ${clienteObj.numeroEndereco}` : '',
-                clienteObj.bairro,
-                clienteObj.cidade,
-                clienteObj.uf,
-                clienteObj.cep ? `CEP: ${clienteObj.cep}` : ''
-            ].filter(Boolean).join(', ');
+            let logradouro = clienteObj.endereco || '';
+            let numero = clienteObj.numeroEndereco ? `Nº ${clienteObj.numeroEndereco}` : '';
+            let bairro = clienteObj.bairro || '';
+            let cidade = clienteObj.cidade || '';
+            let uf = clienteObj.uf || '';
+            let cep = clienteObj.cep ? `CEP: ${clienteObj.cep}` : '';
 
-            detalhesEndereco.textContent = partesEndereco || clienteObj.endereco;
+            let partesEndereco = [logradouro, numero, bairro, cidade, uf, cep]
+                .map(item => String(item).trim())
+                .filter(item => item !== '' && item !== 'undefined' && item !== 'null');
+
+            detalhesEndereco.textContent = partesEndereco.length > 0 ? partesEndereco.join(', ') : 'Endereço não informado';
         }
 
         const lojaId = selectLoja ? selectLoja.value : 100;

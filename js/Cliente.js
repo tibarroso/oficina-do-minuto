@@ -143,15 +143,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     cacheClientes[chaveCliente] = {
                         nome: clienteNome,
                         telefone: clienteTelefone,
-                        // Mapeia todas as possíveis variações dos campos de endereço vindos da API
-                        endereco: ticket.endereco || ticket.logradouro || ticket.rua || '',
-                        cep: ticket.cep || ticket.codigo_postal || '',
-                        numeroEndereco: ticket.numero_endereco || ticket.numero || ticket.num || '',
-                        bairro: ticket.bairro || ticket.nm_bairro || '',
-                        cidade: ticket.cidade || ticket.municipio || '',
-                        uf: ticket.uf || ticket.estado || '',
-                        cpfCnpj: ticket.cpf_cnpj || ticket.cpf || ticket.cnpj || '',
-                        codigo: ticket.codigo_cliente || ticket.codigo || '',
+                        // Mapeamento correto priorizando os prefixos exatos do SQL Server e alternativas
+                        endereco: ticket.cliente_endereco || ticket.endereco || ticket.logradouro || ticket.rua || '',
+                        cep: ticket.cliente_cep || ticket.cep || ticket.codigo_postal || '',
+                        numeroEndereco: ticket.cliente_numero || ticket.numero_endereco || ticket.numero || ticket.num || '',
+                        bairro: ticket.cliente_bairro || ticket.bairro || ticket.nm_bairro || '',
+                        cidade: ticket.cliente_cidade || ticket.cidade || ticket.municipio || '',
+                        uf: ticket.cliente_uf || ticket.uf || ticket.estado || '',
+                        cpfCnpj: ticket.cliente_cpf_cnpj || ticket.cpf_cnpj || ticket.cpf || ticket.cnpj || '',
+                        codigo: ticket.cliente_codigo_loja || ticket.codigo_cliente || ticket.codigo || '',
                         tickets: []
                     };
                 }

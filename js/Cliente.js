@@ -23,9 +23,7 @@ async function carregarSelectLojas() {
                 const option = document.createElement("option");
                 option.value = oficina.loja;
 
-                // Define o indicador visual (bolinha verde para Online, vermelha para Offline)
                 const statusBolinha = oficina.status === "Online" ? "🟢" : "🔴";
-                
                 option.textContent = `${statusBolinha} ${oficina.loja} - ${oficina.nome_oficina} (${oficina.status})`;
                 
                 selectLoja.appendChild(option);
@@ -40,7 +38,6 @@ async function carregarSelectLojas() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Carrega as lojas assim que a página é aberta
     carregarSelectLojas();
 
     const inputTelefone = document.getElementById('filtro-telefone');
@@ -49,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputEndereco = document.getElementById('filtro-endereco');
     const inputCpfCnpj = document.getElementById('filtro-cpf');
     
-    // Novos inputs de endereço detalhado
+    // Inputs de endereço detalhado (ocultos ou visíveis no HTML)
     const inputCep = document.getElementById('filtro-cep');
     const inputNumeroEndereco = document.getElementById('filtro-numero-endereco');
     const inputBairro = document.getElementById('filtro-bairro');
@@ -57,13 +54,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputUf = document.getElementById('filtro-uf');
 
     const selectLoja = document.getElementById('select-loja');
-
     const btnSearch = document.getElementById('btn-pesquisar');
     const listBox = document.getElementById('lista-resultados');
     
     const tabelaAbertos = document.getElementById('tabela-abertos-body');
     const tabelaEntregues = document.getElementById('tabela-entregues-body');
-    
     const detalhesEndereco = document.getElementById('detalhes-endereco-box');
 
     // Elementos do Modal Flutuante e Botão Ticket
@@ -72,13 +67,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalCorpo = document.getElementById('modal-ticket-corpo');
     const btnFecharModal = document.getElementById('btn-fechar-modal');
     
-    // Procura o botão "Ticket"
-    const btnAbrirTicket = Array.from(document.querySelectorAll('button')).find(
-        btn => btn.textContent.includes('Ticket') && btn.id !== 'btn-pesquisar'
-    );
+    const btnAbrirTicket = document.getElementById('btn-abrir-ticket');
 
     let cacheClientes = {};
-    let ticketSelecionado = null; // Guarda { loja, serie, numero } do ticket selecionado
+    let ticketSelecionado = null;
 
     const pad = (n) => String(n).padStart(2, '0');
 
@@ -143,7 +135,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     cacheClientes[chaveCliente] = {
                         nome: clienteNome,
                         telefone: clienteTelefone,
-                        // Mapeamento correto priorizando os prefixos exatos do SQL Server e alternativas
                         endereco: ticket.cliente_endereco || ticket.endereco || ticket.logradouro || ticket.rua || '',
                         cep: ticket.cliente_cep || ticket.cep || ticket.codigo_postal || '',
                         numeroEndereco: ticket.cliente_numero || ticket.numero_endereco || ticket.numero || ticket.num || '',
@@ -200,11 +191,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tabelaEntregues) tabelaEntregues.innerHTML = '';
         ticketSelecionado = null;
 
-        // --- TRATAMENTO INTELIGENTE DE ENDEREÇO E NÚMERO ---
         let enderecoCompleto = clienteObj.endereco || '';
         let numeroEnd = clienteObj.numeroEndereco || '';
 
-        // Se o número veio vazio mas o endereço contém "Nº" ou vírgula com números, extrai
+        // Tratamento inteligente caso o número esteja grudado no endereço principal
         if (!numeroEnd && enderecoCompleto.includes('Nº')) {
             const partes = enderecoCompleto.split(/Nº\s*/i);
             enderecoCompleto = partes[0].replace(/,\s*$/, '').trim();
@@ -216,30 +206,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 numeroEnd = match[2].trim();
             }
         }
-        // ----------------------------------------------------
 
-        // Preenchendo os inputs principais
+        // Preenchendo inputs principais
         if (inputEndereco) inputEndereco.value = enderecoCompleto;
         if (inputCpfCnpj) inputCpfCnpj.value = clienteObj.cpfCnpj || '';
         if (inputCodigo) inputCodigo.value = clienteObj.codigo || '';
 
-        // Preenchendo os campos detalhados de endereço nos inputs
+        // Preenchendo os inputs ocultos de endereço detalhado
         if (inputCep) inputCep.value = clienteObj.cep || '';
         if (inputNumeroEndereco) inputNumeroEndereco.value = numeroEnd;
         if (inputBairro) inputBairro.value = clienteObj.bairro || '';
         if (inputCidade) inputCidade.value = clienteObj.cidade || '';
         if (inputUf) inputUf.value = clienteObj.uf || '';
 
-        // Montando o endereço detalhado para exibição na caixa de texto/div (sem duplicar)
+        // --- MONTAGEM COMPLETA DA CAIXA "DETALHES ENDEREÇO" ---
         if (detalhesEndereco) {
             let logradouro = enderecoCompleto;
-            let numero = (numeroEnd && !logradouro.includes(numeroEnd)) ? `Nº ${numeroEnd}` : '';
-            let bairro = clienteObj.bairro || '';
+            let numero = numeroEnd ? `Nº ${numeroEnd}` : '';
+            let bairro = clienteObj.bairro ? `Bairro: ${clienteObj.bairro}` : '';
             let cidade = clienteObj.cidade || '';
             let uf = clienteObj.uf || '';
+            let cidadeUf = (cidade && uf) ? `${cidade} - ${uf}` : (cidade || uf);
             let cep = clienteObj.cep ? `CEP: ${clienteObj.cep}` : '';
 
-            let partesEndereco = [logradouro, numero, bairro, cidade, uf, cep]
+            let partesEndereco = [logradouro, numero, bairro, cidadeUf, cep]
                 .map(item => String(item).trim())
                 .filter(item => item !== '' && item !== 'undefined' && item !== 'null');
 
@@ -349,8 +339,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- LÓGICA DO MODAL DE TICKET ---
-
     async function carregarEAbrirModalTicket(loja, serie, numero) {
         if (!modalTicket) return;
 
@@ -401,7 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             Item ${peca.item}: ${peca.descricao} 
                             ${peca.cor ? ` | Cor: ${peca.cor}` : ''} 
                             ${peca.marca ? ` | Marca: ${peca.marca}` : ''}
-                             ${peca.data_entrega ? ` | Entrega: ${peca.data_entrega}` : ''}
+                            ${peca.data_entrega ? ` | Entrega: ${peca.data_entrega}` : ''}
                         </div>
                         ${peca.observacao_peca ? `<div style="font-style: italic; color: #555;">Obs: ${peca.observacao_peca}</div>` : ''}
                         <table class="tabela-servicos">

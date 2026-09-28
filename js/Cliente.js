@@ -491,8 +491,4 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.key === 'Enter') realizarBusca();
         });
     }
-
-    if (inputNome && inputNome.value.trim()) {
-        realizarBusca();
-    }
 });

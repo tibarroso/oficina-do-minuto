@@ -3,7 +3,44 @@ import { supabase } from "./supabase.js";
 // Configuração da URL da API (ambiente local)
 const API_URL = 'http://localhost:3000';
 
+// =========================================================================
+// 🏢 FUNÇÃO PARA CARREGAR DINAMICAMENTE AS LOJAS DA API
+// =========================================================================
+async function carregarSelectLojas() {
+    const selectLoja = document.getElementById("select-loja");
+    if (!selectLoja) return;
+
+    try {
+        selectLoja.innerHTML = '<option value="">Carregando lojas...</option>';
+
+        const resposta = await fetch(`${API_URL}/lojas/lista`);
+        const resultado = await resposta.json();
+
+        if (resultado.sucesso && resultado.lojas) {
+            selectLoja.innerHTML = '<option value="">Selecione uma loja...</option>';
+
+            resultado.lojas.forEach(oficina => {
+                // Adiciona no select apenas as oficinas que estão online
+                if (oficina.status === "Online" && oficina.dados) {
+                    const option = document.createElement("option");
+                    option.value = oficina.loja;
+                    option.textContent = `${oficina.loja} - ${oficina.nome_oficina}`;
+                    selectLoja.appendChild(option);
+                }
+            });
+        } else {
+            selectLoja.innerHTML = '<option value="">Erro ao carregar lojas</option>';
+        }
+    } catch (error) {
+        console.error("Erro ao carregar as lojas:", error);
+        selectLoja.innerHTML = '<option value="">Erro de conexão</option>';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    // Carrega as lojas assim que a página é aberta
+    carregarSelectLojas();
+
     const inputTelefone = document.getElementById('filtro-telefone');
     const inputNome = document.getElementById('filtro-nome');
     const inputCodigo = document.getElementById('filtro-codigo');
@@ -375,65 +412,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Fechar ao clicar fora da janela modal
-//    window.addEventListener('click', (e) => {
-//        if (e.target === modalTicket) {
-//            modalTicket.style.display = 'none';
-//        }
-//    });
-
     window.addEventListener('click', (e) => {
-    if (e.target === modalTicket) {
-        // Se a janela estiver aberta e o usuário clicar fora, não faz nada
-         return;
+        if (e.target === modalTicket) {
+            // Se a janela estiver aberta e o usuário clicar fora, não faz nada
+            return;
         }
     });
-
-
-//----------------------------28/09/2026--------------------------------------
-// Função responsável por buscar as lojas da API e preencher o select do HTML
-async function carregarSelectLojas() {
-    const selectLoja = document.getElementById("select-loja");
-    
-    if (!selectLoja) {
-        console.error("Elemento 'select-loja' não foi encontrado no HTML.");
-        return;
-    }
-
-    try {
-        // Altera o texto provisoriamente enquanto busca os dados
-        selectLoja.innerHTML = '<option value="">Carregando lojas...</option>';
-
-        const resposta = await fetch(`${API_URL}/lojas/lista`);
-        const resultado = await resposta.json();
-
-        if (resultado.sucesso && resultado.lojas) {
-            // Limpa o select para preencher com as lojas reais
-            selectLoja.innerHTML = "";
-
-            resultado.lojas.forEach(oficina => {
-                // Adiciona apenas as lojas que estão online e possuem dados cadastrados
-                if (oficina.status === "Online" && oficina.dados) {
-                    const option = document.createElement("option");
-                    option.value = oficina.loja;
-                    option.textContent = `${oficina.loja} - ${oficina.nome_oficina}`;
-                    
-                    selectLoja.appendChild(option);
-                }
-            });
-        } else {
-            selectLoja.innerHTML = '<option value="">Erro ao carregar lojas</option>';
-        }
-    } catch (error) {
-        console.error("Erro ao carregar as lojas:", error);
-        selectLoja.innerHTML = '<option value="">Erro de conexão com o servidor</option>';
-    }
-}
-
-// Executa a função assim que a página terminar de carregar
-document.addEventListener("DOMContentLoaded", carregarSelectLojas);
-//---------------------------------------------------------------------------
-    
 
     function limparTabelasETela() {
         if (tabelaAbertos) tabelaAbertos.innerHTML = '';

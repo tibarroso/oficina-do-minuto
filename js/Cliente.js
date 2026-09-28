@@ -143,6 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     cacheClientes[chaveCliente] = {
                         nome: clienteNome,
                         telefone: clienteTelefone,
+                        // Mapeia todas as possíveis variações dos campos de endereço vindos da API
                         endereco: ticket.endereco || ticket.logradouro || ticket.rua || '',
                         cep: ticket.cep || ticket.codigo_postal || '',
                         numeroEndereco: ticket.numero_endereco || ticket.numero || ticket.num || '',

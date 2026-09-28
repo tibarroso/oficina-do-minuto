@@ -28,11 +28,6 @@ async function carregarSelectLojas() {
                 
                 option.textContent = `${statusBolinha} ${oficina.loja} - ${oficina.nome_oficina} (${oficina.status})`;
                 
-                // Opcional: Se quiser desabilitar a opção caso esteja offline para impedir seleção
-                // if (oficina.status !== "Online") {
-                //     option.disabled = true;
-                // }
-
                 selectLoja.appendChild(option);
             });
         } else {
@@ -54,6 +49,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputCodigo = document.getElementById('filtro-codigo');
     const inputEndereco = document.getElementById('filtro-endereco');
     const inputCpfCnpj = document.getElementById('filtro-cpf');
+    
+    // Novos inputs de endereço detalhado (se existirem no seu HTML)
+    const inputCep = document.getElementById('filtro-cep');
+    const inputNumeroEndereco = document.getElementById('filtro-numero-endereco');
+    const inputBairro = document.getElementById('filtro-bairro');
+    const inputCidade = document.getElementById('filtro-cidade');
+    const inputUf = document.getElementById('filtro-uf');
+
     const selectLoja = document.getElementById('select-loja');
 
     const btnSearch = document.getElementById('btn-pesquisar');
@@ -142,6 +145,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         nome: clienteNome,
                         telefone: clienteTelefone,
                         endereco: ticket.endereco || 'Endereço não informado',
+                        cep: ticket.cep || '',
+                        numeroEndereco: ticket.numero_endereco || '',
+                        bairro: ticket.bairro || '',
+                        cidade: ticket.cidade || '',
+                        uf: ticket.uf || '',
                         cpfCnpj: ticket.cpf_cnpj || '',
                         codigo: ticket.codigo_cliente || '',
                         tickets: []
@@ -191,12 +199,30 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tabelaEntregues) tabelaEntregues.innerHTML = '';
         ticketSelecionado = null;
 
+        // Preenchendo os inputs principais
         if (inputEndereco) inputEndereco.value = clienteObj.endereco || '';
         if (inputCpfCnpj) inputCpfCnpj.value = clienteObj.cpfCnpj || '';
         if (inputCodigo) inputCodigo.value = clienteObj.codigo || '';
 
+        // Preenchendo os novos campos detalhados de endereço (caso existam na tela)
+        if (inputCep) inputCep.value = clienteObj.cep || '';
+        if (inputNumeroEndereco) inputNumeroEndereco.value = clienteObj.numeroEndereco || '';
+        if (inputBairro) inputBairro.value = clienteObj.bairro || '';
+        if (inputCidade) inputCidade.value = clienteObj.cidade || '';
+        if (inputUf) inputUf.value = clienteObj.uf || '';
+
         if (detalhesEndereco) {
-            detalhesEndereco.textContent = clienteObj.endereco;
+            // Monta um resumo completo do endereço estruturado se desejar exibir em texto
+            const partesEndereco = [
+                clienteObj.endereco,
+                clienteObj.numeroEndereco ? `Nº ${clienteObj.numeroEndereco}` : '',
+                clienteObj.bairro,
+                clienteObj.cidade ? `${clienteObj.cidade}` : '',
+                clienteObj.uf,
+                clienteObj.cep ? `CEP: ${clienteObj.cep}` : ''
+            ].filter(Boolean).join(', ');
+
+            detalhesEndereco.textContent = partesEndereco || clienteObj.endereco;
         }
 
         const lojaId = selectLoja ? selectLoja.value : 100;
@@ -422,7 +448,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('click', (e) => {
         if (e.target === modalTicket) {
-            // Se a janela estiver aberta e o usuário clicar fora, não faz nada
             return;
         }
     });
@@ -434,6 +459,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (inputEndereco) inputEndereco.value = '';
         if (inputCpfCnpj) inputCpfCnpj.value = '';
         if (inputCodigo) inputCodigo.value = '';
+        
+        // Limpa os novos campos caso existam
+        if (inputCep) inputCep.value = '';
+        if (inputNumeroEndereco) inputNumeroEndereco.value = '';
+        if (inputBairro) inputBairro.value = '';
+        if (inputCidade) inputCidade.value = '';
+        if (inputUf) inputUf.value = '';
+
         ticketSelecionado = null;
     }
 

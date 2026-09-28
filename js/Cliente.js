@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputEndereco = document.getElementById('filtro-endereco');
     const inputCpfCnpj = document.getElementById('filtro-cpf');
     
-    // Inputs de endereço detalhado (ocultos ou visíveis no HTML)
+    // Inputs de endereço detalhado
     const inputCep = document.getElementById('filtro-cep');
     const inputNumeroEndereco = document.getElementById('filtro-numero-endereco');
     const inputBairro = document.getElementById('filtro-bairro');
@@ -213,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (inputCpfCnpj) inputCpfCnpj.value = clienteObj.cpfCnpj || '';
         if (inputCodigo) inputCodigo.value = clienteObj.codigo || '';
 
-        // Preenchendo os inputs ocultos de endereço detalhado
+        // Preenchendo os inputs de endereço detalhado
         if (inputCep) inputCep.value = clienteObj.cep || '';
         if (inputNumeroEndereco) inputNumeroEndereco.value = numeroEnd;
         if (inputBairro) inputBairro.value = clienteObj.bairro || '';

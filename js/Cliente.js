@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         cidade: ticket.cliente_cidade || ticket.cidade || '',
                         uf: ticket.cliente_uf || ticket.uf || '',
                         cpfCnpj: ticket.cpf_cnpj || ticket.cliente_cpf_cnpj || '',
-                        codigo: ticket.codigo_cliente || ticket.codigo || '',
+                       // codigo: ticket.codigo_cliente || ticket.codigo || '',
                         tickets: []
                     };
                 }

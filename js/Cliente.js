@@ -200,22 +200,40 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tabelaEntregues) tabelaEntregues.innerHTML = '';
         ticketSelecionado = null;
 
+        // --- TRATAMENTO INTELIGENTE DE ENDEREÇO E NÚMERO ---
+        let enderecoCompleto = clienteObj.endereco || '';
+        let numeroEnd = clienteObj.numeroEndereco || '';
+
+        // Se o número veio vazio mas o endereço contém "Nº" ou vírgula com números, extrai
+        if (!numeroEnd && enderecoCompleto.includes('Nº')) {
+            const partes = enderecoCompleto.split(/Nº\s*/i);
+            enderecoCompleto = partes[0].replace(/,\s*$/, '').trim();
+            numeroEnd = partes[1] ? partes[1].trim() : '';
+        } else if (!numeroEnd && /, \d+/.test(enderecoCompleto)) {
+            const match = enderecoCompleto.match(/(.*),\s*(\d+)(.*)$/);
+            if (match) {
+                enderecoCompleto = match[1].trim();
+                numeroEnd = match[2].trim();
+            }
+        }
+        // ----------------------------------------------------
+
         // Preenchendo os inputs principais
-        if (inputEndereco) inputEndereco.value = clienteObj.endereco || '';
+        if (inputEndereco) inputEndereco.value = enderecoCompleto;
         if (inputCpfCnpj) inputCpfCnpj.value = clienteObj.cpfCnpj || '';
         if (inputCodigo) inputCodigo.value = clienteObj.codigo || '';
 
         // Preenchendo os campos detalhados de endereço nos inputs
         if (inputCep) inputCep.value = clienteObj.cep || '';
-        if (inputNumeroEndereco) inputNumeroEndereco.value = clienteObj.numeroEndereco || '';
+        if (inputNumeroEndereco) inputNumeroEndereco.value = numeroEnd;
         if (inputBairro) inputBairro.value = clienteObj.bairro || '';
         if (inputCidade) inputCidade.value = clienteObj.cidade || '';
         if (inputUf) inputUf.value = clienteObj.uf || '';
 
-        // Montando o endereço detalhado para exibição na caixa de texto/div
+        // Montando o endereço detalhado para exibição na caixa de texto/div (sem duplicar)
         if (detalhesEndereco) {
-            let logradouro = clienteObj.endereco || '';
-            let numero = clienteObj.numeroEndereco ? `Nº ${clienteObj.numeroEndereco}` : '';
+            let logradouro = enderecoCompleto;
+            let numero = (numeroEnd && !logradouro.includes(numeroEnd)) ? `Nº ${numeroEnd}` : '';
             let bairro = clienteObj.bairro || '';
             let cidade = clienteObj.cidade || '';
             let uf = clienteObj.uf || '';

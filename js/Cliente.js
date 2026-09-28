@@ -227,12 +227,13 @@ document.addEventListener('DOMContentLoaded', () => {
             let telefone = clienteObj.telefone ? `Tel: ${clienteObj.telefone}` : '';
             let logradouro = enderecoCompleto;
             let numero = numeroEnd ? `Nº ${numeroEnd}` : '';
+            let bairro = clienteObj.bairro ? `Bairro: ${clienteObj.bairro}` : '';
             let cidade = clienteObj.cidade || '';
             let uf = clienteObj.uf || '';
             let cidadeUf = (cidade && uf) ? `${cidade} - ${uf}` : (cidade || uf);
             let cep = clienteObj.cep ? `CEP ${clienteObj.cep}` : '';
 
-            let partesCadastro = [codigo, cpfCnpj, telefone, logradouro, numero, cidadeUf, cep]
+            let partesCadastro = [codigo, cpfCnpj, telefone, logradouro, numero, bairro, cidadeUf, cep]
                 .map(item => String(item).trim())
                 .filter(item => item !== '' && item !== 'undefined' && item !== 'null');
 

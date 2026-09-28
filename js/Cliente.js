@@ -20,13 +20,20 @@ async function carregarSelectLojas() {
             selectLoja.innerHTML = '<option value="">Selecione uma loja...</option>';
 
             resultado.lojas.forEach(oficina => {
-                // Adiciona no select apenas as oficinas que estão online
-                if (oficina.status === "Online" && oficina.dados) {
-                    const option = document.createElement("option");
-                    option.value = oficina.loja;
-                    option.textContent = `${oficina.loja} - ${oficina.nome_oficina}`;
-                    selectLoja.appendChild(option);
-                }
+                const option = document.createElement("option");
+                option.value = oficina.loja;
+
+                // Define o indicador visual (bolinha verde para Online, vermelha para Offline)
+                const statusBolinha = oficina.status === "Online" ? "🟢" : "🔴";
+                
+                option.textContent = `${statusBolinha} ${oficina.loja} - ${oficina.nome_oficina} (${oficina.status})`;
+                
+                // Opcional: Se quiser desabilitar a opção caso esteja offline para impedir seleção
+                // if (oficina.status !== "Online") {
+                //     option.disabled = true;
+                // }
+
+                selectLoja.appendChild(option);
             });
         } else {
             selectLoja.innerHTML = '<option value="">Erro ao carregar lojas</option>';
@@ -36,6 +43,7 @@ async function carregarSelectLojas() {
         selectLoja.innerHTML = '<option value="">Erro de conexão</option>';
     }
 }
+
 
 document.addEventListener('DOMContentLoaded', () => {
     // Carrega as lojas assim que a página é aberta

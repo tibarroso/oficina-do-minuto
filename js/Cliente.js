@@ -135,22 +135,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
             cacheClientes = {};
             resultado.dados.forEach(ticket => {
-                const clienteNome = ticket.cliente || 'CLIENTE NÃO IDENTIFICADO';
-                const clienteTelefone = ticket.telefone || '';
+                const clienteNome = ticket.cliente || ticket.nome || 'CLIENTE NÃO IDENTIFICADO';
+                const clienteTelefone = ticket.telefone || ticket.fone || '';
                 const chaveCliente = `${clienteNome}_${clienteTelefone}`;
 
                 if (!cacheClientes[chaveCliente]) {
                     cacheClientes[chaveCliente] = {
                         nome: clienteNome,
                         telefone: clienteTelefone,
-                        endereco: ticket.endereco || '',
-                        cep: ticket.cep || '',
-                        numeroEndereco: ticket.numero_endereco || '',
-                        bairro: ticket.bairro || '',
-                        cidade: ticket.cidade || '',
-                        uf: ticket.uf || '',
-                        cpfCnpj: ticket.cpf_cnpj || '',
-                        codigo: ticket.codigo_cliente || '',
+                        endereco: ticket.endereco || ticket.logradouro || ticket.rua || '',
+                        cep: ticket.cep || ticket.codigo_postal || '',
+                        numeroEndereco: ticket.numero_endereco || ticket.numero || ticket.num || '',
+                        bairro: ticket.bairro || ticket.nm_bairro || '',
+                        cidade: ticket.cidade || ticket.municipio || '',
+                        uf: ticket.uf || ticket.estado || '',
+                        cpfCnpj: ticket.cpf_cnpj || ticket.cpf || ticket.cnpj || '',
+                        codigo: ticket.codigo_cliente || ticket.codigo || '',
                         tickets: []
                     };
                 }

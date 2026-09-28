@@ -39,7 +39,6 @@ async function carregarSelectLojas() {
     }
 }
 
-
 document.addEventListener('DOMContentLoaded', () => {
     // Carrega as lojas assim que a página é aberta
     carregarSelectLojas();
@@ -50,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputEndereco = document.getElementById('filtro-endereco');
     const inputCpfCnpj = document.getElementById('filtro-cpf');
     
-    // Novos inputs de endereço detalhado (se existirem no seu HTML)
+    // Novos inputs de endereço detalhado
     const inputCep = document.getElementById('filtro-cep');
     const inputNumeroEndereco = document.getElementById('filtro-numero-endereco');
     const inputBairro = document.getElementById('filtro-bairro');
@@ -100,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (selectLoja) {
         selectLoja.addEventListener('change', () => {
             limparTabelasETela();
-            listBox.innerHTML = '';
+            if (listBox) listBox.innerHTML = '';
             cacheClientes = {};
             ticketSelecionado = null;
         });
@@ -122,14 +121,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            listBox.innerHTML = '<div style="padding: 5px; color: #666;">Pesquisando...</div>';
+            if (listBox) listBox.innerHTML = '<div style="padding: 5px; color: #666;">Pesquisando...</div>';
             
             const url = `${API_URL}/api/oficina/buscar?nome=${encodeURIComponent(nome)}&telefone=${encodeURIComponent(telefone)}&loja=${encodeURIComponent(lojaId)}`;
             const response = await fetch(url);
             const resultado = await response.json();
 
             if (!resultado.sucesso || !resultado.dados || resultado.dados.length === 0) {
-                listBox.innerHTML = '<div style="padding: 5px; color: #666;">Nenhum registro encontrado.</div>';
+                if (listBox) listBox.innerHTML = '<div style="padding: 5px; color: #666;">Nenhum registro encontrado.</div>';
                 limparTabelasETela();
                 return;
             }
@@ -163,11 +162,12 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('❌ Erro ao buscar dados:', error);
             alert('Falha ao conectar com o servidor local.');
-            listBox.innerHTML = '<div style="padding: 5px; color: red;">Erro na conexão.</div>';
+            if (listBox) listBox.innerHTML = '<div style="padding: 5px; color: red;">Erro na conexão.</div>';
         }
     }
 
     function renderizarListaClientes() {
+        if (!listBox) return;
         listBox.innerHTML = '';
         const chaves = Object.keys(cacheClientes);
 
@@ -204,7 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (inputCpfCnpj) inputCpfCnpj.value = clienteObj.cpfCnpj || '';
         if (inputCodigo) inputCodigo.value = clienteObj.codigo || '';
 
-        // Preenchendo os novos campos detalhados de endereço (caso existam na tela)
+        // Preenchendo os campos detalhados de endereço
         if (inputCep) inputCep.value = clienteObj.cep || '';
         if (inputNumeroEndereco) inputNumeroEndereco.value = clienteObj.numeroEndereco || '';
         if (inputBairro) inputBairro.value = clienteObj.bairro || '';
@@ -212,12 +212,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (inputUf) inputUf.value = clienteObj.uf || '';
 
         if (detalhesEndereco) {
-            // Monta um resumo completo do endereço estruturado se desejar exibir em texto
             const partesEndereco = [
                 clienteObj.endereco,
                 clienteObj.numeroEndereco ? `Nº ${clienteObj.numeroEndereco}` : '',
                 clienteObj.bairro,
-                clienteObj.cidade ? `${clienteObj.cidade}` : '',
+                clienteObj.cidade,
                 clienteObj.uf,
                 clienteObj.cep ? `CEP: ${clienteObj.cep}` : ''
             ].filter(Boolean).join(', ');
@@ -251,7 +250,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const tr = document.createElement('tr');
             tr.style.cursor = 'pointer';
 
-            // Evento para SELEÇÃO DO TICKET
             tr.addEventListener('click', () => {
                 document.querySelectorAll('tr.selected-row').forEach(el => el.classList.remove('selected-row'));
                 tr.classList.add('selected-row');
@@ -263,7 +261,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             });
 
-            // Duplo clique já abre o modal do ticket diretamente
             tr.addEventListener('dblclick', () => {
                 carregarEAbrirModalTicket(ticket.loja || lojaId, ticket.serie || 1, ticket.numero);
             });
@@ -336,8 +333,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!modalTicket) return;
 
         modalTicket.style.display = 'flex';
-        modalTitulo.textContent = `Ticket nº ${numero} (Série ${serie})`;
-        modalCorpo.innerHTML = '<div style="text-align: center; padding: 20px;">Carregando detalhes...</div>';
+        if (modalTitulo) modalTitulo.textContent = `Ticket nº ${numero} (Série ${serie})`;
+        if (modalCorpo) modalCorpo.innerHTML = '<div style="text-align: center; padding: 20px;">Carregando detalhes...</div>';
 
         try {
             const response = await fetch(`${API_URL}/oficina/ticket/${loja}/${serie}/${numero}`);
@@ -348,9 +345,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error('❌ Erro ao buscar ticket:', error);
-            modalCorpo.innerHTML = `<div style="color: red; text-align: center; padding: 15px;">
-                Erro ao carregar detalhes do ticket.<br><small>${error.message}</small>
-            </div>`;
+            if (modalCorpo) {
+                modalCorpo.innerHTML = `<div style="color: red; text-align: center; padding: 15px;">
+                    Erro ao carregar detalhes do ticket.<br><small>${error.message}</small>
+                </div>`;
+            }
         }
     }
 
@@ -404,31 +403,32 @@ document.addEventListener('DOMContentLoaded', () => {
             pecasHtml = '<div style="padding: 10px;">Nenhuma peça/item cadastrado.</div>';
         }
 
-        modalCorpo.innerHTML = `
-            <div class="ticket-info-grid">
-                <div class="ticket-info-item"><span>Oficina:</span> ${tck.nome_oficina || '-'}</div>
-                <div class="ticket-info-item"><span>Cliente:</span> ${tck.cliente || '-'}</div>
-                <div class="ticket-info-item"><span>Telefone:</span> ${tck.telefone || '-'}</div>
-                <div class="ticket-info-item"><span>Emissão:</span> ${tck.data_emissao || '-'}</div>
-                <div class="ticket-info-item"><span>Previsão:</span> ${tck.data_prevista || '-'}</div>
-                <div class="ticket-info-item"><span>Posição:</span> ${tck.posicao || '-'}</div>
-                <div class="ticket-info-item"><span>Valor Total:</span> R$ ${(tck.valor_final || 0).toFixed(2)}</div>
-            </div>
-
-            ${tck.observacao_geral ? `
-                <div style="background: #fff3cd; border: 1px solid #ffeeba; padding: 6px; margin-bottom: 10px; border-radius: 3px;">
-                    <strong>Obs. Geral:</strong> ${tck.observacao_geral}
+        if (modalCorpo) {
+            modalCorpo.innerHTML = `
+                <div class="ticket-info-grid">
+                    <div class="ticket-info-item"><span>Oficina:</span> ${tck.nome_oficina || '-'}</div>
+                    <div class="ticket-info-item"><span>Cliente:</span> ${tck.cliente || '-'}</div>
+                    <div class="ticket-info-item"><span>Telefone:</span> ${tck.telefone || '-'}</div>
+                    <div class="ticket-info-item"><span>Emissão:</span> ${tck.data_emissao || '-'}</div>
+                    <div class="ticket-info-item"><span>Previsão:</span> ${tck.data_prevista || '-'}</div>
+                    <div class="ticket-info-item"><span>Posição:</span> ${tck.posicao || '-'}</div>
+                    <div class="ticket-info-item"><span>Valor Total:</span> R$ ${(tck.valor_final || 0).toFixed(2)}</div>
                 </div>
-            ` : ''}
 
-            <div class="section-title">Itens / Peças do Ticket</div>
-            <div class="pecas-container">
-                ${pecasHtml}
-            </div>
-        `;
+                ${tck.observacao_geral ? `
+                    <div style="background: #fff3cd; border: 1px solid #ffeeba; padding: 6px; margin-bottom: 10px; border-radius: 3px;">
+                        <strong>Obs. Geral:</strong> ${tck.observacao_geral}
+                    </div>
+                ` : ''}
+
+                <div class="section-title">Itens / Peças do Ticket</div>
+                <div class="pecas-container">
+                    ${pecasHtml}
+                </div>
+            `;
+        }
     }
 
-    // Clique no botão "Ticket"
     if (btnAbrirTicket) {
         btnAbrirTicket.addEventListener('click', () => {
             if (!ticketSelecionado) {
@@ -439,18 +439,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Fechar Modal
     if (btnFecharModal) {
         btnFecharModal.addEventListener('click', () => {
-            modalTicket.style.display = 'none';
+            if (modalTicket) modalTicket.style.display = 'none';
         });
     }
-
-    window.addEventListener('click', (e) => {
-        if (e.target === modalTicket) {
-            return;
-        }
-    });
 
     function limparTabelasETela() {
         if (tabelaAbertos) tabelaAbertos.innerHTML = '';
@@ -460,7 +453,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (inputCpfCnpj) inputCpfCnpj.value = '';
         if (inputCodigo) inputCodigo.value = '';
         
-        // Limpa os novos campos caso existam
         if (inputCep) inputCep.value = '';
         if (inputNumeroEndereco) inputNumeroEndereco.value = '';
         if (inputBairro) inputBairro.value = '';

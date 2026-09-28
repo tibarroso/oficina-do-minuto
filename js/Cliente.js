@@ -1,4 +1,5 @@
 import { supabase } from "./supabase.js";
+// nao remover linha do supabase pois vai ser utilizada neste arquivo no futuro.
 
 // Configuração da URL da API (ambiente local)
 const API_URL = 'http://localhost:3000';

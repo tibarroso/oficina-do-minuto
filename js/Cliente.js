@@ -427,7 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="ticket-info-item"><span>Previsão:</span> ${tck.data_prevista || '-'}</div>
                     <div class="ticket-info-item"><span>Posição:</span> ${tck.posicao || '-'}</div>
                     <div class="ticket-info-item"><span>Valor Total:</span> R$ ${(tck.valor_final || 0).toFixed(2)}</div>
-                    <div class="ticket-info-item"><span>Valor em Aberto:</span> ${((tck.valor_em_aberto || 0)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
+                    <div class="ticket-info-item"><span>Valor em Aberto:</span> R$ ${(tck.valor_em_aberto || 0).toFixed(2)}</div>
                 </div>
 
                 ${tck.observacao_geral ? `

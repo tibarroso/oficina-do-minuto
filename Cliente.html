@@ -131,27 +131,6 @@
       color: #fff;
     }
 
-    /* Botões Navegação */
-    .nav-buttons {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      justify-content: center;
-      padding-top: 20px;
-    }
-
-    .btn-nav {
-      background: linear-gradient(to bottom, #ffffff, #dce6f1);
-      border: 1px solid #7f9db9;
-      padding: 6px;
-      text-align: center;
-      font-size: 10px;
-      color: #000080;
-      cursor: pointer;
-      border-radius: 3px;
-      font-weight: bold;
-    }
-
     /* Tabelas */
     .table-container {
       border: 1px solid #7f9db9;
@@ -234,15 +213,6 @@
     }
 
     /* Cores Status */
-    .bg-pago { background-color: #d9d9d9; }
-    .bg-nao-pago { background-color: #749ab5; }
-    .bg-anulado { background-color: #f4b084; }
-    .bg-entregue-pago { background-color: #c6efce; }
-    .bg-orcamento { background-color: #b4e6eb; }
-    .bg-delivery { background-color: #f4b084; }
-    .bg-entregue-nao-pago { background-color: #8ede76; }
-    .bg-orc-nao-aprovado { background-color: #f8cbad; }
-
     tr.status-pago td { background-color: #d9d9d9 !important; color: #000 !important; }
     tr.status-nao-pago td { background-color: #749ab5 !important; color: #000 !important; }
     tr.status-anulado td { background-color: #f4b084 !important; color: #000 !important; }
@@ -251,6 +221,15 @@
     tr.status-delivery td { background-color: #f4b084 !important; color: #000 !important; }
     tr.status-entregue-nao-pago td { background-color: #8ede76 !important; color: #000 !important; }
     tr.status-orc-nao-aprovado td { background-color: #f8cbad !important; color: #000 !important; }
+
+    .bg-pago { background-color: #d9d9d9; }
+    .bg-nao-pago { background-color: #749ab5; }
+    .bg-anulado { background-color: #f4b084; }
+    .bg-entregue-pago { background-color: #c6efce; }
+    .bg-orcamento { background-color: #b4e6eb; }
+    .bg-delivery { background-color: #f4b084; }
+    .bg-entregue-nao-pago { background-color: #8ede76; }
+    .bg-orc-nao-aprovado { background-color: #f8cbad; }
 
     /* Modal Flutuante */
     .modal-overlay {
@@ -358,20 +337,17 @@
       font-size: 10px;
     }
 
-    /* Ajustes específicos para smartphones */
+    /* Ajustes para smartphones */
     @media (max-width: 600px) {
       .form-group.span-2 {
         grid-column: span 1;
-      }
-      .nav-buttons {
-        flex-direction: row;
-        padding-top: 0;
       }
     }
   </style>
 </head>
 <body>
 
+  <!-- Topo Loja -->
   <div class="top-bar">
     <span>LOJA:</span>
     <select id="select-loja">
@@ -379,16 +355,18 @@
     </select>
   </div>
   
-  <!-- Form de Busca -->
+  <!-- Formulário de Busca -->
   <div class="search-panel">
     <div class="form-group">
       <label>Telefone</label>
       <input type="text" id="filtro-telefone">
     </div>
+    
     <div class="form-group">
       <label>Nome 💡</label>
       <input type="text" id="filtro-nome">
     </div>
+    
     <div class="form-group">
       <label>Código</label>
       <input type="text" id="filtro-codigo" readonly>
@@ -404,12 +382,13 @@
       <label>Endereço</label>
       <input type="text" id="filtro-endereco" readonly>
     </div>
+    
     <div class="form-group span-2">
       <label>CPF/CNPJ</label>
       <input type="text" id="filtro-cpf" readonly>
     </div>
 
-    <!-- Campos de endereço complementares exigidos pelo JS para montar a caixa de Detalhes Endereço -->
+    <!-- Campos de endereço complementares (utilizados pelo JS) -->
     <div style="display: none;">
       <input type="text" id="filtro-cep">
       <input type="text" id="filtro-numero-endereco">
@@ -475,7 +454,7 @@
     <div style="display: flex; flex-direction: column; gap: 8px;">
       <div>
         <div class="section-title">&nbsp;</div>
-        <button class="btn-search" id="btn-abrir-ticket">
+        <button class="btn-search" id="btn-abrir-ticket" style="width: 100%;">
           🔍<br> Ticket
         </button>
       </div>

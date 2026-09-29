@@ -273,12 +273,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 ticketSelecionado = {
                     loja: ticket.loja || lojaId,
                     serie: ticket.serie || 1,
-                    numero: ticket.numero
+                    numero: ticket.numero,
+                    ticketCache: ticket // Guardamos a referência completa do ticket da busca aqui!
                 };
             });
 
             tr.addEventListener('dblclick', () => {
-                carregarEAbrirModalTicket(ticket.loja || lojaId, ticket.serie || 1, ticket.numero);
+                carregarEAbrirModalTicket(ticket.loja || lojaId, ticket.serie || 1, ticket.numero, ticket);
             });
 
             const dataEmissaoFormatada = formatarData(ticket.data_emissao);
@@ -343,7 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    async function carregarEAbrirModalTicket(loja, serie, numero) {
+    async function carregarEAbrirModalTicket(loja, serie, numero, ticketCache = null) {
         if (!modalTicket) return;
 
         modalTicket.style.display = 'flex';
@@ -355,10 +356,24 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error('Não foi possível carregar o ticket.');
 
             const dados = await response.json();
+
+            // FALLBACK INTELIGENTE: Se a rota de detalhes não trouxe valor em aberto, mas temos no cache da busca, usamos ele!
+            if ((dados.valor_em_aberto === undefined || dados.valor_em_aberto === null || dados.valor_em_aberto === 0) && ticketCache && ticketCache.valor_em_aberto !== undefined) {
+                dados.valor_em_aberto = ticketCache.valor_em_aberto;
+            }
+
             renderizarDetalhesModal(dados);
 
         } catch (error) {
             console.error('❌ Erro ao buscar ticket:', error);
+            
+            // Caso ocorra erro na rota de detalhe mas tenhamos o cache, montamos pelo menos com os dados do cache!
+            if (ticketCache) {
+                console.warn('⚠️ Usando dados do cache local devido a falha na rota de detalhes.');
+                renderizarDetalhesModal(ticketCache);
+                return;
+            }
+
             if (modalCorpo) {
                 modalCorpo.innerHTML = `<div style="color: red; text-align: center; padding: 15px;">
                     Erro ao carregar detalhes do ticket.<br><small>${error.message}</small>
@@ -450,7 +465,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Por favor, clique sobre uma linha de ticket da tabela para selecionar.');
                 return;
             }
-            carregarEAbrirModalTicket(ticketSelecionado.loja, ticketSelecionado.serie, ticketSelecionado.numero);
+            carregarEAbrirModalTicket(ticketSelecionado.loja, ticketSelecionado.serie, ticketSelecionado.numero, ticketSelecionado.ticketCache);
         });
     }
 

@@ -136,7 +136,7 @@
     }
 
     .section-intro {
-      margin-bottom: 32px;
+      margin-bottom: 24px;
     }
 
     .section-intro h2 {
@@ -150,6 +150,59 @@
       font-size: 15px;
       color: var(--text-muted);
       margin-top: 6px;
+    }
+
+    /* SISTEMA DE ABAS (TABS) MODERNO */
+    .tabs-header {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 28px;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 12px;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      background-color: #ffffff;
+      border: 1px solid var(--border-color);
+      padding: 10px 20px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: var(--radius-md);
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .tab-btn:hover {
+      background-color: #f1f5f9;
+      color: var(--primary-blue);
+      border-color: #cbd5e1;
+    }
+
+    .tab-btn.active {
+      background-color: var(--primary-blue);
+      color: #ffffff;
+      border-color: var(--primary-blue);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+    }
+
+    /* CONTEÚDO DAS ABAS */
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     /* TOAST DE SUCESSO ELEGANTE */
@@ -270,7 +323,7 @@
 
     .status-Aguardando { background-color: #f59e0b; }
     .status-Transporte { background-color: #3b82f6; }
-    .status-Loja5      { background-color: #8b5cf6; }
+    .status-Loja5     { background-color: #8b5cf6; }
     .status-Finalizado { background-color: #10b981; }
     .status-Retrabalho { background-color: #ef4444; }
 
@@ -321,7 +374,6 @@
     }
 
     .loading {
-      grid-column: 1 / -1;
       text-align: center;
       padding: 60px 20px;
       color: var(--text-muted);
@@ -362,11 +414,56 @@
         <p>Acompanhe, faça a triagem e despache as ordens de serviço em processamento na Loja 5.</p>
       </div>
 
-      <div id="containerPedidos" class="cards-container">
-        <p class="loading">Buscando ordens de serviço ativas na central...</p>
+      <!-- Abas Estilizadas (Pills) -->
+      <div class="tabs-header">
+        <button class="tab-btn active" onclick="abrirAba(event, 'aba-novos')">Novos / Aguardando</button>
+        <button class="tab-btn" onclick="abrirAba(event, 'aba-processo')">Em Processamento</button>
+        <button class="tab-btn" onclick="abrirAba(event, 'aba-concluidos')">Concluídos</button>
+      </div>
+
+      <!-- Conteúdo da Aba 1 -->
+      <div id="aba-novos" class="tab-content active">
+        <div id="containerPedidosNovos" class="cards-container">
+          <p class="loading">Buscando ordens de serviço novas...</p>
+        </div>
+      </div>
+
+      <!-- Conteúdo da Aba 2 -->
+      <div id="aba-processo" class="tab-content">
+        <div id="containerPedidosProcesso" class="cards-container">
+          <p class="loading">Buscando ordens em andamento...</p>
+        </div>
+      </div>
+
+      <!-- Conteúdo da Aba 3 -->
+      <div id="aba-concluidos" class="tab-content">
+        <div id="containerPedidosConcluidos" class="cards-container">
+          <p class="loading">Buscando ordens concluídas...</p>
+        </div>
       </div>
     </section>
   </main>
+
+  <!-- Script para Gerenciamento Visual das Abas -->
+  <script>
+    function abrirAba(evt, idAba) {
+      // Remove a classe 'active' de todas as abas de conteúdo
+      const contents = document.getElementsByClassName("tab-content");
+      for (let i = 0; i < contents.length; i++) {
+        contents[i].classList.remove("active");
+      }
+
+      // Remove a classe 'active' de todos os botões
+      const buttons = document.getElementsByClassName("tab-btn");
+      for (let i = 0; i < buttons.length; i++) {
+        buttons[i].classList.remove("active");
+      }
+
+      // Ativa a aba e o botão correspondentes
+      document.getElementById(idAba).classList.add("active");
+      evt.currentTarget.classList.add("active");
+    }
+  </script>
 
   <script type="module" src="js/loja5.js"></script>
 </body>

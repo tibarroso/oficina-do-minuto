@@ -152,7 +152,7 @@
       margin-top: 6px;
     }
 
-    /* SISTEMA DE ABAS (TABS) MODERNO */
+    /* SISTEMA DE ABAS (TABS) */
     .tabs-header {
       display: flex;
       gap: 10px;
@@ -190,7 +190,6 @@
       box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
     }
 
-    /* CONTEÚDO DAS ABAS */
     .tab-content {
       display: none;
     }
@@ -323,17 +322,43 @@
 
     .status-Aguardando { background-color: #f59e0b; }
     .status-Transporte { background-color: #3b82f6; }
-    .status-Loja5     { background-color: #8b5cf6; }
+    .status-Loja5      { background-color: #8b5cf6; }
     .status-Finalizado { background-color: #10b981; }
     .status-Retrabalho { background-color: #ef4444; }
 
+    /* BOTÕES */
+    .card button.btn-principal {
+      width: 100%;
+      padding: 12px 16px;
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      background-color: var(--accent-green);
+      color: white;
+      transition: all 0.2s ease;
+      margin-top: 10px;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+    }
+
+    .card button.btn-principal:hover {
+      background-color: var(--accent-green-hover);
+      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+    }
+
+    .card button.btn-principal:active {
+      transform: scale(0.98);
+    }
+
     .loading {
+      grid-column: 1 / -1;
       text-align: center;
       padding: 60px 20px;
       color: var(--text-muted);
       font-size: 15px;
       font-weight: 500;
-      grid-column: 1 / -1;
     }
 
     @media (max-width: 768px) {
@@ -369,20 +394,20 @@
         <p>Acompanhe, faça a triagem e despache as ordens de serviço em processamento na Loja 5.</p>
       </div>
 
-      <!-- Abas Estilizadas (Pills) -->
+      <!-- Abas Estilizadas -->
       <div class="tabs-header">
         <button class="tab-btn active" onclick="abrirAba(event, 'aba-aguardando')">Aguardando Execução</button>
         <button class="tab-btn" onclick="abrirAba(event, 'aba-execucao')">Em Serviço (Bancada)</button>
       </div>
 
-      <!-- Conteúdo Aba 1: Aguardando -->
+      <!-- Conteúdo da Aba 1: Aguardando -->
       <div id="aba-aguardando" class="tab-content active">
         <div id="containerAguardando" class="cards-container">
           <p class="loading">Buscando ordens aguardando...</p>
         </div>
       </div>
 
-      <!-- Conteúdo Aba 2: Em Serviço -->
+      <!-- Conteúdo da Aba 2: Em Serviço -->
       <div id="aba-execucao" class="tab-content">
         <div id="containerExecucao" class="cards-container">
           <p class="loading">Buscando ordens em serviço...</p>
@@ -391,7 +416,7 @@
     </section>
   </main>
 
-  <!-- Script de Alternância de Abas -->
+  <!-- Script para troca de abas -->
   <script>
     function abrirAba(evt, idAba) {
       const contents = document.getElementsByClassName("tab-content");

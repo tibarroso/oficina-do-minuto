@@ -427,11 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="ticket-info-item"><span>Previsão:</span> ${tck.data_prevista || '-'}</div>
                     <div class="ticket-info-item"><span>Posição:</span> ${tck.posicao || '-'}</div>
                     <div class="ticket-info-item"><span>Valor Total:</span> R$ ${(tck.valor_final || 0).toFixed(2)}</div>
-                    <div class="ticket-info-item">
-                    <span>Valor em Aberto:</span> 
-                         <span style="${(tck.valor_em_aberto || 0) > 0 ? 'color: #d9534f; font-weight: bold;' : ''}">
-                         R$ ${(tck.valor_em_aberto || 0).toFixed(2)}
-                   </span>
+                   <div class="ticket-info-item"><span>Valor em Aberto:</span> R$ ${(tck.valor_em_aberto || 0).toFixed(2)}</div>
                 </div>
 
                 ${tck.observacao_geral ? `

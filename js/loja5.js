@@ -3,6 +3,7 @@ import { supabase } from "./supabase.js";
 // Referências aos elementos do DOM para as abas
 const containerAguardando = document.getElementById("containerAguardando");
 const containerExecucao = document.getElementById("containerExecucao");
+const containerControle = document.getElementById("containerControle");
 const successMessage = document.getElementById("successMessage");
 
 // Indicadores de carregamento
@@ -14,11 +15,15 @@ const loadingExecucao = document.createElement("div");
 loadingExecucao.classList.add("loading");
 loadingExecucao.innerHTML = "Buscando ordens em serviço...";
 
+const loadingControle = document.createElement("div");
+loadingControle.classList.add("loading");
+loadingControle.innerHTML = "Buscando ordens controladas/prontas...";
+
 // =========================
 // CARREGAR PEDIDOS AUTOMATICAMENTE
 // =========================
 export async function carregarPedidos() {
-  if (!containerAguardando || !containerExecucao) return;
+  if (!containerAguardando || !containerExecucao || !containerControle) return;
 
   try {
     containerAguardando.innerHTML = "";
@@ -27,14 +32,18 @@ export async function carregarPedidos() {
     containerExecucao.innerHTML = "";
     containerExecucao.appendChild(loadingExecucao);
 
-    // Consulta flexível com ILIKE incluindo entregas para retrabalho
+    containerControle.innerHTML = "";
+    containerControle.appendChild(loadingControle);
+
+    // Consulta flexível com ILIKE incluindo entregas para retrabalho e aguardando coleta
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
       .or(
         "status.ilike.%Entregue na Loja 5%," +
         "status.ilike.%Entregue na Loja de Destino para retrabalho%," +
-        "status.ilike.%Em serviço%"
+        "status.ilike.%Em serviço%," +
+        "status.ilike.%Aguardando coleta para loja de Origem%"
       )
       .order("id", { ascending: false });
 
@@ -42,26 +51,31 @@ export async function carregarPedidos() {
 
     containerAguardando.innerHTML = "";
     containerExecucao.innerHTML = "";
+    containerControle.innerHTML = "";
 
     // Se nenhum registro for retornado
     if (!data || data.length === 0) {
       containerAguardando.innerHTML = '<p class="loading">Nenhum pedido aguardando na central.</p>';
       containerExecucao.innerHTML = '<p class="loading">Nenhum pedido em serviço na bancada.</p>';
+      containerControle.innerHTML = '<p class="loading">Nenhum pedido pronto no controle.</p>';
       return;
     }
 
     let contadorAguardando = 0;
     let contadorExecucao = 0;
+    let contadorControle = 0;
 
     // Distribui os pedidos em cada aba baseando-se no status
     data.forEach((pedido) => {
       const card = criarCardPedido(pedido);
       const statusNormalizado = (pedido.status || "").toLowerCase();
 
-      // Se estiver em serviço, vai para a aba de execução; senão, vai para aguardando
       if (statusNormalizado.includes("em serviço")) {
         containerExecucao.appendChild(card);
         contadorExecucao++;
+      } else if (statusNormalizado.includes("aguardando coleta")) {
+        containerControle.appendChild(card);
+        contadorControle++;
       } else {
         containerAguardando.appendChild(card);
         contadorAguardando++;
@@ -73,6 +87,9 @@ export async function carregarPedidos() {
     }
     if (contadorExecucao === 0) {
       containerExecucao.innerHTML = '<p class="loading">Nenhum pedido em serviço no momento.</p>';
+    }
+    if (contadorControle === 0) {
+      containerControle.innerHTML = '<p class="loading">Nenhum pedido pronto no controle no momento.</p>';
     }
 
   } catch (err) {
@@ -134,7 +151,7 @@ function criarCardPedido(pedido) {
 
     <div>
       <strong>Observação Loja 5</strong>
-      <textarea id="obs_loja5_${pedido.id}" placeholder="Digite uma nota técnica..." ${statusNormalizado.includes("finalizado") ? "disabled" : ""}>${pedido.obs_loja5 || ""}</textarea>
+      <textarea id="obs_loja5_${pedido.id}" placeholder="Digite uma nota técnica..." ${statusNormalizado.includes("finalizado") || statusNormalizado.includes("aguardando coleta") ? "disabled" : ""}>${pedido.obs_loja5 || ""}</textarea>
     </div>
 
     ${podeExecutarServico ? `<button class="btn-principal" style="background-color: #f39c12; color: #fff; font-weight: 600; padding: 10px; border: none; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 8px;" onclick="executarServico('${pedido.id}')">Executar serviço</button>` : ""}
@@ -257,7 +274,7 @@ function getStatusClass(status) {
   const st = status.toLowerCase();
   if (st.includes("loja 5") || st.includes("retrabalho")) return "status-Loja5";
   if (st.includes("serviço") || st.includes("transporte")) return "status-Transporte";
-  if (st.includes("finalizado")) return "status-Finalizado";
+  if (st.includes("finalizado") || st.includes("aguardando coleta")) return "status-Finalizado";
   return "status-Aguardando";
 }
 

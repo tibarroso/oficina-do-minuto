@@ -118,40 +118,58 @@
       background: #c6d9f1;
     }
 
-    /* Seções e Colunas em Grid Responsivo */
-    .transport-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 10px;
-      align-items: start;
-    }
-
-    .section {
+    /* Sistema de Abas (Tabs) */
+    .tabs-header {
       display: flex;
-      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 0;
+      border-bottom: 1px solid #7f9db9;
     }
 
-    .section h2 {
-      font-size: 11px;
-      font-weight: bold;
-      color: #000080;
-      background-color: #c6d9f1;
+    .tab-btn {
+      background-color: #e1ecf4;
       border: 1px solid #7f9db9;
-      padding: 5px;
-      margin: 0 0 4px 0;
-      border-radius: 2px;
-      text-align: center;
+      border-bottom: none;
+      padding: 6px 12px;
+      font-weight: bold;
+      color: #555;
+      cursor: pointer;
+      border-top-left-radius: 3px;
+      border-top-right-radius: 3px;
+    }
+
+    .tab-btn.active {
+      background-color: #fff;
+      color: #000080;
+      border-bottom: 1px solid #fff;
+      margin-bottom: -1px;
+    }
+
+    .tab-btn:hover:not(.active) {
+      background-color: #dce6f1;
+    }
+
+    /* Conteúdos das Abas */
+    .tab-content {
+      display: none;
+      border: 1px solid #7f9db9;
+      background-color: #fff;
+      border-top: none;
+      border-bottom-left-radius: 3px;
+      border-bottom-right-radius: 3px;
+      padding: 10px;
+    }
+
+    .tab-content.active {
+      display: block;
     }
 
     /* Container de Cards / Itens */
     .cards-container {
-      border: 1px solid #7f9db9;
-      background-color: #fff;
-      height: 400px;
-      max-height: 55vh;
+      height: 450px;
+      max-height: 60vh;
       overflow-y: auto;
-      border-radius: 2px;
-      padding: 6px;
+      padding: 2px;
     }
 
     .loading {
@@ -206,37 +224,57 @@
       </div>
     </section>
 
-    <!-- Layout em Colunas/Grid para as 3 Etapas -->
-    <div class="transport-grid">
-      <!-- AGUARDANDO COLETA (IDA) -->
-      <section class="section">
-        <h2>Aguardando Coleta</h2>
-        <div id="aguardando" class="cards-container">
-          <p class="loading">Carregando pedidos...</p>
-        </div>
-      </section>
+    <!-- Cabeçalho das Abas -->
+    <div class="tabs-header">
+      <button class="tab-btn active" onclick="abrirAba(event, 'aba-aguardando')">Aguardando Coleta</button>
+      <button class="tab-btn" onclick="abrirAba(event, 'aba-transporte')">Em Transporte</button>
+      <button class="tab-btn" onclick="abrirAba(event, 'aba-retorno')">Aguardando Retorno / Retrabalho</button>
+    </div>
 
-      <!-- EM TRANSPORTE -->
-      <section class="section">
-        <h2>Em Transporte</h2>
-        <div id="transporte" class="cards-container">
-          <p class="loading">Carregando pedidos...</p>
-        </div>
-      </section>
+    <!-- Conteúdo Aba 1: Aguardando Coleta -->
+    <div id="aba-aguardando" class="tab-content active">
+      <div id="aguardando" class="cards-container">
+        <p class="loading">Carregando pedidos...</p>
+      </div>
+    </div>
 
-      <!-- AGUARDANDO RETORNO -->
-      <section class="section">
-        <h2>Aguardando Retorno / Retrabalho</h2>
-        <div id="retorno" class="cards-container">
-          <p class="loading">Carregando pedidos...</p>
-        </div>
-      </section>
+    <!-- Conteúdo Aba 2: Em Transporte -->
+    <div id="aba-transporte" class="tab-content">
+      <div id="transporte" class="cards-container">
+        <p class="loading">Carregando pedidos...</p>
+      </div>
+    </div>
+
+    <!-- Conteúdo Aba 3: Aguardando Retorno -->
+    <div id="aba-retorno" class="tab-content">
+      <div id="retorno" class="cards-container">
+        <p class="loading">Carregando pedidos...</p>
+      </div>
     </div>
   </main>
 
   <footer>
     &copy; 2026 Oficina do Minuto. Todos os direitos reservados.
   </footer>
+
+  <!-- Script de Abas e Inicialização -->
+  <script>
+    // Função para alternar entre as abas visualmente
+    function abrirAba(evt, idAba) {
+      const contents = document.getElementsByClassName("tab-content");
+      for (let i = 0; i < contents.length; i++) {
+        contents[i].classList.remove("active");
+      }
+
+      const buttons = document.getElementsByClassName("tab-btn");
+      for (let i = 0; i < buttons.length; i++) {
+        buttons[i].classList.remove("active");
+      }
+
+      document.getElementById(idAba).classList.add("active");
+      evt.currentTarget.classList.add("active");
+    }
+  </script>
 
   <!-- Script de Inicialização Único e Blindado -->
   <script type="module">

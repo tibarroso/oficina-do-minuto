@@ -53,10 +53,6 @@
       flex-direction: column;
     }
 
-    .form-group.span-2 {
-      grid-column: span 2;
-    }
-
     .form-group label {
       font-weight: bold;
       color: #000080;
@@ -336,13 +332,6 @@
       padding: 3px;
       font-size: 10px;
     }
-
-    /* Ajustes para smartphones */
-    @media (max-width: 600px) {
-      .form-group.span-2 {
-        grid-column: span 1;
-      }
-    }
   </style>
 </head>
 <body>
@@ -371,21 +360,21 @@
       <label>Código</label>
       <input type="text" id="filtro-codigo" readonly>
     </div>
+
+    <div class="form-group">
+      <label>Endereço</label>
+      <input type="text" id="filtro-endereco" readonly>
+    </div>
+
+    <div class="form-group">
+      <label>CPF/CNPJ</label>
+      <input type="text" id="filtro-cpf" readonly>
+    </div>
     
     <div>
       <button class="btn-search" id="btn-pesquisar">
         🔍<br> Pesquisar
       </button>
-    </div>
-
-    <div class="form-group span-2">
-      <label>Endereço</label>
-      <input type="text" id="filtro-endereco" readonly>
-    </div>
-    
-    <div class="form-group span-2">
-      <label>CPF/CNPJ</label>
-      <input type="text" id="filtro-cpf" readonly>
     </div>
 
     <!-- Campos de endereço complementares (utilizados pelo JS) -->

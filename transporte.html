@@ -4,13 +4,171 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Transporte - Oficina do Minuto</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+      font-size: 11px;
+    }
 
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    body {
+      background-color: #f0f4f8;
+      margin: 10px;
+      color: #333;
+    }
 
-  <!-- CSS Global e Específico -->
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/transporte.css">
+    /* Topo / Barra de Navegação Padrão */
+    header {
+      background-color: #000080;
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 3px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 13px;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    header nav {
+      display: flex;
+      gap: 12px;
+    }
+
+    header nav a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 2px;
+    }
+
+    header nav a:hover {
+      background-color: #1a1a9c;
+    }
+
+    /* Introdução / Subtítulo */
+    .intro {
+      margin-bottom: 8px;
+      font-style: italic;
+      color: #555;
+    }
+
+    /* Painel de Filtro Padrão */
+    .filter-section {
+      background-color: #f0f4f8;
+      padding: 8px;
+      border: 1px solid #b4c6e7;
+      margin-bottom: 10px;
+      border-radius: 3px;
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
+    .filter-section label {
+      font-weight: bold;
+      color: #000080;
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .filter-container {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .filter-select {
+      padding: 3px 6px;
+      border: 1px solid #7f9db9;
+      background-color: #fff;
+      font-weight: bold;
+      color: #000080;
+      border-radius: 2px;
+      height: 26px;
+    }
+
+    .filter-btn {
+      height: 26px;
+      background: linear-gradient(to bottom, #ffffff, #dce6f1);
+      border: 1px solid #7f9db9;
+      border-radius: 3px;
+      cursor: pointer;
+      font-weight: bold;
+      color: #000080;
+      padding: 0 12px;
+    }
+
+    .filter-btn:hover {
+      background: #c6d9f1;
+    }
+
+    /* Seções e Colunas em Grid Responsivo */
+    .transport-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 10px;
+      align-items: start;
+    }
+
+    .section {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .section h2 {
+      font-size: 11px;
+      font-weight: bold;
+      color: #000080;
+      background-color: #c6d9f1;
+      border: 1px solid #7f9db9;
+      padding: 5px;
+      margin: 0 0 4px 0;
+      border-radius: 2px;
+      text-align: center;
+    }
+
+    /* Container de Cards / Itens */
+    .cards-container {
+      border: 1px solid #7f9db9;
+      background-color: #fff;
+      height: 400px;
+      max-height: 55vh;
+      overflow-y: auto;
+      border-radius: 2px;
+      padding: 6px;
+    }
+
+    .loading {
+      color: #666;
+      text-align: center;
+      padding: 10px;
+    }
+
+    /* Rodapé */
+    footer {
+      margin-top: 15px;
+      text-align: center;
+      color: #666;
+      border-top: 1px solid #b4c6e7;
+      padding-top: 8px;
+    }
+  </style>
 </head>
 <body>
 
@@ -27,48 +185,53 @@
   </header>
 
   <main>
-    <section class="intro">
+    <div class="intro">
       <p>Controle a coleta, entrega e retorno dos pedidos em tempo real.</p>
-    </section>
+    </div>
 
     <!-- Filtro de Loja -->
     <section class="filter-section">
-      <label for="filtroLoja">Filtrar por Loja:</label>
-      <div class="filter-container">
-        <select id="filtroLoja" class="filter-select">
-          <option value="Todas">Todas</option>
-          <option value="Oficina do Minuto I">Oficina do Minuto I</option>
-          <option value="Oficina do Minuto II">Oficina do Minuto II</option>
-          <option value="Oficina do Minuto III">Oficina do Minuto III</option>
-          <option value="Oficina do Minuto IV">Oficina do Minuto IV</option>
-        </select>
-        <button id="btnFiltrar" class="filter-btn" type="button">Filtrar</button>
+      <div>
+        <label for="filtroLoja">Filtrar por Loja:</label>
+        <div class="filter-container">
+          <select id="filtroLoja" class="filter-select">
+            <option value="Todas">Todas</option>
+            <option value="Oficina do Minuto I">Oficina do Minuto I</option>
+            <option value="Oficina do Minuto II">Oficina do Minuto II</option>
+            <option value="Oficina do Minuto III">Oficina do Minuto III</option>
+            <option value="Oficina do Minuto IV">Oficina do Minuto IV</option>
+          </select>
+          <button id="btnFiltrar" class="filter-btn" type="button">Filtrar</button>
+        </div>
       </div>
     </section>
 
-    <!-- AGUARDANDO COLETA (IDA) -->
-    <section class="section">
-      <h2>Aguardando Coleta</h2>
-      <div id="aguardando" class="cards-container">
-        <p class="loading">Carregando pedidos...</p>
-      </div>
-    </section>
+    <!-- Layout em Colunas/Grid para as 3 Etapas -->
+    <div class="transport-grid">
+      <!-- AGUARDANDO COLETA (IDA) -->
+      <section class="section">
+        <h2>Aguardando Coleta</h2>
+        <div id="aguardando" class="cards-container">
+          <p class="loading">Carregando pedidos...</p>
+        </div>
+      </section>
 
-    <!-- EM TRANSPORTE -->
-    <section class="section">
-      <h2>Em Transporte</h2>
-      <div id="transporte" class="cards-container">
-        <p class="loading">Carregando pedidos...</p>
-      </div>
-    </section>
+      <!-- EM TRANSPORTE -->
+      <section class="section">
+        <h2>Em Transporte</h2>
+        <div id="transporte" class="cards-container">
+          <p class="loading">Carregando pedidos...</p>
+        </div>
+      </section>
 
-    <!-- AGUARDANDO RETORNO -->
-    <section class="section">
-      <h2>Aguardando Retorno do Transporte / Retrabalho</h2>
-      <div id="retorno" class="cards-container">
-        <p class="loading">Carregando pedidos...</p>
-      </div>
-    </section>
+      <!-- AGUARDANDO RETORNO -->
+      <section class="section">
+        <h2>Aguardando Retorno / Retrabalho</h2>
+        <div id="retorno" class="cards-container">
+          <p class="loading">Carregando pedidos...</p>
+        </div>
+      </section>
+    </div>
   </main>
 
   <footer>
@@ -99,7 +262,7 @@
 
         if (error || !user) {
           alert("Sessão expirada ou usuário não conectado!");
-          window.location.href = "index.html"; // Alinhado com o botão Sair
+          window.location.href = "index.html"; 
           return;
         }
 

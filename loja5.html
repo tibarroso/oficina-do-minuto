@@ -152,7 +152,7 @@
       margin-top: 6px;
     }
 
-    /* SISTEMA DE ABAS (TABS) */
+    /* SISTEMA DE ABAS (TABS) COM 3 OPÇÕES */
     .tabs-header {
       display: flex;
       gap: 10px;
@@ -306,7 +306,7 @@
       box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
     }
 
-    /* BADGES DE STATUS MODERNOS */
+    /* BADGES DE STATUS */
     .status-tag {
       display: inline-flex;
       align-items: center;
@@ -346,10 +346,6 @@
     .card button.btn-principal:hover {
       background-color: var(--accent-green-hover);
       box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
-    }
-
-    .card button.btn-principal:active {
-      transform: scale(0.98);
     }
 
     .loading {
@@ -394,23 +390,31 @@
         <p>Acompanhe, faça a triagem e despache as ordens de serviço em processamento na Loja 5.</p>
       </div>
 
-      <!-- Abas Estilizadas -->
+      <!-- Abas Estilizadas com 3 Opções -->
       <div class="tabs-header">
         <button class="tab-btn active" onclick="abrirAba(event, 'aba-aguardando')">Aguardando Execução</button>
         <button class="tab-btn" onclick="abrirAba(event, 'aba-execucao')">Em Serviço (Bancada)</button>
+        <button class="tab-btn" onclick="abrirAba(event, 'aba-controle')">Controle de Serviço (Prontos)</button>
       </div>
 
-      <!-- Conteúdo da Aba 1: Aguardando -->
+      <!-- Aba 1: Aguardando -->
       <div id="aba-aguardando" class="tab-content active">
         <div id="containerAguardando" class="cards-container">
           <p class="loading">Buscando ordens aguardando...</p>
         </div>
       </div>
 
-      <!-- Conteúdo da Aba 2: Em Serviço -->
+      <!-- Aba 2: Em Serviço -->
       <div id="aba-execucao" class="tab-content">
         <div id="containerExecucao" class="cards-container">
           <p class="loading">Buscando ordens em serviço...</p>
+        </div>
+      </div>
+
+      <!-- Aba 3: Controle de Serviço (Prontos/Aguardando Coleta) -->
+      <div id="aba-controle" class="tab-content">
+        <div id="containerControle" class="cards-container">
+          <p class="loading">Buscando ordens controladas/prontas...</p>
         </div>
       </div>
     </section>

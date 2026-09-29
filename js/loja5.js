@@ -1,23 +1,31 @@
 import { supabase } from "./supabase.js";
 
-// Referências aos elementos do DOM
-const containerPedidos = document.getElementById("containerPedidos");
+// Referências aos elementos do DOM para as abas
+const containerAguardando = document.getElementById("containerAguardando");
+const containerExecucao = document.getElementById("containerExecucao");
 const successMessage = document.getElementById("successMessage");
 
-// Indicador de carregamento
-const loadingMessage = document.createElement("div");
-loadingMessage.classList.add("loading");
-loadingMessage.innerHTML = "Buscando ordens de serviço ativas na central...";
+// Indicadores de carregamento
+const loadingAguardando = document.createElement("div");
+loadingAguardando.classList.add("loading");
+loadingAguardando.innerHTML = "Buscando ordens aguardando...";
+
+const loadingExecucao = document.createElement("div");
+loadingExecucao.classList.add("loading");
+loadingExecucao.innerHTML = "Buscando ordens em serviço...";
 
 // =========================
 // CARREGAR PEDIDOS AUTOMATICAMENTE
 // =========================
 export async function carregarPedidos() {
-  if (!containerPedidos) return;
+  if (!containerAguardando || !containerExecucao) return;
 
   try {
-    containerPedidos.innerHTML = "";
-    containerPedidos.appendChild(loadingMessage);
+    containerAguardando.innerHTML = "";
+    containerAguardando.appendChild(loadingAguardando);
+
+    containerExecucao.innerHTML = "";
+    containerExecucao.appendChild(loadingExecucao);
 
     // Consulta flexível com ILIKE incluindo entregas para retrabalho
     const { data, error } = await supabase
@@ -32,25 +40,45 @@ export async function carregarPedidos() {
 
     if (error) throw error;
 
-    containerPedidos.innerHTML = "";
+    containerAguardando.innerHTML = "";
+    containerExecucao.innerHTML = "";
 
     // Se nenhum registro for retornado
     if (!data || data.length === 0) {
-      containerPedidos.innerHTML =
-        '<p class="loading">Nenhum pedido em processamento encontrado na central.</p>';
+      containerAguardando.innerHTML = '<p class="loading">Nenhum pedido aguardando na central.</p>';
+      containerExecucao.innerHTML = '<p class="loading">Nenhum pedido em serviço na bancada.</p>';
       return;
     }
 
-    // Renderiza cada card diretamente
+    let contadorAguardando = 0;
+    let contadorExecucao = 0;
+
+    // Distribui os pedidos em cada aba baseando-se no status
     data.forEach((pedido) => {
       const card = criarCardPedido(pedido);
-      containerPedidos.appendChild(card);
+      const statusNormalizado = (pedido.status || "").toLowerCase();
+
+      // Se estiver em serviço, vai para a aba de execução; senão, vai para aguardando
+      if (statusNormalizado.includes("em serviço")) {
+        containerExecucao.appendChild(card);
+        contadorExecucao++;
+      } else {
+        containerAguardando.appendChild(card);
+        contadorAguardando++;
+      }
     });
+
+    if (contadorAguardando === 0) {
+      containerAguardando.innerHTML = '<p class="loading">Nenhum pedido aguardando no momento.</p>';
+    }
+    if (contadorExecucao === 0) {
+      containerExecucao.innerHTML = '<p class="loading">Nenhum pedido em serviço no momento.</p>';
+    }
 
   } catch (err) {
     console.error("Erro ao carregar pedidos:", err);
-    if (containerPedidos) {
-      containerPedidos.innerHTML = `<p class="loading" style="color: #ef4444;">Erro ao carregar pedidos: ${err.message}</p>`;
+    if (containerAguardando) {
+      containerAguardando.innerHTML = `<p class="loading" style="color: #ef4444;">Erro ao carregar pedidos: ${err.message}</p>`;
     }
   }
 }
@@ -68,19 +96,14 @@ function criarCardPedido(pedido) {
     ? pedido.loja_origem.trim()
     : "Não especificada";
 
-  // Define a loja de origem para onde o pedido retornará
   const lojaOrigemFinal = lojaOrigemLimpa;
-
   const statusNormalizado = (pedido.status || "").toLowerCase();
 
-  // CONDIÇÕES DOS BOTÕES:
-  // 1. "Executar serviço": aparece quando estiver entregue na Loja 5 ou entregue na Loja de Destino para retrabalho
   const podeExecutarServico = 
     statusNormalizado.includes("entregue na loja 5") || 
     statusNormalizado.includes("entregue na loja de destino para retrabalho") ||
     statusNormalizado.includes("retrabalho");
 
-  // 2. "Finalizar Pedido": só aparece quando o status for exatamente "Em serviço"
   const podeFinalizar = statusNormalizado.includes("em serviço");
 
   card.innerHTML = `
@@ -187,7 +210,6 @@ window.mudarStatusParaFinalizado = async function (pedidoId, statusActual, lojaO
     const elObs = document.getElementById(`obs_loja5_${pedidoId}`);
     const obsLoja5 = elObs ? elObs.value : "";
 
-    // Atualiza status e observação da Loja 5 sem alterar campos da origem
     const { error } = await supabase
       .from("pedidos")
       .update({
@@ -202,7 +224,6 @@ window.mudarStatusParaFinalizado = async function (pedidoId, statusActual, lojaO
       return;
     }
 
-    // Registra a mensagem referenciando a Loja de Origem
     const textoEvento = `Serviço Pronto na Central. Aguardando coleta para: ${lojaOrigem}`;
 
     let detalheEvento = (statusActual || "").toLowerCase().includes("retrabalho")
@@ -225,33 +246,6 @@ window.mudarStatusParaFinalizado = async function (pedidoId, statusActual, lojaO
     }, 1500);
   } catch (err) {
     console.error("Erro inesperado ao finalizar fluxo:", err);
-  }
-};
-
-// =========================
-// MUDAR STATUS PARA 'EM TRANSPORTE PARA LOJA DE ORIGEM'
-// =========================
-window.mudarStatusParaTransporte = async function (pedidoId) {
-  try {
-    const { error } = await supabase
-      .from("pedidos")
-      .update({ status: "Em transporte para loja de origem" })
-      .eq("id", pedidoId);
-
-    if (error) {
-      console.error("Erro ao mudar status para 'Em transporte para loja de origem':", error);
-      return;
-    }
-
-    await registrarEvento(
-      pedidoId,
-      "Movido para transporte manual na Central",
-      "Pedido forçado manualmente para a fila de trânsito de retorno."
-    );
-
-    carregarPedidos();
-  } catch (err) {
-    console.error("Erro inesperado:", err);
   }
 };
 

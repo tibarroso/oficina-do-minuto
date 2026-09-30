@@ -3,6 +3,31 @@ import { supabase } from "./supabase.js";
 // Configuração da URL da API (ambiente local)
 const API_URL = 'http://localhost:3000';
 
+// =========================================
+// FUNÇÃO PARA OBTER DATA/HORA LOCAL DO BRASIL
+// =========================================
+function obterDataLocalBrasil() {
+  const agora = new Date();
+  // Formata no padrão ISO usando o fuso de São Paulo
+  const options = {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  };
+  
+  const formatter = new Intl.DateTimeFormat('sv-SE', options); // 'sv-SE' retorna no formato YYYY-MM-DD HH:mm:ss
+  const dataLocalStr = formatter.format(agora).replace(' ', 'T');
+  
+  // Como o Supabase/PostgreSQL aceita string ISO com timezone ou offset, 
+  // vamos garantir o offset de Brasília (-03:00) para salvar exato no banco:
+  return `${dataLocalStr}-03:00`;
+}
+
 // =========================
 // CARREGAR PEDIDOS
 // =========================
@@ -148,7 +173,7 @@ async function cancelarRetrabalho(pedidoId) {
     }
 
     const obsCancelamento = "Retrabalho cancelado. Retornado ao status anterior.";
-    const agoraIso = new Date().toISOString();
+    const dataHoraLocal = obterDataLocalBrasil();
 
     const { error: errorPedido } = await supabase
       .from("pedidos")
@@ -165,7 +190,7 @@ async function cancelarRetrabalho(pedidoId) {
       evento: statusAnterior,
       observacao: "Cancelamento de Retrabalho pelo operador.",
       criado_por: operador,
-      criado_em: agoraIso // <<---- ADICIONADO AQUI
+      criado_em: dataHoraLocal
     }]);
 
     if (errorLog) throw errorLog;
@@ -197,7 +222,7 @@ async function atualizarStatus(novoStatus, pedidoId) {
       ? "Serviço para ser refeito (Retrabalho)"
       : "OS concluída e finalizada.";
 
-    const agoraIso = new Date().toISOString();
+    const dataHoraLocal = obterDataLocalBrasil();
 
     const { error: errorPedido } = await supabase
       .from("pedidos")
@@ -214,7 +239,7 @@ async function atualizarStatus(novoStatus, pedidoId) {
       evento: statusLimpo,
       observacao: novaObservacao,
       criado_por: operador,
-      criado_em: agoraIso // <<---- ADICIONADO AQUI
+      criado_em: dataHoraLocal
     }]);
 
     if (errorEvento) throw errorEvento;
@@ -256,7 +281,6 @@ async function carregarTimeline(pedidoId, lojaOrigem) {
       return;
     }
 
-    // Ordenação garantida via código JS (evita posições erradas devido a milissegundos ou fuso horário)
     eventos.sort((a, b) => {
       const dataA = new Date(a.criado_em || a.created_at).getTime();
       const dataB = new Date(b.criado_em || b.created_at).getTime();
@@ -280,7 +304,10 @@ async function carregarTimeline(pedidoId, lojaOrigem) {
 
       if (timestamp) {
         const timestampStr = String(timestamp);
-        const dataUtc = timestampStr.endsWith("Z") ? timestampStr : `${timestampStr}Z`;
+        const dataUtc = timestampStr.endsWith("Z") || timestampStr.includes("+") || timestampStr.includes("-", 10) 
+          ? timestampStr 
+          : `${timestampStr}Z`;
+        
         dataFormatada = new Date(dataUtc).toLocaleString("pt-BR", {
           timeZone: "America/Sao_Paulo"
         });
@@ -353,7 +380,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const statusInicial = "Aguardando coleta";
       const obsInicial = observacao || "OS inicial aberta no sistema da loja.";
-      const agoraIso = new Date().toISOString();
+      const dataHoraLocal = obterDataLocalBrasil();
 
       const { data, error } = await supabase.from("pedidos").insert([{
         tipo_servico: tipoServico,
@@ -361,7 +388,8 @@ document.addEventListener("DOMContentLoaded", () => {
         loja_destino: lojaDestino,
         orcamento,
         obs_loja_origem: obsInicial,
-        status: statusInicial
+        status: statusInicial,
+        criado_em: dataHoraLocal // <<---- ADICIONADO AQUI TAMBÉM NA TABELA PEDIDOS
       }]).select();
 
       if (error) throw error;
@@ -372,7 +400,7 @@ document.addEventListener("DOMContentLoaded", () => {
           evento: statusInicial,
           observacao: obsInicial,
           criado_por: operador,
-          criado_em: agoraIso // <<---- ADICIONADO AQUI
+          criado_em: dataHoraLocal
         }]);
       }
 
@@ -427,7 +455,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         const statusInicial = "Aguardando coleta";
         const obsInicial = observacaoTicket || "Pedido criado através do Ticket.";
-        const agoraIso = new Date().toISOString();
+        const dataHoraLocal = obterDataLocalBrasil();
 
         const { data, error } = await supabase.from("pedidos").insert([{
           tipo_servico: tipoServico,
@@ -435,7 +463,8 @@ document.addEventListener("DOMContentLoaded", () => {
           loja_destino: lojaDestino,
           orcamento,
           obs_loja_origem: obsInicial,
-          status: statusInicial
+          status: statusInicial,
+          criado_em: dataHoraLocal // <<---- ADICIONADO AQUI TAMBÉM NA TABELA PEDIDOS
         }]).select();
 
         if (error) throw error;
@@ -446,7 +475,7 @@ document.addEventListener("DOMContentLoaded", () => {
             evento: statusInicial,
             observacao: obsInicial,
             criado_por: operador,
-            criado_em: agoraIso // <<---- ADICIONADO AQUI
+            criado_em: dataHoraLocal
           }]);
         }
 

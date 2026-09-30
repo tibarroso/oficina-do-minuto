@@ -31,6 +31,8 @@ async function carregarAguardando(filtroLoja) {
   const div = document.getElementById("aguardando");
   if (!div) return;
   
+  // Garante espaçamento limpo no container grid/flex se não estiver no CSS
+  div.style.gap = "16px";
   div.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Carregando pedidos...</p>";
 
   let query = supabase
@@ -73,6 +75,7 @@ async function carregarEmTransporte(filtroLoja) {
   const div = document.getElementById("transporte");
   if (!div) return;
   
+  div.style.gap = "16px";
   div.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Carregando pedidos...</p>";
 
   let query = supabase
@@ -116,6 +119,7 @@ async function carregarRetorno(filtroLoja) {
   const div = document.getElementById("retorno");
   if (!div) return;
   
+  div.style.gap = "16px";
   div.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Carregando pedidos...</p>";
 
   let query = supabase
@@ -159,6 +163,13 @@ async function carregarRetorno(filtroLoja) {
 async function criarCard(pedido, tipo) {
   const card = document.createElement("div");
   card.classList.add("card");
+  
+  // MELHORIA DE ESPAÇAMENTO INTERNO E EXTERNO DO CARD
+  card.style.marginBottom = "14px";
+  card.style.padding = "16px";
+  card.style.borderRadius = "8px";
+  card.style.backgroundColor = "#ffffff";
+  card.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
 
   const statusComparacao = pedido.status ? pedido.status.trim() : "";
 
@@ -181,35 +192,35 @@ async function criarCard(pedido, tipo) {
     HTMLeventos = eventosUnicos.map(ev => {
       const dataFormatada = new Date(ev.criado_em).toLocaleString('pt-BR');
       const obsTexto = ev.observacao ? ` - <em style="color: #475569;">${ev.observacao}</em>` : "";
-      return `<li style="margin-bottom: 4px; padding-bottom: 2px; border-bottom: 1px dashed #f1f5f9;">• <strong>${ev.evento}</strong>${obsTexto} <span style="color: #64748b; font-size: 10px;">(${dataFormatada})</span></li>`;
+      return `<li style="margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px dashed #f1f5f9;">• <strong>${ev.evento}</strong>${obsTexto} <span style="color: #64748b; font-size: 10px;">(${dataFormatada})</span></li>`;
     }).join('');
   } else {
     HTMLeventos = `<li><em style="color: #94a3b8; font-size: 11px;">Nenhum evento registrado.</em></li>`;
   }
 
-  let obs = pedido.obs_loja_origem ? `<p style="margin: 3px 0;"><strong>Obs Origem:</strong> ${pedido.obs_loja_origem}</p>` : "";
-  let obsLoja5 = pedido.obs_loja5 ? `<p style="margin: 3px 0;"><strong>Obs Central:</strong> ${pedido.obs_loja5}</p>` : "";
-  let lojaDestino = pedido.loja_destino ? `<p style="margin: 0 0 4px 0;"><strong>Loja de Destino:</strong> ${pedido.loja_destino}</p>` : "";
+  let obs = pedido.obs_loja_origem ? `<p style="margin: 6px 0;"><strong>Obs Origem:</strong> ${pedido.obs_loja_origem}</p>` : "";
+  let obsLoja5 = pedido.obs_loja5 ? `<p style="margin: 6px 0;"><strong>Obs Central:</strong> ${pedido.obs_loja5}</p>` : "";
+  let lojaDestino = pedido.loja_destino ? `<p style="margin: 0 0 6px 0;"><strong>Loja de Destino:</strong> ${pedido.loja_destino}</p>` : "";
 
   card.innerHTML = `
-    <div style="font-size: 13px; line-height: 1.4; color: #334155;">
-      <p style="margin: 0 0 4px 0;"><strong>Loja de Origem:</strong> ${pedido.loja_origem || 'Não informada'}</p>
+    <div style="font-size: 13px; line-height: 1.5; color: #334155;">
+      <p style="margin: 0 0 6px 0;"><strong>Loja de Origem:</strong> ${pedido.loja_origem || 'Não informada'}</p>
       ${lojaDestino}
-      <p style="margin: 0 0 4px 0;"><strong>OS:</strong> <span style="font-size: 11px;">${pedido.id}</span></p>
-      <p style="margin: 0 0 4px 0;"><strong>Serviço:</strong> ${pedido.tipo_servico || 'Geral'}</p>
+      <p style="margin: 0 0 6px 0;"><strong>OS:</strong> <span style="font-size: 11px;">${pedido.id}</span></p>
+      <p style="margin: 0 0 6px 0;"><strong>Serviço:</strong> ${pedido.tipo_servico || 'Geral'}</p>
 
-      <div style="margin: 6px 0;">
+      <div style="margin: 8px 0;">
         <span class="status-badge status-${statusClasse(statusComparacao)}">${pedido.status}</span>
       </div>
 
-      <p style="margin: 0 0 4px 0;"><strong>Orçamento:</strong> ${pedido.orcamento ? 'Sim' : 'Não'}</p>
+      <p style="margin: 0 0 6px 0;"><strong>Orçamento:</strong> ${pedido.orcamento ? 'Sim' : 'Não'}</p>
 
       ${obs}
       ${obsLoja5}
 
-      <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid #e2e8f0;">
+      <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid #e2e8f0;">
         <strong style="font-size: 11px; color: #0f172a;">Histórico de Eventos:</strong>
-        <ul style="list-style: none; padding-left: 0; margin-top: 4px; font-size: 11px; max-height: 110px; overflow-y: auto;">
+        <ul style="list-style: none; padding-left: 0; margin-top: 6px; font-size: 11px; max-height: 120px; overflow-y: auto;">
           ${HTMLeventos}
         </ul>
       </div>
@@ -217,11 +228,11 @@ async function criarCard(pedido, tipo) {
   `;
 
   const acaoContainer = document.createElement("div");
-  acaoContainer.style.marginTop = "10px";
+  acaoContainer.style.marginTop = "14px"; // Espaço adequado entre o conteúdo do card e o botão
 
   const btn = document.createElement("button");
   btn.className = "btn-verde-dash";
-  btn.style.height = "36px";
+  btn.style.height = "38px";
   btn.style.fontSize = "12px";
   btn.style.width = "100%";
   btn.style.cursor = "pointer";
@@ -277,7 +288,6 @@ async function criarCard(pedido, tipo) {
 // Atualizar status e registrar evento
 // =====================
 async function atualizarStatus(id, novoStatus, observacaoDoEvento = "") {
-  // Trava para verificar se o pedido já não foi finalizado no sistema
   const { data: pedidoAtual } = await supabase
     .from("pedidos")
     .select("status")

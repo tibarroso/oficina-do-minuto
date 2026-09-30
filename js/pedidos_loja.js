@@ -25,7 +25,7 @@ function obterDataLocalBrasil() {
   
   // Como o Supabase/PostgreSQL aceita string ISO com timezone ou offset, 
   // vamos garantir o offset de Brasília (-03:00) para salvar exato no banco:
-  return `${dataLocalStr}-03:00`;
+  return `${dataLocalStr}`;
 }
 
 // =========================

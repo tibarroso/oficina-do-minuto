@@ -3,6 +3,26 @@ import { supabase } from "./supabase.js";
 // Configuração da URL da API (ambiente local)
 const API_URL = 'http://localhost:3000';
 
+// =========================================
+// FUNÇÃO PARA OBTER DATA/HORA LOCAL DO BRASIL
+// =========================================
+function obterDataLocalBrasil() {
+  const agora = new Date();
+  const options = {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  };
+  
+  const formatter = new Intl.DateTimeFormat('sv-SE', options);
+  const dataLocalStr = formatter.format(agora).replace(' ', 'T');
+  return `${dataLocalStr}-03:00`;
+}
 
 // =========================
 // CARREGAR PEDIDOS
@@ -365,7 +385,7 @@ document.addEventListener("DOMContentLoaded", () => {
         orcamento,
         obs_loja_origem: obsInicial,
         status: statusInicial,
-        criado_em: dataHoraLocal // <<---- ADICIONADO AQUI TAMBÉM NA TABELA PEDIDOS
+        criado_em: dataHoraLocal
       }]).select();
 
       if (error) throw error;
@@ -440,7 +460,7 @@ document.addEventListener("DOMContentLoaded", () => {
           orcamento,
           obs_loja_origem: obsInicial,
           status: statusInicial,
-          criado_em: dataHoraLocal // <<---- ADICIONADO AQUI TAMBÉM NA TABELA PEDIDOS
+          criado_em: dataHoraLocal
         }]).select();
 
         if (error) throw error;

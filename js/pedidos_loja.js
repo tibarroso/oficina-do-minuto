@@ -4,9 +4,9 @@ import { supabase } from "./supabase.js";
 const API_URL = 'http://localhost:3000';
 
 // =========================================
-// FUNÇÃO PARA OBTER DATA/HORA LOCAL DO BRASIL
+// FUNÇÃO GLOBAL: OBTEM DATA/HORA DO BRASIL (-03:00)
 // =========================================
-function obterDataLocalBrasil() {
+window.obterDataLocalBrasil = function obterDataLocalBrasil() {
   const agora = new Date();
   const options = {
     timeZone: 'America/Sao_Paulo',
@@ -22,7 +22,11 @@ function obterDataLocalBrasil() {
   const formatter = new Intl.DateTimeFormat('sv-SE', options);
   const dataLocalStr = formatter.format(agora).replace(' ', 'T');
   return `${dataLocalStr}-03:00`;
-}
+};
+
+// Atalho interno para uso direto nas funções do arquivo
+const obterDataLocalBrasil = window.obterDataLocalBrasil;
+
 // =========================
 // CARREGAR PEDIDOS
 // =========================
@@ -253,7 +257,7 @@ async function atualizarStatus(novoStatus, pedidoId) {
 window.atualizarStatus = atualizarStatus;
 
 // =========================
-// CARREGAR TIMELINE (CORRIGIDO)
+// CARREGAR TIMELINE (CORRIGIDO PARA EXIBIR HORA EXATA)
 // =========================
 async function carregarTimeline(pedidoId, lojaOrigem) {
   try {
@@ -276,15 +280,6 @@ async function carregarTimeline(pedidoId, lojaOrigem) {
       return;
     }
 
-    eventos.sort((a, b) => {
-      const dataA = new Date(a.criado_em || a.created_at).getTime();
-      const dataB = new Date(b.criado_em || b.created_at).getTime();
-      if (dataA === dataB) {
-        return (a.id || 0) - (b.id || 0);
-      }
-      return dataA - dataB;
-    });
-
     const nomeLoja = lojaOrigem ? lojaOrigem.trim() : "loja de origem";
 
     eventos.forEach(evento => {
@@ -298,14 +293,19 @@ async function carregarTimeline(pedidoId, lojaOrigem) {
       let dataFormatada = "Data pendente";
 
       if (timestamp) {
-        const timestampStr = String(timestamp);
-        const dataUtc = timestampStr.endsWith("Z") || timestampStr.includes("+") || timestampStr.includes("-", 10) 
-          ? timestampStr 
-          : `${timestampStr}Z`;
-        
-        dataFormatada = new Date(dataUtc).toLocaleString("pt-BR", {
-          timeZone: "America/Sao_Paulo"
-        });
+        // Exemplo esperado de string: "2026-09-30 16:18:44" ou "2026-09-30T16:18:44..."
+        const parts = String(timestamp).split(/[-T :]/);
+        if (parts.length >= 6) {
+          const ano = parts[0];
+          const mes = parts[1];
+          const dia = parts[2];
+          const hora = parts[3];
+          const minuto = parts[4];
+          const segundo = parts[5];
+          dataFormatada = `${dia}/${mes}/${ano}, ${hora}:${minuto}:${segundo}`;
+        } else {
+          dataFormatada = String(timestamp);
+        }
       }
 
       let textoExibicao = evento.evento ? evento.evento.trim() : "";

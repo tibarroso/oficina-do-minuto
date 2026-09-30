@@ -19,6 +19,23 @@ let usuarioLogado = null;
 let pedidoAtualId = null;
 
 // ===============================
+// Função Auxiliar: Horário do Brasil
+// ===============================
+function obterDataLocalBrasil() {
+  const agora = new Date();
+  return new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    fractionalSecondDigits: 3
+  }).format(agora).replace(',', '');
+}
+
+// ===============================
 // Verificar Login
 // ===============================
 async function verificarLogin() {
@@ -74,7 +91,7 @@ async function carregarPedidos() {
 }
 
 // ===============================
-// Registrar Evento na Timeline
+// Registrar Evento na Timeline (Com fuso ajustado para o Brasil)
 // ===============================
 async function registrarEvento(pedidoId, evento, observacao = "") {
   if (!usuarioLogado) return;
@@ -87,7 +104,7 @@ async function registrarEvento(pedidoId, evento, observacao = "") {
         evento: evento,
         observacao: observacao,
         criado_por: usuarioLogado.email || "Sistema / Loja",
-        criado_em: new Date().toISOString()
+        criado_em: obterDataLocalBrasil() // <-- Corrigido aqui para o horário de Brasília
       }]);
 
     if (error) throw error;
@@ -129,6 +146,7 @@ btnCriarPedido?.addEventListener("click", async (e) => {
   try {
     if (btnCriarPedido) btnCriarPedido.disabled = true;
 
+    // Opcional: Se a tabela pedidos também tiver a coluna criado_em e você quiser forçar nela:
     const { data, error } = await supabase
       .from("pedidos")
       .insert([{
@@ -137,7 +155,8 @@ btnCriarPedido?.addEventListener("click", async (e) => {
         tipo_servico: tipo,
         orcamento: orcamento,
         status: statusInicial,
-        obs_loja_origem: obsInicial
+        obs_loja_origem: obsInicial,
+        criado_em: obterDataLocalBrasil() // Força também na tabela pedidos se ela usar criado_em
       }])
       .select()
       .single();
@@ -212,7 +231,8 @@ formTicketModal?.addEventListener("submit", async (e) => {
         tipo_servico: tipo,
         orcamento: orcamento,
         status: statusInicial,
-        obs_loja_origem: observacao
+        obs_loja_origem: observacao,
+        criado_em: obterDataLocalBrasil() // Força também no ticket
       }])
       .select()
       .single();

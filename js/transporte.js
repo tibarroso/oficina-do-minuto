@@ -327,6 +327,7 @@ async function atualizarStatus(id, novoStatus, observacaoDoEvento = "") {
   carregarPedidos(filtroAtivo);
 }
 
+
 // =====================
 // Registrar Logs na Tabela de Eventos (Com fuso ajustado para o Brasil)
 // =====================
@@ -335,13 +336,26 @@ async function registrarEvento(pedidoId, statusComoEvento, observacaoTabelaPedid
     const { data } = await supabase.auth.getUser();
     const operador = data?.user?.email || "Motorista / Logística";
 
+    // Pega a data atual e formata explicitamente para o fuso de Brasília (YYYY-MM-DD HH:mm:ss)
+    const agora = new Date();
+    const dataLocalBrasil = new Intl.DateTimeFormat('sv-SE', {
+      timeZone: 'America/Sao_Paulo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      fractionalSecondDigits: 3 // Mantém os milissegundos para precisão
+    }).format(agora).replace(',', '');
+
     // Garante a gravação considerando o horário local exato do Brasil
     await supabase.from("pedido_eventos").insert([{
       pedido_id: pedidoId,
       evento: statusComoEvento,
       observacao: observacaoTabelaPedidos,
       criado_por: operador,
-      criado_em: new Date().toISOString()
+      criado_em: dataLocalBrasil
     }]);
   } catch (err) {
     console.error("Erro ao registrar evento de logística:", err);

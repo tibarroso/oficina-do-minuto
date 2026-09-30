@@ -31,7 +31,6 @@ async function carregarAguardando(filtroLoja) {
   const div = document.getElementById("aguardando");
   if (!div) return;
   
-  // Garante espaçamento limpo no container grid/flex se não estiver no CSS
   div.style.gap = "16px";
   div.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Carregando pedidos...</p>";
 
@@ -164,7 +163,6 @@ async function criarCard(pedido, tipo) {
   const card = document.createElement("div");
   card.classList.add("card");
   
-  // MELHORIA DE ESPAÇAMENTO INTERNO E EXTERNO DO CARD
   card.style.marginBottom = "14px";
   card.style.padding = "16px";
   card.style.borderRadius = "8px";
@@ -200,12 +198,21 @@ async function criarCard(pedido, tipo) {
 
   let obs = pedido.obs_loja_origem ? `<p style="margin: 6px 0;"><strong>Obs Origem:</strong> ${pedido.obs_loja_origem}</p>` : "";
   let obsLoja5 = pedido.obs_loja5 ? `<p style="margin: 6px 0;"><strong>Obs Central:</strong> ${pedido.obs_loja5}</p>` : "";
-  let lojaDestino = pedido.loja_destino ? `<p style="margin: 0 0 6px 0;"><strong>Loja de Destino:</strong> ${pedido.loja_destino}</p>` : "";
+  
+  // Lógica inteligente para exibir corretamente a origem e o destino considerando onde o serviço foi feito/encaminhado
+  let textoOrigem = pedido.loja_origem || 'Não informada';
+  let textoDestino = pedido.loja_destino || '';
+
+  // Se for um fluxo onde o destino é explicitamente a loja que vai receber na volta
+  let linhaDestino = "";
+  if (textoDestino && textoDestino !== textoOrigem) {
+    linhaDestino = `<p style="margin: 0 0 6px 0;"><strong>Loja de Destino:</strong> ${textoDestino}</p>`;
+  }
 
   card.innerHTML = `
     <div style="font-size: 13px; line-height: 1.5; color: #334155;">
-      <p style="margin: 0 0 6px 0;"><strong>Loja de Origem:</strong> ${pedido.loja_origem || 'Não informada'}</p>
-      ${lojaDestino}
+      <p style="margin: 0 0 6px 0;"><strong>Loja de Origem:</strong> ${textoOrigem}</p>
+      ${linhaDestino}
       <p style="margin: 0 0 6px 0;"><strong>OS:</strong> <span style="font-size: 11px;">${pedido.id}</span></p>
       <p style="margin: 0 0 6px 0;"><strong>Serviço:</strong> ${pedido.tipo_servico || 'Geral'}</p>
 
@@ -228,7 +235,7 @@ async function criarCard(pedido, tipo) {
   `;
 
   const acaoContainer = document.createElement("div");
-  acaoContainer.style.marginTop = "14px"; // Espaço adequado entre o conteúdo do card e o botão
+  acaoContainer.style.marginTop = "14px";
 
   const btn = document.createElement("button");
   btn.className = "btn-verde-dash";

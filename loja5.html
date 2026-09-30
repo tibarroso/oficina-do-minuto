@@ -1,193 +1,127 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Loja 5 – Central | Oficina do Minuto</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
+  
   <style>
     :root {
-      --primary-blue: #0f172a;
-      --accent-yellow: #f59e0b;
-      --accent-green: #10b981;
-      --accent-green-hover: #059669;
-      --bg-main: #f8fafc;
-      --surface: #ffffff;
-      --text-main: #1e293b;
-      --text-muted: #64748b;
-      --border-color: #e2e8f0;
-      --radius-lg: 16px;
-      --radius-md: 10px;
-      --shadow-soft: 0 10px 25px -5px rgba(15, 23, 42, 0.05), 0 8px 10px -6px rgba(15, 23, 42, 0.02);
-      --shadow-hover: 0 20px 30px -10px rgba(15, 23, 42, 0.1);
+      --primary: #2c3e50;
+      --secondary: #18bc9c;
+      --warning: #f39c12;
+      --danger: #e74c3c;
+      --light: #ecf0f1;
+      --dark: #2c3e50;
+      --gray: #95a5a6;
+      --bg-body: #f4f6f7;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
     body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background-color: var(--bg-main);
-      color: var(--text-main);
-      min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
+      background-color: var(--bg-body);
+      color: var(--dark);
+      padding-bottom: 40px;
     }
 
-    /* HEADER MODERNO COM GLASSMORPHISM */
+    /* HEADER PADRÃO */
     header {
-      background: rgba(15, 23, 42, 0.92);
-      backdrop-filter: blur(12px);
+      background-color: var(--primary);
       color: white;
-      padding: 0 40px;
+      padding: 15px 30px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 72px;
-      z-index: 1000;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
 
     .logo-area {
       display: flex;
       align-items: center;
-      gap: 12px;
-    }
-
-    .icone-relogio {
-      font-size: 22px;
-      background: rgba(255, 255, 255, 0.1);
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 10px;
-    }
-
-    .marca-texto {
-      font-size: 20px;
-      font-weight: 700;
-      color: #ffffff;
-      letter-spacing: -0.5px;
-    }
-
-    .tag-loja5 {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      color: #ffffff;
-      padding: 4px 10px;
-      font-size: 11px;
-      font-weight: 800;
-      border-radius: 20px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      gap: 10px;
+      font-size: 18px;
+      font-weight: bold;
     }
 
     header nav {
       display: flex;
+      gap: 15px;
       align-items: center;
-      gap: 8px;
     }
 
     header nav a {
-      color: #94a3b8;
+      color: white;
       text-decoration: none;
       font-size: 14px;
-      font-weight: 600;
-      padding: 8px 16px;
-      border-radius: var(--radius-md);
-      transition: all 0.2s ease;
+      padding: 6px 12px;
+      border-radius: 4px;
+      transition: background 0.2s;
     }
 
-    header nav a:hover {
-      color: #ffffff;
-      background-color: rgba(255, 255, 255, 0.08);
-    }
-
-    header nav a.active {
-      color: #ffffff;
-      background-color: rgba(255, 255, 255, 0.15);
+    header nav a:hover, header nav a.active {
+      background-color: rgba(255,255,255,0.1);
     }
 
     header nav a.btn-sair {
-      color: #f87171;
+      color: #e74c3c;
     }
 
-    header nav a.btn-sair:hover {
-      background-color: rgba(239, 68, 68, 0.15);
-      color: #fca5a5;
-    }
-
-    /* CONTAINER PRINCIPAL */
+    /* CONTEÚDO PRINCIPAL */
     main {
-      max-width: 1400px;
-      margin: 110px auto 50px auto;
-      padding: 0 40px;
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 0 20px;
     }
 
     .section-intro {
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
 
     .section-intro h2 {
-      font-size: 28px;
-      font-weight: 800;
-      color: var(--primary-blue);
-      letter-spacing: -0.5px;
+      font-size: 24px;
+      color: var(--primary);
     }
 
     .section-intro p {
-      font-size: 15px;
-      color: var(--text-muted);
-      margin-top: 6px;
+      color: #666;
+      font-size: 14px;
+      margin-top: 5px;
     }
 
-    /* SISTEMA DE ABAS (TABS) COM 3 OPÇÕES */
+    /* SISTEMA DE ABAS (TABS) PADRÃO */
     .tabs-header {
       display: flex;
       gap: 10px;
-      margin-bottom: 28px;
-      border-bottom: 2px solid var(--border-color);
-      padding-bottom: 12px;
-      overflow-x: auto;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #ddd;
+      padding-bottom: 10px;
     }
 
     .tab-btn {
-      background-color: #ffffff;
-      border: 1px solid var(--border-color);
+      background-color: #e0e0e0;
+      border: none;
       padding: 10px 20px;
-      font-family: 'Plus Jakarta Sans', sans-serif;
       font-size: 14px;
-      font-weight: 700;
-      color: var(--text-muted);
+      font-weight: bold;
+      color: #555;
       cursor: pointer;
-      border-radius: var(--radius-md);
-      transition: all 0.2s ease;
-      white-space: nowrap;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      border-radius: 4px 4px 0 0;
+      transition: all 0.2s;
     }
 
     .tab-btn:hover {
-      background-color: #f1f5f9;
-      color: var(--primary-blue);
-      border-color: #cbd5e1;
+      background-color: #d0d0d0;
     }
 
     .tab-btn.active {
-      background-color: var(--primary-blue);
-      color: #ffffff;
-      border-color: var(--primary-blue);
-      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+      background-color: var(--primary);
+      color: white;
     }
 
     .tab-content {
@@ -196,185 +130,102 @@
 
     .tab-content.active {
       display: block;
-      animation: fadeIn 0.3s ease;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* TOAST DE SUCESSO ELEGANTE */
+    /* TOAST DE SUCESSO PADRÃO */
     .success-toast {
       display: none;
       position: fixed;
-      top: 90px;
-      right: 40px;
-      background-color: var(--accent-green);
+      top: 20px;
+      right: 20px;
+      background-color: var(--secondary);
       color: white;
-      padding: 14px 24px;
-      border-radius: var(--radius-md);
-      box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
-      font-weight: 600;
-      font-size: 14px;
-      z-index: 1001;
-      animation: slideIn 0.3s ease;
-    }
-
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(-15px); }
-      to { opacity: 1; transform: translateY(0); }
+      padding: 12px 20px;
+      border-radius: 4px;
+      font-weight: bold;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      z-index: 1000;
     }
 
     /* GRID DE CARDS */
     .cards-container {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 24px;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
     }
 
-    /* CARD ESTILIZADO */
+    /* CARD PADRÃO */
     .card {
-      background: var(--surface);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-lg);
-      padding: 24px;
-      box-shadow: var(--shadow-soft);
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
       display: flex;
       flex-direction: column;
-      gap: 14px;
-      position: relative;
-      transition: all 0.25s ease;
-      overflow: hidden;
-    }
-
-    .card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 6px;
-      height: 100%;
-      background: #3b82f6;
-    }
-
-    .card:hover {
-      transform: translateY(-4px);
-      box-shadow: var(--shadow-hover);
-      border-color: #cbd5e1;
+      gap: 12px;
     }
 
     .card strong {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-muted);
+      font-size: 12px;
+      color: #7f8c8d;
       text-transform: uppercase;
-      letter-spacing: 0.8px;
     }
 
-    .card em, .card .obs-italic, .card p i {
+    .card em {
       font-style: normal;
-      color: #334155;
-      font-size: 13.5px;
+      color: #333;
+      background: #f8f9fa;
+      padding: 8px;
+      border-radius: 4px;
       display: block;
-      margin-top: 6px;
-      background: #f1f5f9;
-      padding: 10px 14px;
-      border-radius: var(--radius-md);
-      border-left: 3px solid #94a3b8;
+      font-size: 13px;
     }
 
     .card textarea {
       width: 100%;
-      min-height: 85px;
-      padding: 12px;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border-color);
-      font-family: inherit;
+      min-height: 70px;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
       font-size: 13px;
-      color: var(--text-main);
-      background-color: #f8fafc;
       resize: vertical;
-      transition: all 0.2s ease;
-      margin-top: 6px;
     }
 
-    .card textarea:focus {
-      outline: none;
-      border-color: #3b82f6;
-      background-color: #fff;
-      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
-    }
-
-    /* BADGES DE STATUS */
+    /* BADGES DE STATUS PADRÃO */
     .status-tag {
-      display: inline-flex;
-      align-items: center;
-      padding: 6px 14px;
+      display: inline-block;
+      padding: 4px 10px;
       font-size: 11px;
-      font-weight: 700;
-      border-radius: 20px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      width: fit-content;
+      font-weight: bold;
+      border-radius: 12px;
       color: white !important;
+      text-transform: uppercase;
     }
 
-    .status-Aguardando { background-color: #f59e0b; }
-    .status-Transporte { background-color: #3b82f6; }
-    .status-Loja5      { background-color: #8b5cf6; }
-    .status-Finalizado { background-color: #10b981; }
-    .status-Retrabalho { background-color: #ef4444; }
-
-    /* BOTÕES */
-    .card button.btn-principal {
-      width: 100%;
-      padding: 12px 16px;
-      border: none;
-      border-radius: var(--radius-md);
-      font-family: inherit;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      background-color: var(--accent-green);
-      color: white;
-      transition: all 0.2s ease;
-      margin-top: 10px;
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
-    }
-
-    .card button.btn-principal:hover {
-      background-color: var(--accent-green-hover);
-      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
-    }
+    .status-Aguardando { background-color: var(--warning); }
+    .status-Transporte { background-color: #3498db; }
+    .status-Loja5      { background-color: #9b59b6; }
+    .status-Finalizado { background-color: var(--secondary); }
+    .status-Retrabalho { background-color: var(--danger); }
 
     .loading {
       grid-column: 1 / -1;
       text-align: center;
-      padding: 60px 20px;
-      color: var(--text-muted);
-      font-size: 15px;
-      font-weight: 500;
-    }
-
-    @media (max-width: 768px) {
-      header { padding: 0 20px; }
-      main { padding: 0 20px; margin-top: 100px; }
-      .success-toast { right: 20px; left: 20px; text-align: center; }
+      padding: 40px;
+      color: #666;
     }
   </style>
 </head>
 <body>
 
   <div id="successMessage" class="success-toast">
-    ✓ Operação realizada com sucesso!
+    Operação realizada com sucesso!
   </div>
 
   <header>
     <div class="logo-area">
-      <span class="icone-relogio">🕒</span>
-      <span class="marca-texto">Oficina do Minuto</span>
-      <span class="tag-loja5">Loja 5</span>
+      <span>🕒 Oficina do Minuto (Loja 5)</span>
     </div>
     <nav>
       <a href="/admin">Dashboard</a>
@@ -387,10 +238,10 @@
     <section>
       <div class="section-intro">
         <h2>Pedidos Recebidos na Central</h2>
-        <p>Acompanhe, faça a triagem e despache as ordens de serviço em processamento na Loja 5.</p>
+        <p>Acompanhe e gerencie as ordens de serviço em processamento na Loja 5.</p>
       </div>
 
-      <!-- Abas Estilizadas com 3 Opções -->
+      <!-- Sistema de Abas Padrão -->
       <div class="tabs-header">
         <button class="tab-btn active" onclick="abrirAba(event, 'aba-aguardando')">Aguardando Execução</button>
         <button class="tab-btn" onclick="abrirAba(event, 'aba-execucao')">Em Serviço (Bancada)</button>
@@ -411,7 +262,7 @@
         </div>
       </div>
 
-      <!-- Aba 3: Controle de Serviço (Prontos/Aguardando Coleta) -->
+      <!-- Aba 3: Controle de Serviço -->
       <div id="aba-controle" class="tab-content">
         <div id="containerControle" class="cards-container">
           <p class="loading">Buscando ordens controladas/prontas...</p>

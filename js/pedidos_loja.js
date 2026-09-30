@@ -23,7 +23,6 @@ function obterDataLocalBrasil() {
   const dataLocalStr = formatter.format(agora).replace(' ', 'T');
   return `${dataLocalStr}-03:00`;
 }
-
 // =========================
 // CARREGAR PEDIDOS
 // =========================

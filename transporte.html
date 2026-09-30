@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -12,7 +13,7 @@
     }
 
     body {
-      background-color: #FFDE21;
+      background-color: #FFDE21; /* Mantém o amarelo que você pediu antes */
       margin: 10px;
       color: #333;
     }
@@ -54,8 +55,10 @@
       font-weight: bold;
       padding: 2px 6px;
       border-radius: 2px;
+      transition: background-color 0.2s;
     }
 
+    /* AQUI: Ao passar o mouse fica preto (#000000) */
     header nav a:hover {
       background-color: #000000;
     }
@@ -259,7 +262,6 @@
 
   <!-- Script de Abas e Inicialização -->
   <script>
-    // Função para alternar entre as abas visualmente
     function abrirAba(evt, idAba) {
       const contents = document.getElementsByClassName("tab-content");
       for (let i = 0; i < contents.length; i++) {
@@ -289,11 +291,9 @@
       carregarPedidos(filtroLoja);
     }
 
-    // Eventos do botão e do select
     if (btnFiltrar) btnFiltrar.addEventListener("click", aplicarFiltro);
     if (selectLoja) selectLoja.addEventListener("change", aplicarFiltro);
 
-    // Autenticação e Ponto Único de Inicialização
     (async () => {
       try {
         const { data: { user }, error } = await supabase.auth.getUser();
@@ -304,10 +304,8 @@
           return;
         }
 
-        // Carga inicial única controlada pelo HTML
         aplicarFiltro();
 
-        // Recarregamento automático contínuo (5 minutos)
         setInterval(() => {
           aplicarFiltro();
         }, 300000);

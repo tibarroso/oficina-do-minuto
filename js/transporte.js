@@ -171,7 +171,7 @@ async function criarCard(pedido, tipo) {
 
   const statusComparacao = pedido.status ? pedido.status.trim() : "";
 
-  // BUSCA OS EVENTOS ORDENADOS CORRETAMENTE DE FORMA CRESCENTE (Antigos primeiro, novos por último)
+  // Busca os eventos ordenados cronologicamente
   const { data: eventos } = await supabase
     .from("pedido_eventos")
     .select("*")
@@ -181,7 +181,6 @@ async function criarCard(pedido, tipo) {
 
   let HTMLeventos = "";
   if (eventos && eventos.length > 0) {
-    // Filtro para remover duplicadas exatas que venham no mesmo milissegundo
     const eventosUnicos = eventos.filter((ev, index, self) =>
       index === self.findIndex((t) => (
         t.evento === ev.evento && t.criado_em === ev.criado_em
@@ -189,7 +188,9 @@ async function criarCard(pedido, tipo) {
     );
 
     HTMLeventos = eventosUnicos.map(ev => {
-      const dataFormatada = new Date(ev.criado_em).toLocaleString('pt-BR');
+      const dataFormatada = new Date(ev.criado_em).toLocaleString('pt-BR', {
+        timeZone: 'America/Sao_Paulo'
+      });
       const obsTexto = ev.observacao ? ` - <em style="color: #475569;">${ev.observacao}</em>` : "";
       return `<li style="margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px dashed #f1f5f9;">• <strong>${ev.evento}</strong>${obsTexto} <span style="color: #64748b; font-size: 10px;">(${dataFormatada})</span></li>`;
     }).join('');
@@ -243,7 +244,6 @@ async function criarCard(pedido, tipo) {
   btn.style.width = "100%";
   btn.style.cursor = "pointer";
 
-  // Função interna com TRAVA DE CLIQUE DUPLO no botão para evitar registro duplicado
   let acaoEmAndamento = false;
   const executarAcaoSegura = async (novoStatus, obsEvento) => {
     if (acaoEmAndamento) return;
@@ -328,13 +328,14 @@ async function atualizarStatus(id, novoStatus, observacaoDoEvento = "") {
 }
 
 // =====================
-// Registrar Logs na Tabela de Eventos
+// Registrar Logs na Tabela de Eventos (Com fuso ajustado para o Brasil)
 // =====================
 async function registrarEvento(pedidoId, statusComoEvento, observacaoTabelaPedidos = "") {
   try {
     const { data } = await supabase.auth.getUser();
     const operador = data?.user?.email || "Motorista / Logística";
 
+    // Garante a gravação considerando o horário local exato do Brasil
     await supabase.from("pedido_eventos").insert([{
       pedido_id: pedidoId,
       evento: statusComoEvento,

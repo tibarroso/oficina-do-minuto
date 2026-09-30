@@ -3,30 +3,6 @@ import { supabase } from "./supabase.js";
 // Configuração da URL da API (ambiente local)
 const API_URL = 'http://localhost:3000';
 
-// =========================================
-// FUNÇÃO PARA OBTER DATA/HORA LOCAL DO BRASIL
-// =========================================
-function obterDataLocalBrasil() {
-  const agora = new Date();
-  // Formata no padrão ISO usando o fuso de São Paulo
-  const options = {
-    timeZone: 'America/Sao_Paulo',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  };
-  
-  const formatter = new Intl.DateTimeFormat('sv-SE', options); // 'sv-SE' retorna no formato YYYY-MM-DD HH:mm:ss
-  const dataLocalStr = formatter.format(agora).replace(' ', 'T');
-  
-  // Como o Supabase/PostgreSQL aceita string ISO com timezone ou offset, 
-  // vamos garantir o offset de Brasília (-03:00) para salvar exato no banco:
-  return `${dataLocalStr}`;
-}
 
 // =========================
 // CARREGAR PEDIDOS

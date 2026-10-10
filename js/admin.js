@@ -1,8 +1,8 @@
 import { supabase } from "./supabase.js";
 
 // Configuração da URL da API (ambiente local)
-//const API_URL = 'http://localhost:3000';
-const API_URL = 'http://10.86.1.120:3000';
+const API_URL = 'http://localhost:3000';
+
 
 document.addEventListener("DOMContentLoaded", () => {
     const inputInicio = document.getElementById("filtro_data_inicio");

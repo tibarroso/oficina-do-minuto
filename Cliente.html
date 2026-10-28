@@ -24,6 +24,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      flex-wrap: wrap;
     }
 
     .top-bar select {
@@ -33,6 +34,25 @@
       font-weight: bold;
       color: #000080;
       border-radius: 2px;
+    }
+
+    /* Botão Grande para Voltar */
+    .btn-voltar {
+      background: linear-gradient(to bottom, #ffffff, #dce6f1);
+      border: 1px solid #7f9db9;
+      border-radius: 3px;
+      cursor: pointer;
+      font-weight: bold;
+      color: #000080;
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+    }
+
+    .btn-voltar:hover {
+      background: #c6d9f1;
     }
 
     /* Painel de Busca Responsivo */
@@ -338,6 +358,11 @@
 
   <!-- Topo Loja -->
   <div class="top-bar">
+    <!-- Botão Potão para voltar -->
+    <button class="btn-voltar" onclick="history.back()">
+      ⬅ Voltar
+    </button>
+    
     <span>LOJA:</span>
     <select id="select-loja">
       <option value="">Carregando lojas...</option>

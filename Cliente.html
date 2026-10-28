@@ -4,68 +4,91 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Oficina do Minuto - Cliente</title>
+  
+  <!-- Fonte Moderna -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
     * {
       box-sizing: border-box;
-      font-family: Arial, sans-serif;
-      font-size: 11px;
+      font-family: 'Poppins', Arial, sans-serif;
+      font-size: 12px;
     }
 
     body {
-      background-color: #f0f4f8;
-      margin: 10px;
-      color: #333;
+      background-color: #f8fafc;
+      margin: 16px;
+      color: #334155;
     }
 
-    /* Topo Loja */
+    /* Topo Loja e Botão Voltar */
     .top-bar {
-      font-weight: bold;
-      margin-bottom: 8px;
+      font-weight: 600;
+      margin-bottom: 16px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       flex-wrap: wrap;
+      background: #ffffff;
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .top-bar span {
+      color: #0f172a;
     }
 
     .top-bar select {
-      padding: 3px 6px;
-      border: 1px solid #7f9db9;
+      padding: 6px 10px;
+      border: 1px solid #cbd5e1;
       background-color: #fff;
-      font-weight: bold;
-      color: #000080;
-      border-radius: 2px;
+      font-weight: 600;
+      color: #0f172a;
+      border-radius: 6px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .top-bar select:focus {
+      border-color: #3b82f6;
     }
 
     /* Botão Grande para Voltar */
     .btn-voltar {
-      background: linear-gradient(to bottom, #ffffff, #dce6f1);
-      border: 1px solid #7f9db9;
-      border-radius: 3px;
+      background: linear-gradient(to bottom, #ffffff, #f1f5f9);
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
       cursor: pointer;
-      font-weight: bold;
-      color: #000080;
-      padding: 6px 14px;
+      font-weight: 600;
+      color: #0f172a;
+      padding: 8px 16px;
       display: flex;
       align-items: center;
       gap: 6px;
       font-size: 12px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      transition: all 0.2s;
     }
 
     .btn-voltar:hover {
-      background: #c6d9f1;
+      background: #e2e8f0;
+      border-color: #94a3b8;
     }
 
     /* Painel de Busca Responsivo */
     .search-panel {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 8px;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
       align-items: end;
-      background-color: #f0f4f8;
-      padding: 8px;
-      border: 1px solid #b4c6e7;
-      margin-bottom: 10px;
-      border-radius: 3px;
+      background-color: #ffffff;
+      padding: 16px;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 16px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
 
     .form-group {
@@ -74,87 +97,104 @@
     }
 
     .form-group label {
-      font-weight: bold;
-      color: #000080;
-      margin-bottom: 3px;
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 4px;
     }
 
     .form-group input {
-      border: 1px solid #7f9db9;
-      padding: 3px 6px;
-      height: 26px;
+      border: 1px solid #cbd5e1;
+      padding: 6px 10px;
+      height: 32px;
       background-color: #fff;
-      border-radius: 2px;
+      border-radius: 6px;
       width: 100%;
+      color: #1e293b;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59,130,246,0.1);
     }
 
     .btn-search {
-      height: 45px;
-      background: linear-gradient(to bottom, #ffffff, #dce6f1);
-      border: 1px solid #7f9db9;
-      border-radius: 3px;
+      height: 32px;
+      background: #0f172a;
+      border: 1px solid #0f172a;
+      border-radius: 6px;
       cursor: pointer;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-weight: bold;
-      color: #000080;
-      padding: 4px;
+      font-weight: 600;
+      color: #ffffff;
+      padding: 4px 12px;
       width: 100%;
-      min-width: 80px;
+      min-width: 90px;
+      transition: background 0.2s;
     }
 
     .btn-search:hover {
-      background: #c6d9f1;
+      background: #1e293b;
     }
 
     /* Main Grid Responsivo */
     .main-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
       align-items: start;
     }
 
     .section-title {
-      font-weight: bold;
-      color: #000080;
-      margin-bottom: 4px;
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 6px;
+      font-size: 13px;
     }
 
     /* Caixa Lista */
     .list-box {
-      border: 1px solid #7f9db9;
+      border: 1px solid #e2e8f0;
       background-color: #fff;
       height: 350px;
       max-height: 50vh;
       overflow-y: auto;
-      border-radius: 2px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
 
     .list-box div {
-      padding: 5px;
+      padding: 8px 12px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       cursor: pointer;
-      border-bottom: 1px dotted #e0e0e0;
+      border-bottom: 1px solid #f1f5f9;
+      transition: background 0.1s;
+    }
+
+    .list-box div:hover {
+      background-color: #f8fafc;
     }
 
     .list-box div.selected {
-      background-color: #000080;
-      color: #fff;
+      background-color: #0f172a !important;
+      color: #fff !important;
+      font-weight: 500;
     }
 
     /* Tabelas */
     .table-container {
-      border: 1px solid #7f9db9;
+      border: 1px solid #e2e8f0;
       background-color: #fff;
       height: 350px;
       max-height: 50vh;
       overflow: auto;
-      border-radius: 2px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
 
     table {
@@ -163,90 +203,104 @@
     }
 
     th {
-      background-color: #c6d9f1;
-      border: 1px solid #7f9db9;
-      padding: 5px;
+      background-color: #f1f5f9;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 8px;
       text-align: center;
-      font-weight: bold;
+      font-weight: 600;
+      color: #0f172a;
       position: sticky;
       top: 0;
       z-index: 1;
     }
 
     td {
-      border: 1px solid #e0e0e0;
-      padding: 4px;
+      border-bottom: 1px solid #f1f5f9;
+      padding: 6px 8px;
       text-align: center;
-      cursor: pointer;
+      color: #334155;
+    }
+
+    tr:hover td {
+      background-color: #f8fafc;
     }
 
     /* Seleção de Linha na Tabela */
     tr.selected-row td {
-      outline: 2px solid #000080;
-      font-weight: bold;
+      background-color: #e2e8f0 !important;
+      font-weight: 600;
+      color: #0f172a !important;
     }
 
     /* Detalhes */
     .details-box {
-      border: 1px solid #7f9db9;
-      background-color: #f9f9f9;
-      padding: 6px;
-      height: 80px;
+      border: 1px solid #e2e8f0;
+      background-color: #ffffff;
+      padding: 10px;
+      height: 90px;
       overflow-y: auto;
-      border-radius: 2px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      color: #475569;
     }
 
     /* Legendas Responsivas */
     .legend-container {
       grid-column: 1 / -1;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 6px;
-      margin-top: 10px;
-      background-color: #e8eef5;
-      padding: 8px;
-      border: 1px solid #b4c6e7;
-      border-radius: 3px;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+      margin-top: 16px;
+      background-color: #ffffff;
+      padding: 16px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
 
     .legend-item {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+      font-weight: 500;
+      color: #475569;
     }
 
     .legend-box {
       width: 14px;
       height: 14px;
-      border: 1px solid #7f9db9;
+      border-radius: 3px;
+      border: 1px solid rgba(0,0,0,0.1);
       flex-shrink: 0;
     }
 
     .legend-footer {
       grid-column: 1 / -1;
-      font-weight: bold;
-      margin-top: 4px;
-      color: #000080;
+      font-weight: 600;
+      margin-top: 6px;
+      color: #0f172a;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 8px;
     }
 
-    /* Cores Status */
-    tr.status-pago td { background-color: #d9d9d9 !important; color: #000 !important; }
-    tr.status-nao-pago td { background-color: #749ab5 !important; color: #000 !important; }
-    tr.status-anulado td { background-color: #f4b084 !important; color: #000 !important; }
-    tr.status-entregue-pago td { background-color: #c6efce !important; color: #000 !important; }
-    tr.status-orcamento td { background-color: #b4e6eb !important; color: #000 !important; }
-    tr.status-delivery td { background-color: #f4b084 !important; color: #000 !important; }
-    tr.status-entregue-nao-pago td { background-color: #8ede76 !important; color: #000 !important; }
-    tr.status-orc-nao-aprovado td { background-color: #f8cbad !important; color: #000 !important; }
+    /* Cores Status Modernas e Suaves */
+    tr.status-pago td { background-color: #f1f5f9 !important; color: #1e293b !important; }
+    tr.status-nao-pago td { background-color: #e0f2fe !important; color: #0369a1 !important; }
+    tr.status-anulado td { background-color: #fee2e2 !important; color: #991b1b !important; }
+    tr.status-entregue-pago td { background-color: #d1fae5 !important; color: #065f46 !important; }
+    tr.status-orcamento td { background-color: #ccfbf1 !important; color: #0f766e !important; }
+    tr.status-delivery td { background-color: #ffedd5 !important; color: #c2410c !important; }
+    tr.status-entregue-nao-pago td { background-color: #dcfce7 !important; color: #15803d !important; }
+    tr.status-orc-nao-aprovado td { background-color: #ffedd5 !important; color: #9a3412 !important; }
 
-    .bg-pago { background-color: #d9d9d9; }
-    .bg-nao-pago { background-color: #749ab5; }
-    .bg-anulado { background-color: #f4b084; }
-    .bg-entregue-pago { background-color: #c6efce; }
-    .bg-orcamento { background-color: #b4e6eb; }
-    .bg-delivery { background-color: #f4b084; }
-    .bg-entregue-nao-pago { background-color: #8ede76; }
-    .bg-orc-nao-aprovado { background-color: #f8cbad; }
+    .bg-pago { background-color: #f1f5f9; }
+    .bg-nao-pago { background-color: #e0f2fe; }
+    .bg-anulado { background-color: #fee2e2; }
+    .bg-entregue-pago { background-color: #d1fae5; }
+    .bg-orcamento { background-color: #ccfbf1; }
+    .bg-delivery { background-color: #ffedd5; }
+    .bg-entregue-nao-pago { background-color: #dcfce7; }
+    .bg-orc-nao-aprovado { background-color: #ffedd5; }
 
     /* Modal Flutuante */
     .modal-overlay {
@@ -255,7 +309,8 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(2px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -264,37 +319,43 @@
 
     .modal-content {
       background: #fff;
-      border: 2px solid #000080;
-      border-radius: 4px;
+      border: none;
+      border-radius: 12px;
       width: 90%;
       max-width: 750px;
       max-height: 85vh;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
     }
 
     .modal-header {
-      background: #000080;
+      background: #0f172a;
       color: #fff;
-      padding: 8px 12px;
+      padding: 12px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-weight: bold;
+      font-weight: 600;
     }
 
     .modal-close {
       background: transparent;
       border: none;
-      color: #fff;
-      font-size: 18px;
+      color: #94a3b8;
+      font-size: 20px;
       font-weight: bold;
       cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .modal-close:hover {
+      color: #ffffff;
     }
 
     .modal-body {
-      padding: 12px;
+      padding: 16px;
       overflow-y: auto;
       font-size: 11px;
     }
@@ -302,55 +363,57 @@
     .ticket-info-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 6px;
-      background: #f0f4f8;
-      padding: 8px;
-      border: 1px solid #b4c6e7;
-      margin-bottom: 10px;
+      gap: 8px;
+      background: #f8fafc;
+      padding: 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      margin-bottom: 12px;
     }
 
     .ticket-info-item span {
-      font-weight: bold;
-      color: #000080;
+      font-weight: 600;
+      color: #0f172a;
     }
 
     .pecas-container {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
     }
 
     .peca-card {
-      border: 1px solid #7f9db9;
-      border-radius: 3px;
-      padding: 8px;
-      background: #fafafa;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px;
+      background: #f8fafc;
     }
 
     .peca-header {
-      font-weight: bold;
-      color: #000080;
-      margin-bottom: 4px;
-      border-bottom: 1px solid #dcdcdc;
-      padding-bottom: 2px;
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 6px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 4px;
     }
 
     .tabela-servicos {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 4px;
+      margin-top: 6px;
     }
 
     .tabela-servicos th {
-      background: #dce6f1;
-      border: 1px solid #b4c6e7;
-      padding: 3px;
+      background: #e2e8f0;
+      border: 1px solid #cbd5e1;
+      padding: 4px;
       font-size: 10px;
+      color: #0f172a;
     }
 
     .tabela-servicos td {
-      border: 1px solid #e0e0e0;
-      padding: 3px;
+      border: 1px solid #e2e8f0;
+      padding: 4px;
       font-size: 10px;
     }
   </style>
@@ -359,7 +422,7 @@
 
   <!-- Topo Loja -->
   <div class="top-bar">
-    <!-- Botão Potão para voltar -->
+    <!-- Botão Voltar -->
     <button class="btn-voltar" onclick="history.back()">
       ⬅ Voltar
     </button>
@@ -389,7 +452,7 @@
     
     <div>
       <button class="btn-search" id="btn-pesquisar">
-        🔍<br> Pesquisar
+        🔍 Pesquisar
       </button>
     </div>
 
@@ -456,11 +519,11 @@
     </div>
 
     <!-- Painel Lateral / Ações -->
-    <div style="display: flex; flex-direction: column; gap: 8px;">
+    <div style="display: flex; flex-direction: column; gap: 12px;">
       <div>
         <div class="section-title">&nbsp;</div>
-        <button class="btn-search" id="btn-abrir-ticket" style="width: 100%;">
-          🔍<br> Ticket
+        <button class="btn-search" id="btn-abrir-ticket" style="width: 100%; height: 32px;">
+          🔍 Abrir Ticket
         </button>
       </div>
 
@@ -506,58 +569,5 @@
 
   <!-- Script de Conexão com o Back-end -->
   <script type="module" src="./js/Cliente.js"></script>
-
-  <!-- Script de apoio para garantir a seleção visual e abertura do modal caso o Cliente.js precise de suporte -->
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const modal = document.getElementById("modal-ticket");
-      const btnFechar = document.getElementById("btn-fechar-modal");
-      const btnAbrirTicket = document.getElementById("btn-abrir-ticket");
-
-      // Fechar modal no X
-      if (btnFechar) {
-        btnFechar.addEventListener("click", () => {
-          modal.style.display = "none";
-        });
-      }
-
-      // Fechar modal clicando fora
-      window.addEventListener("click", (event) => {
-        if (event.target === modal) {
-          modal.style.display = "none";
-        }
-      });
-
-      // Garantir seleção de linha e abertura ao clicar nas tabelas de tickets
-      document.addEventListener("click", (e) => {
-        const tr = e.target.closest("tr");
-        if (tr && tr.closest("tbody") && (tr.closest("#tabela-abertos-body") || tr.closest("#tabela-entregues-body"))) {
-          // Remove a seleção anterior das tabelas
-          document.querySelectorAll("tbody tr").forEach(row => row.classList.remove("selected-row"));
-          // Adiciona na linha clicada
-          tr.classList.add("selected-row");
-        }
-      });
-
-      // Abrir modal ao clicar duas vezes na linha ou pelo botão Abrir Ticket
-      document.addEventListener("dblclick", (e) => {
-        const tr = e.target.closest("tr");
-        if (tr && tr.closest("tbody") && (tr.closest("#tabela-abertos-body") || tr.closest("#tabela-entregues-body"))) {
-          if (modal) modal.style.display = "flex";
-        }
-      });
-
-      if (btnAbrirTicket) {
-        btnAbrirTicket.addEventListener("click", () => {
-          const selecionado = document.querySelector("tr.selected-row");
-          if (selecionado) {
-            if (modal) modal.style.display = "flex";
-          } else {
-            alert("Por favor, selecione um ticket na tabela primeiro.");
-          }
-        });
-      }
-    });
-  </script>
 </body>
 </html>

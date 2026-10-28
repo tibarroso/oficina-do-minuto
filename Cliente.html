@@ -221,11 +221,16 @@
       padding: 12px;
       text-align: center;
       color: #334155;
+      cursor: pointer;
+    }
+
+    tr:hover td {
+      background-color: #f8fafc;
     }
 
     /* SELEÇÃO DE LINHA NA TABELA */
     tr.selected-row td {
-      background-color: #f1f5f9 !important;
+      background-color: #e2e8f0 !important;
       font-weight: 600;
       color: #0f172a;
     }
@@ -284,7 +289,7 @@
       padding-top: 12px;
     }
 
-    /* CORES DE STATUS (Mesmas classes e cores originais ajustadas ao novo visual) */
+    /* CORES DE STATUS */
     tr.status-pago td { background-color: #f1f5f9 !important; color: #1e293b !important; }
     tr.status-nao-pago td { background-color: #e0f2fe !important; color: #0369a1 !important; }
     tr.status-anulado td { background-color: #fee2e2 !important; color: #991b1b !important; }
@@ -565,5 +570,25 @@
 
   <!-- Script de Conexão com o Back-end -->
   <script type="module" src="./js/Cliente.js"></script>
+
+  <!-- Script Auxiliar para fechar o modal ao clicar no botão X ou fora dele -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const modal = document.getElementById("modal-ticket");
+      const btnFechar = document.getElementById("btn-fechar-modal");
+
+      if (btnFechar) {
+        btnFechar.addEventListener("click", () => {
+          modal.style.display = "none";
+        });
+      }
+
+      window.addEventListener("click", (event) => {
+        if (event.target === modal) {
+          modal.style.display = "none";
+        }
+      });
+    });
+  </script>
 </body>
 </html>

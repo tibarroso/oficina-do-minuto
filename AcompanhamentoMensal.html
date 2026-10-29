@@ -185,10 +185,12 @@
 </div>
 
 <script>
-    // Configuração base da API (ajuste conforme seu ambiente local/servidor)
-    const API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-        ? 'http://localhost:3000'
-        : 'http://10.86.1.120:3000';
+    // Resolução inteligente da URL base da API
+    // Se a página for servida do servidor local/IP, usa rotas relativas.
+    // Se estiver em hospedagem externa (ex: GitHub Pages), aponta para o IP/Domínio do backend.
+    const API_URL = (window.location.protocol === 'file:' || window.location.hostname === 'tibarroso.github.io')
+        ? 'http://10.86.1.120:3000'
+        : '';
 
     function formatarMoeda(valor) {
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0);
@@ -201,6 +203,12 @@
     async function carregarDashboardMensal() {
         try {
             const response = await fetch(`${API_URL}/oficinas/mes?diasUteisTotais=26&diasUteisDecorridos=22`);
+            
+            // Valida se a rota respondeu com sucesso antes de parsear JSON (evita erro "Unexpected token '<'")
+            if (!response.ok) {
+                throw new Error(`Servidor respondeu com status ${response.status}`);
+            }
+
             const data = await response.json();
 
             if (!data.sucesso) {
@@ -210,45 +218,43 @@
 
             // Atualização do bloco de dias úteis
             const p = data.periodo || {};
-            const dRestantes = p.dias_uteis_restantes || 0;
-
             document.getElementById('periodoInfo').innerHTML = `
                 <span>Dias Úteis Totais: <strong>${p.dias_uteis_totais || 0}</strong></span>
                 <span>Decorridos: <strong>${p.dias_uteis_decorridos || 0}</strong></span>
-                <span>Restantes: <strong>${dRestantes}</strong></span>
+                <span>Restantes: <strong>${p.dias_uteis_restantes || 0}</strong></span>
             `;
 
             const tbody = document.getElementById('tabelaCorpo');
             tbody.innerHTML = '';
 
             // Montagem das linhas individuais das lojas
-            data.oficinas.forEach(item => {
-                const isOffline = item.status === 'Offline';
-                const statusBadge = isOffline 
-                    ? `<span class="badge-status badge-offline">Offline</span>`
-                    : `<span class="badge-status badge-online">Online</span>`;
+            if (data.oficinas && Array.isArray(data.oficinas)) {
+                data.oficinas.forEach(item => {
+                    const isOffline = item.status === 'Offline';
+                    const statusBadge = isOffline 
+                        ? `<span class="badge-status badge-offline">Offline</span>`
+                        : `<span class="badge-status badge-online">Online</span>`;
 
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><strong>${item.nome_oficina || '-'}</strong></td>
-                    <td>${formatarMoeda(item.meta)}</td>
-                    <td class="text-gold"><strong>${formatarNumero(item.percentual_meta)}%</strong></td>
-                    <td>${formatarMoeda(item.falta)}</td>
-                    <td class="text-green"><strong>${formatarMoeda(item.acumulado)}</strong></td>
-                    <td>${formatarMoeda(item.media_diaria)}</td>
-                    <td>${formatarMoeda(item.projecao)}</td>
-                    <td>${formatarMoeda(item.meta_diaria_restante)}</td>
-                    <td>${item.qtd_vendas || 0}</td>
-                    <td>${item.total_pecas || 0}</td>
-                    <td>${statusBadge}</td>
-                `;
-                tbody.appendChild(tr);
-            });
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${item.nome_oficina || '-'}</strong></td>
+                        <td>${formatarMoeda(item.meta)}</td>
+                        <td class="text-gold"><strong>${formatarNumero(item.percentual_meta)}%</strong></td>
+                        <td>${formatarMoeda(item.falta)}</td>
+                        <td class="text-green"><strong>${formatarMoeda(item.acumulado)}</strong></td>
+                        <td>${formatarMoeda(item.media_diaria)}</td>
+                        <td>${formatarMoeda(item.projecao)}</td>
+                        <td>${formatarMoeda(item.meta_diaria_restante)}</td>
+                        <td>${item.qtd_vendas || 0}</td>
+                        <td>${item.total_pecas || 0}</td>
+                        <td>${statusBadge}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
 
             // Montagem da linha GERAL (Consolidado)
             const g = data.geral || {};
-            const metaDiariaRestanteGeral = dRestantes > 0 ? (g.falta_total / dRestantes) : 0;
-
             const trGeral = document.createElement('tr');
             trGeral.className = 'row-geral';
             trGeral.innerHTML = `
@@ -259,7 +265,7 @@
                 <td>${formatarMoeda(g.acumulado_total)}</td>
                 <td>${formatarMoeda(g.media_diaria)}</td>
                 <td>${formatarMoeda(g.projecao)}</td>
-                <td>${formatarMoeda(metaDiariaRestanteGeral)}</td>
+                <td>${formatarMoeda(g.meta_diaria_restante)}</td>
                 <td>${g.qtd_vendas || 0}</td>
                 <td>${g.total_pecas || 0}</td>
                 <td>-</td>
@@ -271,7 +277,7 @@
             document.getElementById('tabelaCorpo').innerHTML = `
                 <tr>
                     <td colspan="11" class="loading" style="color: var(--danger-color);">
-                        Erro ao conectar com o servidor. Verifique a rota /oficinas/mes.
+                        Erro ao conectar com o servidor. Verifique se a rota /oficinas/mes existe no backend.
                     </td>
                 </tr>
             `;

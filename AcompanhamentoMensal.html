@@ -31,7 +31,7 @@
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1500px;
             margin: 0 auto;
         }
 
@@ -167,6 +167,7 @@
                     <th>%</th>
                     <th>Falta</th>
                     <th>Acumulado</th>
+                    <th>Meta Diária</th>
                     <th>Média Diária</th>
                     <th>Projeção</th>
                     <th>Meta Diária Restante</th>
@@ -177,7 +178,7 @@
             </thead>
             <tbody id="tabelaCorpo">
                 <tr>
-                    <td colspan="11" class="loading">A carregar dados do servidor...</td>
+                    <td colspan="12" class="loading">A carregar dados do servidor...</td>
                 </tr>
             </tbody>
         </table>
@@ -185,9 +186,6 @@
 </div>
 
 <script>
-    // Resolução inteligente da URL base da API
-    // Se a página for servida do servidor local/IP, usa rotas relativas.
-    // Se estiver em hospedagem externa (ex: GitHub Pages), aponta para o IP/Domínio do backend.
     const API_URL = (window.location.protocol === 'file:' || window.location.hostname === 'tibarroso.github.io')
         ? 'http://10.86.1.120:3000'
         : '';
@@ -204,7 +202,6 @@
         try {
             const response = await fetch(`${API_URL}/oficinas/mes?diasUteisTotais=26&diasUteisDecorridos=22`);
             
-            // Valida se a rota respondeu com sucesso antes de parsear JSON (evita erro "Unexpected token '<'")
             if (!response.ok) {
                 throw new Error(`Servidor respondeu com status ${response.status}`);
             }
@@ -216,7 +213,6 @@
                 return;
             }
 
-            // Atualização do bloco de dias úteis
             const p = data.periodo || {};
             document.getElementById('periodoInfo').innerHTML = `
                 <span>Dias Úteis Totais: <strong>${p.dias_uteis_totais || 0}</strong></span>
@@ -227,7 +223,6 @@
             const tbody = document.getElementById('tabelaCorpo');
             tbody.innerHTML = '';
 
-            // Montagem das linhas individuais das lojas
             if (data.oficinas && Array.isArray(data.oficinas)) {
                 data.oficinas.forEach(item => {
                     const isOffline = item.status === 'Offline';
@@ -242,6 +237,7 @@
                         <td class="text-gold"><strong>${formatarNumero(item.percentual_meta)}%</strong></td>
                         <td>${formatarMoeda(item.falta)}</td>
                         <td class="text-green"><strong>${formatarMoeda(item.acumulado)}</strong></td>
+                        <td>${formatarMoeda(item.meta_diaria)}</td>
                         <td>${formatarMoeda(item.media_diaria)}</td>
                         <td>${formatarMoeda(item.projecao)}</td>
                         <td>${formatarMoeda(item.meta_diaria_restante)}</td>
@@ -253,7 +249,6 @@
                 });
             }
 
-            // Montagem da linha GERAL (Consolidado)
             const g = data.geral || {};
             const trGeral = document.createElement('tr');
             trGeral.className = 'row-geral';
@@ -263,6 +258,7 @@
                 <td>${formatarNumero(g.percentual_meta)}%</td>
                 <td>${formatarMoeda(g.falta_total)}</td>
                 <td>${formatarMoeda(g.acumulado_total)}</td>
+                <td>${formatarMoeda(g.meta_diaria)}</td>
                 <td>${formatarMoeda(g.media_diaria)}</td>
                 <td>${formatarMoeda(g.projecao)}</td>
                 <td>${formatarMoeda(g.meta_diaria_restante)}</td>
@@ -276,7 +272,7 @@
             console.error('Erro ao conectar à API:', error);
             document.getElementById('tabelaCorpo').innerHTML = `
                 <tr>
-                    <td colspan="11" class="loading" style="color: var(--danger-color);">
+                    <td colspan="12" class="loading" style="color: var(--danger-color);">
                         Erro ao conectar com o servidor. Verifique se a rota /oficinas/mes existe no backend.
                     </td>
                 </tr>
@@ -284,7 +280,6 @@
         }
     }
 
-    // Inicialização e atualização contínua (cada 60 segundos)
     document.addEventListener('DOMContentLoaded', carregarDashboardMensal);
     setInterval(carregarDashboardMensal, 60000);
 </script>

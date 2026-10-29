@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oficina do Minuto - Acompanhamento Mensal</title>
+    <style>
+        :root {
+            --bg-primary: #121214;
+            --bg-card: #202024;
+            --bg-table-header: #29292e;
+            --text-main: #e1e1e6;
+            --text-secondary: #a8a8b3;
+            --border-color: #323238;
+            --accent-gold: #e5b800;
+            --accent-green: #04d361;
+            --danger-color: #f75a68;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            padding: 24px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--accent-gold);
+        }
+
+        .header h1 {
+            font-size: 1.6rem;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .periodo-info {
+            display: flex;
+            gap: 16px;
+            background-color: var(--bg-card);
+            padding: 10px 18px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        .periodo-info span strong {
+            color: var(--accent-gold);
+        }
+
+        .card-table {
+            background-color: var(--bg-card);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            margin-bottom: 24px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: right;
+            font-size: 0.88rem;
+            white-space: nowrap;
+        }
+
+        th, td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--bg-table-header);
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+
+        th:first-child, td:first-child {
+            text-align: left;
+        }
+
+        tr:nth-child(even) {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        tr:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .row-geral {
+            background-color: rgba(229, 184, 0, 0.1) !important;
+            font-weight: bold;
+            font-size: 0.95rem;
+            border-top: 2px solid var(--accent-gold);
+        }
+
+        .row-geral td {
+            color: var(--accent-gold);
+        }
+
+        .badge-status {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .badge-online {
+            background-color: rgba(4, 211, 97, 0.1);
+            color: var(--accent-green);
+        }
+
+        .badge-offline {
+            background-color: rgba(247, 90, 104, 0.1);
+            color: var(--danger-color);
+        }
+
+        .text-green { color: var(--accent-green); }
+        .text-gold { color: var(--accent-gold); }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>Oficina do Minuto - Acompanhamento Mensal</h1>
+        <div class="periodo-info" id="periodoInfo">
+            <span>A carregar período...</span>
+        </div>
+    </div>
+
+    <div class="card-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Loja / Oficina</th>
+                    <th>Meta</th>
+                    <th>%</th>
+                    <th>Falta</th>
+                    <th>Acumulado</th>
+                    <th>Média Diária</th>
+                    <th>Projeção</th>
+                    <th>Meta Diária Restante</th>
+                    <th>Qtd Vendas</th>
+                    <th>Peças</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="tabelaCorpo">
+                <tr>
+                    <td colspan="11" class="loading">A carregar dados do servidor...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function formatarMoeda(valor) {
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0);
+    }
+
+    async function carregarDashboardMensal() {
+        try {
+            const response = await fetch('/oficinas/mes?diasUteisTotais=26&diasUteisDecorridos=22');
+            const data = await response.json();
+
+            if (!data.sucesso) {
+                console.error('Erro na resposta da API');
+                return;
+            }
+
+            // Atualização do bloco de dias úteis
+            const p = data.periodo;
+            document.getElementById('periodoInfo').innerHTML = `
+                <span>Dias Úteis Totais: <strong>${p.dias_uteis_totais}</strong></span>
+                <span>Decorridos: <strong>${p.dias_uteis_decorridos}</strong></span>
+                <span>Restantes: <strong>${p.dias_uteis_restantes}</strong></span>
+            `;
+
+            const tbody = document.getElementById('tabelaCorpo');
+            tbody.innerHTML = '';
+
+            // Montagem das linhas individuais das lojas
+            data.oficinas.forEach(item => {
+                const isOffline = item.status === 'Offline';
+                const statusBadge = isOffline 
+                    ? `<span class="badge-status badge-offline">Offline</span>`
+                    : `<span class="badge-status badge-online">Online</span>`;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${item.nome_oficina}</strong></td>
+                    <td>${formatarMoeda(item.meta)}</td>
+                    <td class="text-gold"><strong>${item.percentual_meta.toFixed(2)}%</strong></td>
+                    <td>${formatarMoeda(item.falta)}</td>
+                    <td class="text-green"><strong>${formatarMoeda(item.acumulado)}</strong></td>
+                    <td>${formatarMoeda(item.media_diaria)}</td>
+                    <td>${formatarMoeda(item.projecao)}</td>
+                    <td>${formatarMoeda(item.meta_diaria_restante)}</td>
+                    <td>${item.qtd_vendas}</td>
+                    <td>${item.total_pecas}</td>
+                    <td>${statusBadge}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Montagem da linha GERAL (Consolidado)
+            const g = data.geral;
+            const trGeral = document.createElement('tr');
+            trGeral.className = 'row-geral';
+            trGeral.innerHTML = `
+                <td>GERAL</td>
+                <td>${formatarMoeda(g.meta_total)}</td>
+                <td>${g.percentual_meta.toFixed(2)}%</td>
+                <td>${formatarMoeda(g.falta_total)}</td>
+                <td>${formatarMoeda(g.acumulado_total)}</td>
+                <td>${formatarMoeda(g.media_diaria)}</td>
+                <td>${formatarMoeda(g.projecao)}</td>
+                <td>-</td>
+                <td>${g.qtd_vendas}</td>
+                <td>${g.total_pecas}</td>
+                <td>-</td>
+            `;
+            tbody.appendChild(trGeral);
+
+        } catch (error) {
+            console.error('Erro ao conectar à API:', error);
+            document.getElementById('tabelaCorpo').innerHTML = `
+                <tr>
+                    <td colspan="11" class="loading" style="color: var(--danger-color);">
+                        Erro ao conectar com o servidor. Verifique a rota /oficinas/mes.
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    // Inicialização e atualização contínua (cada 60 segundos)
+    document.addEventListener('DOMContentLoaded', carregarDashboardMensal);
+    setInterval(carregarDashboardMensal, 60000);
+</script>
+
+</body>
+</html>

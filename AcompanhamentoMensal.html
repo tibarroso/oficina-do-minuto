@@ -31,7 +31,7 @@
         }
 
         .container {
-            max-width: 1500px;
+            max-width: 1550px;
             margin: 0 auto;
         }
 
@@ -154,7 +154,7 @@
     <div class="header">
         <h1>Oficina do Minuto - Acompanhamento Mensal</h1>
         <div class="periodo-info" id="periodoInfo">
-            <span>A carregar período...</span>
+            <span>Carregando período...</span>
         </div>
     </div>
 
@@ -178,7 +178,7 @@
             </thead>
             <tbody id="tabelaCorpo">
                 <tr>
-                    <td colspan="12" class="loading">A carregar dados do servidor...</td>
+                    <td colspan="12" class="loading">Carregando dados do servidor...</td>
                 </tr>
             </tbody>
         </table>
@@ -200,7 +200,8 @@
 
     async function carregarDashboardMensal() {
         try {
-            const response = await fetch(`${API_URL}/oficinas/mes?diasUteisTotais=26&diasUteisDecorridos=22`);
+            // Chamada enviando os parâmetros para a rota dinâmica
+            const response = await fetch(`${API_URL}/oficinas/mes?diasUteisTotais=26&diasUteisDecorridos=24&diasUteisRestantes=2`);
             
             if (!response.ok) {
                 throw new Error(`Servidor respondeu com status ${response.status}`);
@@ -214,7 +215,18 @@
             }
 
             const p = data.periodo || {};
+
+            // Fallback dinâmico para ano/mês vigente automático caso o servidor não envie o rótulo
+            let refMes = p.referencia;
+            if (!refMes) {
+                const hoje = new Date();
+                const ultDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
+                const mesExtenso = hoje.toLocaleDateString('pt-BR', { month: 'long' }).toUpperCase();
+                refMes = `${mesExtenso} ${hoje.getFullYear()} (01 À ${String(ultDia).padStart(2, '0')})`;
+            }
+
             document.getElementById('periodoInfo').innerHTML = `
+                <span>Período: <strong>${refMes}</strong></span>
                 <span>Dias Úteis Totais: <strong>${p.dias_uteis_totais || 0}</strong></span>
                 <span>Decorridos: <strong>${p.dias_uteis_decorridos || 0}</strong></span>
                 <span>Restantes: <strong>${p.dias_uteis_restantes || 0}</strong></span>

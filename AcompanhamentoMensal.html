@@ -246,6 +246,189 @@
 </head>
 <body>
 
+<script type="module">
+    import { supabase } from "./supabase.js";
+    // nao remover linha do supabase pois vai ser utilizada neste arquivo no futuro.
+
+    // Configuração dinâmica da URL da API
+    const API_URL = (window.location.protocol === 'file:' || window.location.hostname === 'tibarroso.github.io')
+        ? 'http://10.86.1.120:3000'
+        : '';
+
+    // =========================================================================
+    // 🏢 FUNÇÃO PARA CARREGAR DINAMICAMENTE AS LOJAS DA API
+    // =========================================================================
+    async function carregarSelectLojas() {
+        const selectLoja = document.getElementById("select-loja");
+        if (!selectLoja) return;
+
+        try {
+            selectLoja.innerHTML = '<option value="">Carregando lojas...</option>';
+
+            const resposta = await fetch(`${API_URL}/lojas/lista`);
+            const resultado = await resposta.json();
+
+            if (resultado.sucesso && resultado.lojas) {
+                selectLoja.innerHTML = '<option value="">Selecione uma loja...</option>';
+
+                resultado.lojas.forEach(oficina => {
+                    const option = document.createElement("option");
+                    option.value = oficina.loja;
+
+                    const statusBolinha = oficina.status === "Online" ? "🟢" : "🔴";
+                    option.textContent = `${statusBolinha} ${oficina.loja} - ${oficina.nome_oficina} (${oficina.status})`;
+                    
+                    selectLoja.appendChild(option);
+                });
+            } else {
+                selectLoja.innerHTML = '<option value="">Erro ao carregar lojas</option>';
+            }
+        } catch (error) {
+            console.error("Erro ao carregar as lojas:", error);
+            selectLoja.innerHTML = '<option value="">Erro de conexão</option>';
+        }
+    }
+
+    // =========================================================================
+    // 📊 FUNÇÃO PARA CARREGAR O RELATÓRIO DE DESEMPENHO (MÊS OU PERÍODO)
+    // =========================================================================
+    async function carregarAcompanhamentoMensal(diasUteisTotais = 26, diasUteisDecorridos = 24, diasUteisRestantes = 2) {
+        const tabelaCorpo = document.getElementById('tabelaCorpo');
+        const periodoInfo = document.getElementById('periodoInfo');
+
+        if (!tabelaCorpo) return;
+
+        // IDs corrigidos para bater com o HTML abaixo
+        const inputDataInicio = document.getElementById('filtro-data-inicio');
+        const inputDataFim = document.getElementById('filtro-data-fim');
+        
+        const dataInicio = inputDataInicio ? inputDataInicio.value : '';
+        const dataFim = inputDataFim ? inputDataFim.value : '';
+
+        try {
+            tabelaCorpo.innerHTML = '<tr><td colspan="12" style="text-align:center; padding:20px;">Carregando dados...</td></tr>';
+
+            let url = '';
+            
+            if (dataInicio && dataFim) {
+                url = `${API_URL}/oficinas/faturamento-periodo?dataInicio=${dataInicio}&dataFim=${dataFim}`;
+            } else {
+                url = `${API_URL}/oficinas/mes?diasUteisTotais=${diasUteisTotais}&diasUteisDecorridos=${diasUteisDecorridos}&diasUteisRestantes=${diasUteisRestantes}`;
+            }
+
+            const response = await fetch(url);
+
+            if (!response.ok) {
+                throw new Error(`Status ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (!data.sucesso) {
+                tabelaCorpo.innerHTML = '<tr><td colspan="12" style="color:red; text-align:center;">Falha ao carregar relatório.</td></tr>';
+                return;
+            }
+
+            if (periodoInfo) {
+                if (dataInicio && dataFim) {
+                    periodoInfo.innerHTML = `
+                        <span>Período Personalizado: <strong>${dataInicio} até ${dataFim}</strong></span>
+                    `;
+                } else if (data.periodo) {
+                    const p = data.periodo;
+                    let refMes = p.referencia;
+                    if (!refMes) {
+                        const d = new Date();
+                        const ultDia = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+                        const mesExtenso = d.toLocaleDateString('pt-BR', { month: 'long' }).toUpperCase();
+                        refMes = `${mesExtenso} ${d.getFullYear()} (01 À ${ultDia})`;
+                    }
+
+                    periodoInfo.innerHTML = `
+                        <span>Período: <strong>${refMes}</strong></span>
+                        <span>Dias Úteis Totais: <strong>${p.dias_uteis_totais || 0}</strong></span>
+                        <span>Decorridos: <strong>${p.dias_uteis_decorridos || 0}</strong></span>
+                        <span>Restantes: <strong>${p.dias_uteis_restantes || 0}</strong></span>
+                    `;
+                }
+            }
+
+            tabelaCorpo.innerHTML = '';
+
+            const formatarMoeda = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
+            const formatarNumero = (val) => (Number(val) || 0).toFixed(2);
+
+            if (data.oficinas && Array.isArray(data.oficinas)) {
+                data.oficinas.forEach(item => {
+                    const isOffline = item.status === 'Offline';
+                    const statusBadge = isOffline 
+                        ? `<span class="badge-status badge-offline">Offline</span>`
+                        : `<span class="badge-status badge-online">Online</span>`;
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${item.nome_oficina || '-'}</strong></td>
+                        <td>${formatarMoeda(item.meta)}</td>
+                        <td class="text-gold"><strong>${formatarNumero(item.percentual_meta)}%</strong></td>
+                        <td>${formatarMoeda(item.falta)}</td>
+                        <td class="text-green"><strong>${formatarMoeda(item.acumulado)}</strong></td>
+                        <td>${formatarMoeda(item.meta_diaria || 0)}</td>
+                        <td>${formatarMoeda(item.media_diaria || 0)}</td>
+                        <td>${formatarMoeda(item.projecao || 0)}</td>
+                        <td>${formatarMoeda(item.meta_diaria_restante || 0)}</td>
+                        <td>${item.qtd_vendas || 0}</td>
+                        <td>${item.total_pecas || 0}</td>
+                        <td>${statusBadge}</td>
+                    `;
+                    tabelaCorpo.appendChild(tr);
+                });
+            }
+
+            if (data.geral) {
+                const g = data.geral;
+                const trGeral = document.createElement('tr');
+                trGeral.className = 'row-geral';
+                trGeral.innerHTML = `
+                    <td>GERAL</td>
+                    <td>${formatarMoeda(g.meta_total)}</td>
+                    <td>${formatarNumero(g.percentual_meta)}%</td>
+                    <td>${formatarMoeda(g.falta_total)}</td>
+                    <td>${formatarMoeda(g.acumulado_total)}</td>
+                    <td>${formatarMoeda(g.meta_diaria || 0)}</td>
+                    <td>${formatarMoeda(g.media_diaria || 0)}</td>
+                    <td>${formatarMoeda(g.projecao || 0)}</td>
+                    <td>${formatarMoeda(g.meta_diaria_restante || 0)}</td>
+                    <td>${g.qtd_vendas || 0}</td>
+                    <td>${g.total_pecas || 0}</td>
+                    <td>-</td>
+                `;
+                tabelaCorpo.appendChild(trGeral);
+            }
+
+        } catch (error) {
+            console.error('❌ Erro ao carregar acompanhamento mensal:', error);
+            tabelaCorpo.innerHTML = '<tr><td colspan="12" style="color:red; text-align:center;">Erro de conexão com o servidor.</td></tr>';
+        }
+    }
+
+    // Tornando funções acessíveis globalmente para os botões do HTML
+    window.carregarAcompanhamentoMensal = carregarAcompanhamentoMensal;
+    window.limparFiltroPeriodo = function() {
+        document.getElementById('filtro-data-inicio').value = '';
+        document.getElementById('filtro-data-fim').value = '';
+        carregarAcompanhamentoMensal();
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        carregarSelectLojas();
+
+        if (document.getElementById('tabelaCorpo')) {
+            carregarAcompanhamentoMensal();
+            setInterval(() => carregarAcompanhamentoMensal(), 60000); 
+        }
+    });
+</script>
+
 <div class="container">
     <!-- Topo Loja / Botão Voltar -->
     <div class="top-bar">
@@ -255,23 +438,23 @@
     </div>
 
     <div class="header">
-        <h1>Oficina do Minuto - Acompanhamento</h1>
+        <h1>Oficina do Minuto - Ac do Mes</h1>
         <div class="periodo-info" id="periodoInfo">
             <span>Carregando período...</span>
         </div>
     </div>
 
-    <!-- Filtro de Período Personalizado (Usa a rota /oficinas/faturamento-periodo) -->
+    <!-- Filtro de Período Personalizado -->
     <div class="filter-bar">
         <div class="filter-group">
-            <label for="filtroDataInicio">Data Início</label>
-            <input type="date" id="filtroDataInicio" value="2026-01-01">
+            <label for="filtro-data-inicio">Data Início</label>
+            <input type="date" id="filtro-data-inicio" value="2026-01-01">
         </div>
         <div class="filter-group">
-            <label for="filtroDataFim">Data Fim</label>
-            <input type="date" id="filtroDataFim" value="2026-09-30">
+            <label for="filtro-data-fim">Data Fim</label>
+            <input type="date" id="filtro-data-fim" value="2026-01-01">
         </div>
-        <button class="btn-filtrar" onclick="carregarDashboardMensal()">Filtrar Período</button>
+        <button class="btn-filtrar" onclick="carregarAcompanhamentoMensal()">Filtrar Período</button>
         <button class="btn-limpar" onclick="limparFiltroPeriodo()">Mês Atual</button>
     </div>
 
@@ -301,145 +484,6 @@
         </table>
     </div>
 </div>
-
-<script>
-    const API_URL = (window.location.protocol === 'file:' || window.location.hostname === 'tibarroso.github.io')
-        ? 'http://10.86.1.120:3000'
-        : '';
-
-    function formatarMoeda(valor) {
-        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0);
-    }
-
-    function formatarNumero(valor) {
-        return (Number(valor) || 0).toFixed(2);
-    }
-
-    function limparFiltroPeriodo() {
-        document.getElementById('filtroDataInicio').value = '';
-        document.getElementById('filtroDataFim').value = '';
-        carregarDashboardMensal();
-    }
-
-    async function carregarDashboardMensal() {
-        const dataInicio = document.getElementById('filtroDataInicio').value;
-        const dataFim = document.getElementById('filtroDataFim').value;
-
-        try {
-            document.getElementById('tabelaCorpo').innerHTML = `
-                <tr><td colspan="12" class="loading">Carregando dados do servidor...</td></tr>
-            `;
-
-            let url = '';
-            
-            // Se as datas estiverem preenchidas, chama a rota de período baseada na tabela FechamentoMes_ServicoGrupo
-            if (dataInicio && dataFim) {
-                url = `${API_URL}/oficinas/faturamento-periodo?dataInicio=${dataInicio}&dataFim=${dataFim}`;
-            } else {
-                // Caso contrário, usa a rota padrão do mês atual
-                url = `${API_URL}/oficinas/mes?diasUteisTotais=26&diasUteisDecorridos=24&diasUteisRestantes=2`;
-            }
-
-            const response = await fetch(url);
-            
-            if (!response.ok) {
-                throw new Error(`Servidor respondeu com status ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            if (!data.sucesso) {
-                console.error('Erro na resposta da API');
-                return;
-            }
-
-            // Exibição do Período no Cabeçalho
-            if (dataInicio && dataFim) {
-                document.getElementById('periodoInfo').innerHTML = `
-                    <span>Período Personalizado: <strong>${dataInicio} até ${dataFim}</strong></span>
-                `;
-            } else {
-                const p = data.periodo || {};
-                let refMes = p.referencia;
-                if (!refMes) {
-                    const hoje = new Date();
-                    const ultDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
-                    const mesExtenso = hoje.toLocaleDateString('pt-BR', { month: 'long' }).toUpperCase();
-                    refMes = `${mesExtenso} ${hoje.getFullYear()} (01 À ${String(ultDia).padStart(2, '0')})`;
-                }
-
-                document.getElementById('periodoInfo').innerHTML = `
-                    <span>Período: <strong>${refMes}</strong></span>
-                    <span>Dias Úteis Totais: <strong>${p.dias_uteis_totais || 0}</strong></span>
-                    <span>Decorridos: <strong>${p.dias_uteis_decorridos || 0}</strong></span>
-                    <span>Restantes: <strong>${p.dias_uteis_restantes || 0}</strong></span>
-                `;
-            }
-
-            const tbody = document.getElementById('tabelaCorpo');
-            tbody.innerHTML = '';
-
-            if (data.oficinas && Array.isArray(data.oficinas)) {
-                data.oficinas.forEach(item => {
-                    const isOffline = item.status === 'Offline';
-                    const statusBadge = isOffline 
-                        ? `<span class="badge-status badge-offline">Offline</span>`
-                        : `<span class="badge-status badge-online">Online</span>`;
-
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td><strong>${item.nome_oficina || '-'}</strong></td>
-                        <td>${formatarMoeda(item.meta)}</td>
-                        <td class="text-gold"><strong>${formatarNumero(item.percentual_meta)}%</strong></td>
-                        <td>${formatarMoeda(item.falta)}</td>
-                        <td class="text-green"><strong>${formatarMoeda(item.acumulado)}</strong></td>
-                        <td>${formatarMoeda(item.meta_diaria || 0)}</td>
-                        <td>${formatarMoeda(item.media_diaria || 0)}</td>
-                        <td>${formatarMoeda(item.projecao || 0)}</td>
-                        <td>${formatarMoeda(item.meta_diaria_restante || 0)}</td>
-                        <td>${item.qtd_vendas || 0}</td>
-                        <td>${item.total_pecas || 0}</td>
-                        <td>${statusBadge}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            }
-
-            const g = data.geral || {};
-            const trGeral = document.createElement('tr');
-            trGeral.className = 'row-geral';
-            trGeral.innerHTML = `
-                <td>GERAL</td>
-                <td>${formatarMoeda(g.meta_total)}</td>
-                <td>${formatarNumero(g.percentual_meta)}%</td>
-                <td>${formatarMoeda(g.falta_total)}</td>
-                <td>${formatarMoeda(g.acumulado_total)}</td>
-                <td>${formatarMoeda(g.meta_diaria || 0)}</td>
-                <td>${formatarMoeda(g.media_diaria || 0)}</td>
-                <td>${formatarMoeda(g.projecao || 0)}</td>
-                <td>${formatarMoeda(g.meta_diaria_restante || 0)}</td>
-                <td>${g.qtd_vendas || 0}</td>
-                <td>${g.total_pecas || 0}</td>
-                <td>-</td>
-            `;
-            tbody.appendChild(trGeral);
-
-        } catch (error) {
-            console.error('Erro ao conectar à API:', error);
-            document.getElementById('tabelaCorpo').innerHTML = `
-                <tr>
-                    <td colspan="12" class="loading" style="color: var(--danger-color);">
-                        Erro ao conectar com o servidor. Verifique se as rotas do backend estão ativas.
-                    </td>
-                </tr>
-            `;
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        carregarDashboardMensal();
-    });
-</script>
 
 </body>
 </html>

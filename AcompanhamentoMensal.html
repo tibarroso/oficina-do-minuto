@@ -35,7 +35,6 @@
             margin: 0 auto;
         }
 
-        /* Estilização da Top Bar / Botão Voltar */
         .top-bar {
             margin-bottom: 16px;
         }
@@ -94,7 +93,6 @@
             color: var(--accent-gold);
         }
 
-        /* Barra de Filtro por Período */
         .filter-bar {
             background-color: var(--bg-card);
             padding: 16px;
@@ -141,9 +139,7 @@
             transition: opacity 0.2s;
         }
 
-        .btn-filtrar:hover {
-            opacity: 0.9;
-        }
+        .btn-filtrar:hover { opacity: 0.9; }
 
         .btn-limpar {
             background-color: transparent;
@@ -192,16 +188,17 @@
             letter-spacing: 0.5px;
         }
 
-        th:first-child, td:first-child {
-            text-align: left;
-        }
+        th:first-child, td:first-child { text-align: left; }
 
-        tr:nth-child(even) {
-            background-color: rgba(255, 255, 255, 0.02);
+        tr:nth-child(even) { background-color: rgba(255, 255, 255, 0.02); }
+        
+        /* Deixa claro que as linhas da tabela são clicáveis */
+        .linha-loja {
+            cursor: pointer;
+            transition: background-color 0.15s;
         }
-
-        tr:hover {
-            background-color: rgba(255, 255, 255, 0.05);
+        .linha-loja:hover {
+            background-color: rgba(229, 184, 0, 0.08) !important;
         }
 
         .row-geral {
@@ -211,9 +208,7 @@
             border-top: 2px solid var(--accent-gold);
         }
 
-        .row-geral td {
-            color: var(--accent-gold);
-        }
+        .row-geral td { color: var(--accent-gold); }
 
         .badge-status {
             padding: 3px 8px;
@@ -223,24 +218,77 @@
             text-transform: uppercase;
         }
 
-        .badge-online {
-            background-color: rgba(4, 211, 97, 0.1);
-            color: var(--accent-green);
-        }
-
-        .badge-offline {
-            background-color: rgba(247, 90, 104, 0.1);
-            color: var(--danger-color);
-        }
+        .badge-online { background-color: rgba(4, 211, 97, 0.1); color: var(--accent-green); }
+        .badge-offline { background-color: rgba(247, 90, 104, 0.1); color: var(--danger-color); }
 
         .text-green { color: var(--accent-green); }
         .text-gold { color: var(--accent-gold); }
+        .loading { text-align: center; padding: 40px; font-size: 1rem; color: var(--text-secondary); }
 
-        .loading {
-            text-align: center;
-            padding: 40px;
-            font-size: 1rem;
+        /* Estilização do Modal de Detalhes */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.75);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 16px;
+        }
+
+        .modal-content {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            width: 100%;
+            max-width: 900px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 1.2rem;
+            color: var(--accent-gold);
+        }
+
+        .btn-fechar {
+            background: transparent;
+            border: none;
             color: var(--text-secondary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .btn-fechar:hover { background-color: rgba(255,255,255,0.1); color: var(--text-main); }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .instrucao-clique {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            font-style: italic;
         }
     </style>
 </head>
@@ -250,34 +298,26 @@
     import { supabase } from "./supabase.js";
     // nao remover linha do supabase pois vai ser utilizada neste arquivo no futuro.
 
-    // Configuração dinâmica da URL da API
     const API_URL = (window.location.protocol === 'file:' || window.location.hostname === 'tibarroso.github.io')
         ? 'http://10.86.1.120:3000'
         : '';
 
-    // =========================================================================
-    // 🏢 FUNÇÃO PARA CARREGAR DINAMICAMENTE AS LOJAS DA API
-    // =========================================================================
     async function carregarSelectLojas() {
         const selectLoja = document.getElementById("select-loja");
         if (!selectLoja) return;
 
         try {
             selectLoja.innerHTML = '<option value="">Carregando lojas...</option>';
-
             const resposta = await fetch(`${API_URL}/lojas/lista`);
             const resultado = await resposta.json();
 
             if (resultado.sucesso && resultado.lojas) {
                 selectLoja.innerHTML = '<option value="">Selecione uma loja...</option>';
-
                 resultado.lojas.forEach(oficina => {
                     const option = document.createElement("option");
                     option.value = oficina.loja;
-
                     const statusBolinha = oficina.status === "Online" ? "🟢" : "🔴";
                     option.textContent = `${statusBolinha} ${oficina.loja} - ${oficina.nome_oficina} (${oficina.status})`;
-                    
                     selectLoja.appendChild(option);
                 });
             } else {
@@ -289,16 +329,12 @@
         }
     }
 
-    // =========================================================================
-    // 📊 FUNÇÃO PARA CARREGAR O RELATÓRIO DE DESEMPENHO (MÊS OU PERÍODO)
-    // =========================================================================
     async function carregarAcompanhamentoMensal(diasUteisTotais = 26, diasUteisDecorridos = 24, diasUteisRestantes = 2) {
         const tabelaCorpo = document.getElementById('tabelaCorpo');
         const periodoInfo = document.getElementById('periodoInfo');
 
         if (!tabelaCorpo) return;
 
-        // IDs corrigidos para bater com o HTML abaixo
         const inputDataInicio = document.getElementById('filtro-data-inicio');
         const inputDataFim = document.getElementById('filtro-data-fim');
         
@@ -309,7 +345,6 @@
             tabelaCorpo.innerHTML = '<tr><td colspan="12" style="text-align:center; padding:20px;">Carregando dados...</td></tr>';
 
             let url = '';
-            
             if (dataInicio && dataFim) {
                 url = `${API_URL}/oficinas/faturamento-periodo?dataInicio=${dataInicio}&dataFim=${dataFim}`;
             } else {
@@ -317,13 +352,9 @@
             }
 
             const response = await fetch(url);
-
-            if (!response.ok) {
-                throw new Error(`Status ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`Status ${response.status}`);
 
             const data = await response.json();
-
             if (!data.sucesso) {
                 tabelaCorpo.innerHTML = '<tr><td colspan="12" style="color:red; text-align:center;">Falha ao carregar relatório.</td></tr>';
                 return;
@@ -331,9 +362,7 @@
 
             if (periodoInfo) {
                 if (dataInicio && dataFim) {
-                    periodoInfo.innerHTML = `
-                        <span>Período Personalizado: <strong>${dataInicio} até ${dataFim}</strong></span>
-                    `;
+                    periodoInfo.innerHTML = `<span>Período Personalizado: <strong>${dataInicio} até ${dataFim}</strong></span>`;
                 } else if (data.periodo) {
                     const p = data.periodo;
                     let refMes = p.referencia;
@@ -343,7 +372,6 @@
                         const mesExtenso = d.toLocaleDateString('pt-BR', { month: 'long' }).toUpperCase();
                         refMes = `${mesExtenso} ${d.getFullYear()} (01 À ${ultDia})`;
                     }
-
                     periodoInfo.innerHTML = `
                         <span>Período: <strong>${refMes}</strong></span>
                         <span>Dias Úteis Totais: <strong>${p.dias_uteis_totais || 0}</strong></span>
@@ -366,6 +394,14 @@
                         : `<span class="badge-status badge-online">Online</span>`;
 
                     const tr = document.createElement('tr');
+                    tr.className = 'linha-loja';
+                    tr.title = 'Clique para ver o detalhamento por grupo de serviços';
+                    
+                    // Evento de clique para abrir o modal de detalhes da loja
+                    tr.addEventListener('click', () => {
+                        abrirModalDetalhesLoja(item.loja, item.nome_oficina, dataInicio, dataFim);
+                    });
+
                     tr.innerHTML = `
                         <td><strong>${item.nome_oficina || '-'}</strong></td>
                         <td>${formatarMoeda(item.meta)}</td>
@@ -411,7 +447,71 @@
         }
     }
 
-    // Tornando funções acessíveis globalmente para os botões do HTML
+    // Função para buscar e exibir o modal com os grupos de serviço
+    async function abrirModalDetalhesLoja(codigoLoja, nomeLoja, dataInicio, dataFim) {
+        const modal = document.getElementById('modalDetalhes');
+        const titulo = document.getElementById('modalTitulo');
+        const corpo = document.getElementById('modalCorpo');
+
+        modal.style.display = 'flex';
+        titulo.textContent = `Detalhamento por Grupo - ${nomeLoja} (Loja ${codigoLoja})`;
+        corpo.innerHTML = '<div style="text-align:center; padding:20px;">Carregando grupos de serviços...</div>';
+
+        try {
+            let url = `${API_URL}/oficinas/grupos?codigoLoja=${codigoLoja}`;
+            if (dataInicio && dataFim) {
+                url += `&dataInicio=${dataInicio}&dataFim=${dataFim}`;
+            }
+
+            const response = await fetch(url);
+            const resultado = await response.json();
+
+            if (!resultado.sucesso || !resultado.grupos || resultado.grupos.length === 0) {
+                corpo.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-secondary);">Nenhum grupo de serviço encontrado para este período.</div>';
+                return;
+            }
+
+            const formatarMoeda = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
+
+            let html = `
+                <table style="width:100%;">
+                    <thead>
+                        <tr>
+                            <th>Grupo</th>
+                            <th>Qtd Serviços</th>
+                            <th>Qtd Tickets</th>
+                            <th>Faturamento (R$)</th>
+                            <th>Desconto (R$)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            resultado.grupos.forEach(g => {
+                html += `
+                    <tr>
+                        <td style="text-align:left;"><strong>${g.fcs_DescricaoGrupo || 'OUTROS'}</strong></td>
+                        <td>${g.fcs_QuantidadeServicos || 0}</td>
+                        <td>${g.fcs_QtdTickestPorGrupo || 0}</td>
+                        <td class="text-green"><strong>${formatarMoeda(g.fcs_ValorServicoGrupo)}</strong></td>
+                        <td>${formatarMoeda(g.fcs_DescontoServicoGrupo)}</td>
+                    </tr>
+                `;
+            });
+
+            html += `</tbody></table>`;
+            corpo.innerHTML = html;
+
+        } catch (error) {
+            console.error('Erro ao carregar grupos da loja:', error);
+            corpo.innerHTML = '<div style="text-align:center; padding:20px; color:var(--danger-color);">Erro ao carregar detalhes dos grupos.</div>';
+        }
+    }
+
+    window.fecharModal = function() {
+        document.getElementById('modalDetalhes').style.display = 'none';
+    };
+
     window.carregarAcompanhamentoMensal = carregarAcompanhamentoMensal;
     window.limparFiltroPeriodo = function() {
         document.getElementById('filtro-data-inicio').value = '';
@@ -421,7 +521,6 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         carregarSelectLojas();
-
         if (document.getElementById('tabelaCorpo')) {
             carregarAcompanhamentoMensal();
             setInterval(() => carregarAcompanhamentoMensal(), 60000); 
@@ -430,11 +529,8 @@
 </script>
 
 <div class="container">
-    <!-- Topo Loja / Botão Voltar -->
     <div class="top-bar">
-        <button class="btn-voltar" onclick="history.back()">
-            ⬅ Voltar
-        </button>
+        <button class="btn-voltar" onclick="history.back()">⬅ Voltar</button>
     </div>
 
     <div class="header">
@@ -444,7 +540,6 @@
         </div>
     </div>
 
-    <!-- Filtro de Período Personalizado -->
     <div class="filter-bar">
         <div class="filter-group">
             <label for="filtro-data-inicio">Data Início</label>
@@ -452,11 +547,13 @@
         </div>
         <div class="filter-group">
             <label for="filtro-data-fim">Data Fim</label>
-            <input type="date" id="filtro-data-fim" value="2026-01-01">
+            <input type="date" id="filtro-data-fim" value="2026-09-30">
         </div>
         <button class="btn-filtrar" onclick="carregarAcompanhamentoMensal()">Filtrar Período</button>
         <button class="btn-limpar" onclick="limparFiltroPeriodo()">Mês Atual</button>
     </div>
+
+    <p class="instrucao-clique">💡 Dica: Clique em qualquer linha de loja na tabela abaixo para abrir o detalhamento por grupo de serviços.</p>
 
     <div class="card-table">
         <table>
@@ -482,6 +579,19 @@
                 </tr>
             </tbody>
         </table>
+    </div>
+</div>
+
+<!-- Modal de Detalhes por Grupo de Serviço -->
+<div class="modal-overlay" id="modalDetalhes">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitulo">Detalhamento por Grupo</h2>
+            <button class="btn-fechar" onclick="fecharModal()">✕</button>
+        </div>
+        <div class="modal-body" id="modalCorpo">
+            <!-- Conteúdo carregado via JS -->
+        </div>
     </div>
 </div>
 

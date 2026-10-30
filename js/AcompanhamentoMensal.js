@@ -1,9 +1,10 @@
 import { supabase } from "./supabase.js";
 // nao remover linha do supabase pois vai ser utilizada neste arquivo no futuro.
 
-// Configuração da URL da API (ambiente local)
-//const API_URL = 'http://localhost:3000';
-const API_URL = 'http://10.86.1.120:3000';
+// Configuração dinâmica da URL da API
+const API_URL = (window.location.protocol === 'file:' || window.location.hostname === 'tibarroso.github.io')
+    ? 'http://10.86.1.120:3000'
+    : '';
 
 // =========================================================================
 // 🏢 FUNÇÃO PARA CARREGAR DINAMICAMENTE AS LOJAS DA API
@@ -42,63 +43,83 @@ async function carregarSelectLojas() {
 // =========================================================================
 // 📊 FUNÇÃO PARA CARREGAR O RELATÓRIO DE DESEMPENHO MENSAL DA API
 // =========================================================================
-async function carregarAcompanhamentoMensal(diasUteisTotais = 26, diasUteisDecorridos = 22) {
+async function carregarAcompanhamentoMensal(diasUteisTotais = 26, diasUteisDecorridos = 24, diasUteisRestantes = 2) {
     const tabelaCorpo = document.getElementById('tabelaCorpo');
     const periodoInfo = document.getElementById('periodoInfo');
 
     if (!tabelaCorpo) return;
 
     try {
-        tabelaCorpo.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:20px;">Carregando dados mensais...</td></tr>';
+        tabelaCorpo.innerHTML = '<tr><td colspan="12" style="text-align:center; padding:20px;">Carregando dados mensais...</td></tr>';
 
-        const url = `${API_URL}/oficinas/mes?diasUteisTotais=${diasUteisTotais}&diasUteisDecorridos=${diasUteisDecorridos}`;
+        const url = `${API_URL}/oficinas/mes?diasUteisTotais=${diasUteisTotais}&diasUteisDecorridos=${diasUteisDecorridos}&diasUteisRestantes=${diasUteisRestantes}`;
         const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error(`Status ${response.status}`);
+        }
+
         const data = await response.json();
 
         if (!data.sucesso) {
-            tabelaCorpo.innerHTML = '<tr><td colspan="11" style="color:red; text-align:center;">Falha ao carregar relatório.</td></tr>';
+            tabelaCorpo.innerHTML = '<tr><td colspan="12" style="color:red; text-align:center;">Falha ao carregar relatório.</td></tr>';
             return;
         }
 
-        // Atualiza cabeçalho do período de dias úteis
+        // Atualiza cabeçalho do período e referência de dias úteis
         if (periodoInfo && data.periodo) {
             const p = data.periodo;
+            
+            // Fallback dinâmico para garantir exibição do mês e do último dia do mês corrente
+            let refMes = p.referencia;
+            if (!refMes) {
+                const d = new Date();
+                const ultDia = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+                const mesExtenso = d.toLocaleDateString('pt-BR', { month: 'long' }).toUpperCase();
+                refMes = `${mesExtenso} ${d.getFullYear()} (01 À ${ultDia})`;
+            }
+
             periodoInfo.innerHTML = `
-                <span>Dias Úteis Totais: <strong>${p.dias_uteis_totais}</strong></span>
-                <span>Decorridos: <strong>${p.dias_uteis_decorridos}</strong></span>
-                <span>Restantes: <strong>${p.dias_uteis_restantes}</strong></span>
+                <span>Período: <strong>${refMes}</strong></span>
+                <span>Dias Úteis Totais: <strong>${p.dias_uteis_totais || 0}</strong></span>
+                <span>Decorridos: <strong>${p.dias_uteis_decorridos || 0}</strong></span>
+                <span>Restantes: <strong>${p.dias_uteis_restantes || 0}</strong></span>
             `;
         }
 
         tabelaCorpo.innerHTML = '';
 
         const formatarMoeda = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
+        const formatarNumero = (val) => (Number(val) || 0).toFixed(2);
 
-        // Renderiza linhas de cada oficina
-        data.oficinas.forEach(item => {
-            const isOffline = item.status === 'Offline';
-            const statusBadge = isOffline 
-                ? `<span class="badge-status badge-offline">Offline</span>`
-                : `<span class="badge-status badge-online">Online</span>`;
+        // Renderiza linhas de cada oficina (12 Colunas)
+        if (data.oficinas && Array.isArray(data.oficinas)) {
+            data.oficinas.forEach(item => {
+                const isOffline = item.status === 'Offline';
+                const statusBadge = isOffline 
+                    ? `<span class="badge-status badge-offline">Offline</span>`
+                    : `<span class="badge-status badge-online">Online</span>`;
 
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><strong>${item.nome_oficina}</strong></td>
-                <td>${formatarMoeda(item.meta)}</td>
-                <td class="text-gold"><strong>${item.percentual_meta.toFixed(2)}%</strong></td>
-                <td>${formatarMoeda(item.falta)}</td>
-                <td class="text-green"><strong>${formatarMoeda(item.acumulado)}</strong></td>
-                <td>${formatarMoeda(item.media_diaria)}</td>
-                <td>${formatarMoeda(item.projecao)}</td>
-                <td>${formatarMoeda(item.meta_diaria_restante)}</td>
-                <td>${item.qtd_vendas}</td>
-                <td>${item.total_pecas}</td>
-                <td>${statusBadge}</td>
-            `;
-            tabelaCorpo.appendChild(tr);
-        });
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${item.nome_oficina || '-'}</strong></td>
+                    <td>${formatarMoeda(item.meta)}</td>
+                    <td class="text-gold"><strong>${formatarNumero(item.percentual_meta)}%</strong></td>
+                    <td>${formatarMoeda(item.falta)}</td>
+                    <td class="text-green"><strong>${formatarMoeda(item.acumulado)}</strong></td>
+                    <td>${formatarMoeda(item.meta_diaria)}</td>
+                    <td>${formatarMoeda(item.media_diaria)}</td>
+                    <td>${formatarMoeda(item.projecao)}</td>
+                    <td>${formatarMoeda(item.meta_diaria_restante)}</td>
+                    <td>${item.qtd_vendas || 0}</td>
+                    <td>${item.total_pecas || 0}</td>
+                    <td>${statusBadge}</td>
+                `;
+                tabelaCorpo.appendChild(tr);
+            });
+        }
 
-        // Linha Consolidada GERAL
+        // Linha Consolidada GERAL (12 Colunas)
         if (data.geral) {
             const g = data.geral;
             const trGeral = document.createElement('tr');
@@ -106,14 +127,15 @@ async function carregarAcompanhamentoMensal(diasUteisTotais = 26, diasUteisDecor
             trGeral.innerHTML = `
                 <td>GERAL</td>
                 <td>${formatarMoeda(g.meta_total)}</td>
-                <td>${g.percentual_meta.toFixed(2)}%</td>
+                <td>${formatarNumero(g.percentual_meta)}%</td>
                 <td>${formatarMoeda(g.falta_total)}</td>
                 <td>${formatarMoeda(g.acumulado_total)}</td>
+                <td>${formatarMoeda(g.meta_diaria)}</td>
                 <td>${formatarMoeda(g.media_diaria)}</td>
                 <td>${formatarMoeda(g.projecao)}</td>
-                <td>-</td>
-                <td>${g.qtd_vendas}</td>
-                <td>${g.total_pecas}</td>
+                <td>${formatarMoeda(g.meta_diaria_restante)}</td>
+                <td>${g.qtd_vendas || 0}</td>
+                <td>${g.total_pecas || 0}</td>
                 <td>-</td>
             `;
             tabelaCorpo.appendChild(trGeral);
@@ -121,7 +143,7 @@ async function carregarAcompanhamentoMensal(diasUteisTotais = 26, diasUteisDecor
 
     } catch (error) {
         console.error('❌ Erro ao carregar acompanhamento mensal:', error);
-        tabelaCorpo.innerHTML = '<tr><td colspan="11" style="color:red; text-align:center;">Erro de conexão com o servidor.</td></tr>';
+        tabelaCorpo.innerHTML = '<tr><td colspan="12" style="color:red; text-align:center;">Erro de conexão com o servidor.</td></tr>';
     }
 }
 

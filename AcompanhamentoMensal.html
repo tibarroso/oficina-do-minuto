@@ -35,6 +35,32 @@
             margin: 0 auto;
         }
 
+        /* Estilização da Top Bar / Botão Voltar */
+        .top-bar {
+            margin-bottom: 16px;
+        }
+
+        .btn-voltar {
+            background-color: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .btn-voltar:hover {
+            background-color: var(--bg-table-header);
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+
         .header {
             display: flex;
             justify-content: space-between;
@@ -150,13 +176,14 @@
 </head>
 <body>
 
-  <!-- Topo Loja -->
-  <div class="top-bar">
-    <!-- Botão Voltar -->
-    <button class="btn-voltar" onclick="history.back()">
-      ⬅ Voltar    
-        
 <div class="container">
+    <!-- Topo Loja / Botão Voltar -->
+    <div class="top-bar">
+        <button class="btn-voltar" onclick="history.back()">
+            ⬅ Voltar
+        </button>
+    </div>
+
     <div class="header">
         <h1>Oficina do Minuto - Acompanhamento Mensal</h1>
         <div class="periodo-info" id="periodoInfo">
@@ -206,7 +233,6 @@
 
     async function carregarDashboardMensal() {
         try {
-            // Chamada enviando os parâmetros para a rota dinâmica
             const response = await fetch(`${API_URL}/oficinas/mes?diasUteisTotais=26&diasUteisDecorridos=24&diasUteisRestantes=2`);
             
             if (!response.ok) {
@@ -222,7 +248,6 @@
 
             const p = data.periodo || {};
 
-            // Fallback dinâmico para ano/mês vigente automático caso o servidor não envie o rótulo
             let refMes = p.referencia;
             if (!refMes) {
                 const hoje = new Date();

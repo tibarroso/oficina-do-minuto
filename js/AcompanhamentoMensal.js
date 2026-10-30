@@ -41,7 +41,7 @@ async function carregarSelectLojas() {
 }
 
 // =========================================================================
-// 📊 FUNÇÃO PARA CARREGAR O RELATÓRIO DE DESEMPENHO MENSAL DA API
+// 📊 FUNÇÃO PARA CARREGAR O RELATÓRIO DE DESEMPENHO (MÊS OU PERÍODO)
 // =========================================================================
 async function carregarAcompanhamentoMensal(diasUteisTotais = 26, diasUteisDecorridos = 24, diasUteisRestantes = 2) {
     const tabelaCorpo = document.getElementById('tabelaCorpo');
@@ -49,10 +49,26 @@ async function carregarAcompanhamentoMensal(diasUteisTotais = 26, diasUteisDecor
 
     if (!tabelaCorpo) return;
 
+    // Verifica se existem inputs de data na tela para busca por período personalizado
+    const inputDataInicio = document.getElementById('filtro-data-inicio');
+    const inputDataFim = document.getElementById('filtro-data-fim');
+    
+    const dataInicio = inputDataInicio ? inputDataInicio.value : '';
+    const dataFim = inputDataFim ? inputDataFim.value : '';
+
     try {
         tabelaCorpo.innerHTML = '<tr><td colspan="12" style="text-align:center; padding:20px;">Carregando dados mensais...</td></tr>';
 
-        const url = `${API_URL}/oficinas/mes?diasUteisTotais=${diasUteisTotais}&diasUteisDecorridos=${diasUteisDecorridos}&diasUteisRestantes=${diasUteisRestantes}`;
+        let url = '';
+        
+        // Se o usuário preencheu datas, consome a nova rota de faturamento por período
+        if (dataInicio && dataFim) {
+            url = `${API_URL}/oficinas/faturamento-periodo?dataInicio=${dataInicio}&dataFim=${dataFim}`;
+        } else {
+            // Caso contrário, usa a rota padrão do mês corrente
+            url = `${API_URL}/oficinas/mes?diasUteisTotais=${diasUteisTotais}&diasUteisDecorridos=${diasUteisDecorridos}&diasUteisRestantes=${diasUteisRestantes}`;
+        }
+
         const response = await fetch(url);
 
         if (!response.ok) {
@@ -66,25 +82,29 @@ async function carregarAcompanhamentoMensal(diasUteisTotais = 26, diasUteisDecor
             return;
         }
 
-        // Atualiza cabeçalho do período e referência de dias úteis
-        if (periodoInfo && data.periodo) {
-            const p = data.periodo;
-            
-            // Fallback dinâmico para garantir exibição do mês e do último dia do mês corrente
-            let refMes = p.referencia;
-            if (!refMes) {
-                const d = new Date();
-                const ultDia = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-                const mesExtenso = d.toLocaleDateString('pt-BR', { month: 'long' }).toUpperCase();
-                refMes = `${mesExtenso} ${d.getFullYear()} (01 À ${ultDia})`;
-            }
+        // Atualiza cabeçalho do período
+        if (periodoInfo) {
+            if (dataInicio && dataFim) {
+                periodoInfo.innerHTML = `
+                    <span>Período Personalizado: <strong>${dataInicio} até ${dataFim}</strong></span>
+                `;
+            } else if (data.periodo) {
+                const p = data.periodo;
+                let refMes = p.referencia;
+                if (!refMes) {
+                    const d = new Date();
+                    const ultDia = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+                    const mesExtenso = d.toLocaleDateString('pt-BR', { month: 'long' }).toUpperCase();
+                    refMes = `${mesExtenso} ${d.getFullYear()} (01 À ${ultDia})`;
+                }
 
-            periodoInfo.innerHTML = `
-                <span>Período: <strong>${refMes}</strong></span>
-                <span>Dias Úteis Totais: <strong>${p.dias_uteis_totais || 0}</strong></span>
-                <span>Decorridos: <strong>${p.dias_uteis_decorridos || 0}</strong></span>
-                <span>Restantes: <strong>${p.dias_uteis_restantes || 0}</strong></span>
-            `;
+                periodoInfo.innerHTML = `
+                    <span>Período: <strong>${refMes}</strong></span>
+                    <span>Dias Úteis Totais: <strong>${p.dias_uteis_totais || 0}</strong></span>
+                    <span>Decorridos: <strong>${p.dias_uteis_decorridos || 0}</strong></span>
+                    <span>Restantes: <strong>${p.dias_uteis_restantes || 0}</strong></span>
+                `;
+            }
         }
 
         tabelaCorpo.innerHTML = '';
@@ -92,7 +112,7 @@ async function carregarAcompanhamentoMensal(diasUteisTotais = 26, diasUteisDecor
         const formatarMoeda = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
         const formatarNumero = (val) => (Number(val) || 0).toFixed(2);
 
-        // Renderiza linhas de cada oficina (12 Colunas)
+        // Renderiza linhas de cada oficina
         if (data.oficinas && Array.isArray(data.oficinas)) {
             data.oficinas.forEach(item => {
                 const isOffline = item.status === 'Offline';
@@ -107,10 +127,10 @@ async function carregarAcompanhamentoMensal(diasUteisTotais = 26, diasUteisDecor
                     <td class="text-gold"><strong>${formatarNumero(item.percentual_meta)}%</strong></td>
                     <td>${formatarMoeda(item.falta)}</td>
                     <td class="text-green"><strong>${formatarMoeda(item.acumulado)}</strong></td>
-                    <td>${formatarMoeda(item.meta_diaria)}</td>
-                    <td>${formatarMoeda(item.media_diaria)}</td>
-                    <td>${formatarMoeda(item.projecao)}</td>
-                    <td>${formatarMoeda(item.meta_diaria_restante)}</td>
+                    <td>${formatarMoeda(item.meta_diaria || 0)}</td>
+                    <td>${formatarMoeda(item.media_diaria || 0)}</td>
+                    <td>${formatarMoeda(item.projecao || 0)}</td>
+                    <td>${formatarMoeda(item.meta_diaria_restante || 0)}</td>
                     <td>${item.qtd_vendas || 0}</td>
                     <td>${item.total_pecas || 0}</td>
                     <td>${statusBadge}</td>
@@ -119,7 +139,7 @@ async function carregarAcompanhamentoMensal(diasUteisTotais = 26, diasUteisDecor
             });
         }
 
-        // Linha Consolidada GERAL (12 Colunas)
+        // Linha Consolidada GERAL
         if (data.geral) {
             const g = data.geral;
             const trGeral = document.createElement('tr');
@@ -130,10 +150,10 @@ async function carregarAcompanhamentoMensal(diasUteisTotais = 26, diasUteisDecor
                 <td>${formatarNumero(g.percentual_meta)}%</td>
                 <td>${formatarMoeda(g.falta_total)}</td>
                 <td>${formatarMoeda(g.acumulado_total)}</td>
-                <td>${formatarMoeda(g.meta_diaria)}</td>
-                <td>${formatarMoeda(g.media_diaria)}</td>
-                <td>${formatarMoeda(g.projecao)}</td>
-                <td>${formatarMoeda(g.meta_diaria_restante)}</td>
+                <td>${formatarMoeda(g.meta_diaria || 0)}</td>
+                <td>${formatarMoeda(g.media_diaria || 0)}</td>
+                <td>${formatarMoeda(g.projecao || 0)}</td>
+                <td>${formatarMoeda(g.meta_diaria_restante || 0)}</td>
                 <td>${g.qtd_vendas || 0}</td>
                 <td>${g.total_pecas || 0}</td>
                 <td>-</td>
@@ -150,10 +170,17 @@ async function carregarAcompanhamentoMensal(diasUteisTotais = 26, diasUteisDecor
 document.addEventListener('DOMContentLoaded', () => {
     carregarSelectLojas();
 
-    // Se a tabela de acompanhamento mensal existir na página, faz a carga automática
     if (document.getElementById('tabelaCorpo')) {
         carregarAcompanhamentoMensal();
-        setInterval(carregarAcompanhamentoMensal, 60000); // Atualiza a cada 60s
+        setInterval(carregarAcompanhamentoMensal, 60000); 
+    }
+
+    // Botão opcional para filtrar por período caso exista no HTML
+    const btnFiltrarPeriodo = document.getElementById('btn-filtrar-periodo');
+    if (btnFiltrarPeriodo) {
+        btnFiltrarPeriodo.addEventListener('click', () => {
+            carregarAcompanhamentoMensal();
+        });
     }
 
     const inputTelefone = document.getElementById('filtro-telefone');
@@ -162,7 +189,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputEndereco = document.getElementById('filtro-endereco');
     const inputCpfCnpj = document.getElementById('filtro-cpf');
     
-    // Inputs de endereço detalhado
     const inputCep = document.getElementById('filtro-cep');
     const inputNumeroEndereco = document.getElementById('filtro-numero-endereco');
     const inputBairro = document.getElementById('filtro-bairro');
@@ -177,7 +203,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabelaEntregues = document.getElementById('tabela-entregues-body');
     const detalhesEndereco = document.getElementById('detalhes-endereco-box');
 
-    // Elementos do Modal Flutuante e Botão Ticket
     const modalTicket = document.getElementById('modal-ticket');
     const modalTitulo = document.getElementById('modal-ticket-titulo');
     const modalCorpo = document.getElementById('modal-ticket-corpo');

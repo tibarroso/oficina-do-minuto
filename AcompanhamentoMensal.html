@@ -68,6 +68,8 @@
             margin-bottom: 24px;
             padding-bottom: 16px;
             border-bottom: 2px solid var(--accent-gold);
+            flex-wrap: wrap;
+            gap: 16px;
         }
 
         .header h1 {
@@ -85,10 +87,78 @@
             border-radius: 8px;
             border: 1px solid var(--border-color);
             font-size: 0.9rem;
+            align-items: center;
         }
 
         .periodo-info span strong {
             color: var(--accent-gold);
+        }
+
+        /* Barra de Filtro por Período */
+        .filter-bar {
+            background-color: var(--bg-card);
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 16px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-group label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .filter-group input {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .btn-filtrar {
+            background-color: var(--accent-gold);
+            color: #121214;
+            border: none;
+            padding: 9px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: opacity 0.2s;
+        }
+
+        .btn-filtrar:hover {
+            opacity: 0.9;
+        }
+
+        .btn-limpar {
+            background-color: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            padding: 9px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .btn-limpar:hover {
+            color: var(--text-main);
+            border-color: var(--text-main);
         }
 
         .card-table {
@@ -185,10 +255,24 @@
     </div>
 
     <div class="header">
-        <h1>Oficina do Minuto - Ac do Mes</h1>
+        <h1>Oficina do Minuto - Acompanhamento</h1>
         <div class="periodo-info" id="periodoInfo">
             <span>Carregando período...</span>
         </div>
+    </div>
+
+    <!-- Filtro de Período Personalizado (Usa a rota /oficinas/faturamento-periodo) -->
+    <div class="filter-bar">
+        <div class="filter-group">
+            <label for="filtroDataInicio">Data Início</label>
+            <input type="date" id="filtroDataInicio" value="2026-01-01">
+        </div>
+        <div class="filter-group">
+            <label for="filtroDataFim">Data Fim</label>
+            <input type="date" id="filtroDataFim" value="2026-09-30">
+        </div>
+        <button class="btn-filtrar" onclick="carregarDashboardMensal()">Filtrar Período</button>
+        <button class="btn-limpar" onclick="limparFiltroPeriodo()">Mês Atual</button>
     </div>
 
     <div class="card-table">
@@ -231,9 +315,32 @@
         return (Number(valor) || 0).toFixed(2);
     }
 
+    function limparFiltroPeriodo() {
+        document.getElementById('filtroDataInicio').value = '';
+        document.getElementById('filtroDataFim').value = '';
+        carregarDashboardMensal();
+    }
+
     async function carregarDashboardMensal() {
+        const dataInicio = document.getElementById('filtroDataInicio').value;
+        const dataFim = document.getElementById('filtroDataFim').value;
+
         try {
-            const response = await fetch(`${API_URL}/oficinas/mes?diasUteisTotais=26&diasUteisDecorridos=24&diasUteisRestantes=2`);
+            document.getElementById('tabelaCorpo').innerHTML = `
+                <tr><td colspan="12" class="loading">Carregando dados do servidor...</td></tr>
+            `;
+
+            let url = '';
+            
+            // Se as datas estiverem preenchidas, chama a rota de período baseada na tabela FechamentoMes_ServicoGrupo
+            if (dataInicio && dataFim) {
+                url = `${API_URL}/oficinas/faturamento-periodo?dataInicio=${dataInicio}&dataFim=${dataFim}`;
+            } else {
+                // Caso contrário, usa a rota padrão do mês atual
+                url = `${API_URL}/oficinas/mes?diasUteisTotais=26&diasUteisDecorridos=24&diasUteisRestantes=2`;
+            }
+
+            const response = await fetch(url);
             
             if (!response.ok) {
                 throw new Error(`Servidor respondeu com status ${response.status}`);
@@ -246,22 +353,28 @@
                 return;
             }
 
-            const p = data.periodo || {};
+            // Exibição do Período no Cabeçalho
+            if (dataInicio && dataFim) {
+                document.getElementById('periodoInfo').innerHTML = `
+                    <span>Período Personalizado: <strong>${dataInicio} até ${dataFim}</strong></span>
+                `;
+            } else {
+                const p = data.periodo || {};
+                let refMes = p.referencia;
+                if (!refMes) {
+                    const hoje = new Date();
+                    const ultDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
+                    const mesExtenso = hoje.toLocaleDateString('pt-BR', { month: 'long' }).toUpperCase();
+                    refMes = `${mesExtenso} ${hoje.getFullYear()} (01 À ${String(ultDia).padStart(2, '0')})`;
+                }
 
-            let refMes = p.referencia;
-            if (!refMes) {
-                const hoje = new Date();
-                const ultDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
-                const mesExtenso = hoje.toLocaleDateString('pt-BR', { month: 'long' }).toUpperCase();
-                refMes = `${mesExtenso} ${hoje.getFullYear()} (01 À ${String(ultDia).padStart(2, '0')})`;
+                document.getElementById('periodoInfo').innerHTML = `
+                    <span>Período: <strong>${refMes}</strong></span>
+                    <span>Dias Úteis Totais: <strong>${p.dias_uteis_totais || 0}</strong></span>
+                    <span>Decorridos: <strong>${p.dias_uteis_decorridos || 0}</strong></span>
+                    <span>Restantes: <strong>${p.dias_uteis_restantes || 0}</strong></span>
+                `;
             }
-
-            document.getElementById('periodoInfo').innerHTML = `
-                <span>Período: <strong>${refMes}</strong></span>
-                <span>Dias Úteis Totais: <strong>${p.dias_uteis_totais || 0}</strong></span>
-                <span>Decorridos: <strong>${p.dias_uteis_decorridos || 0}</strong></span>
-                <span>Restantes: <strong>${p.dias_uteis_restantes || 0}</strong></span>
-            `;
 
             const tbody = document.getElementById('tabelaCorpo');
             tbody.innerHTML = '';
@@ -280,10 +393,10 @@
                         <td class="text-gold"><strong>${formatarNumero(item.percentual_meta)}%</strong></td>
                         <td>${formatarMoeda(item.falta)}</td>
                         <td class="text-green"><strong>${formatarMoeda(item.acumulado)}</strong></td>
-                        <td>${formatarMoeda(item.meta_diaria)}</td>
-                        <td>${formatarMoeda(item.media_diaria)}</td>
-                        <td>${formatarMoeda(item.projecao)}</td>
-                        <td>${formatarMoeda(item.meta_diaria_restante)}</td>
+                        <td>${formatarMoeda(item.meta_diaria || 0)}</td>
+                        <td>${formatarMoeda(item.media_diaria || 0)}</td>
+                        <td>${formatarMoeda(item.projecao || 0)}</td>
+                        <td>${formatarMoeda(item.meta_diaria_restante || 0)}</td>
                         <td>${item.qtd_vendas || 0}</td>
                         <td>${item.total_pecas || 0}</td>
                         <td>${statusBadge}</td>
@@ -301,10 +414,10 @@
                 <td>${formatarNumero(g.percentual_meta)}%</td>
                 <td>${formatarMoeda(g.falta_total)}</td>
                 <td>${formatarMoeda(g.acumulado_total)}</td>
-                <td>${formatarMoeda(g.meta_diaria)}</td>
-                <td>${formatarMoeda(g.media_diaria)}</td>
-                <td>${formatarMoeda(g.projecao)}</td>
-                <td>${formatarMoeda(g.meta_diaria_restante)}</td>
+                <td>${formatarMoeda(g.meta_diaria || 0)}</td>
+                <td>${formatarMoeda(g.media_diaria || 0)}</td>
+                <td>${formatarMoeda(g.projecao || 0)}</td>
+                <td>${formatarMoeda(g.meta_diaria_restante || 0)}</td>
                 <td>${g.qtd_vendas || 0}</td>
                 <td>${g.total_pecas || 0}</td>
                 <td>-</td>
@@ -316,15 +429,16 @@
             document.getElementById('tabelaCorpo').innerHTML = `
                 <tr>
                     <td colspan="12" class="loading" style="color: var(--danger-color);">
-                        Erro ao conectar com o servidor. Verifique se a rota /oficinas/mes existe no backend.
+                        Erro ao conectar com o servidor. Verifique se as rotas do backend estão ativas.
                     </td>
                 </tr>
             `;
         }
     }
 
-    document.addEventListener('DOMContentLoaded', carregarDashboardMensal);
-    setInterval(carregarDashboardMensal, 60000);
+    document.addEventListener('DOMContentLoaded', () => {
+        carregarDashboardMensal();
+    });
 </script>
 
 </body>

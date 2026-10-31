@@ -343,7 +343,9 @@
             tabelaCorpo.innerHTML = '<tr><td colspan="12" style="text-align:center; padding:20px;">Carregando dados...</td></tr>';
 
             let url = '';
-            if (dataInicio && dataFim) {
+            const isPeriodoPersonalizado = (dataInicio && dataFim);
+
+            if (isPeriodoPersonalizado) {
                 url = `${API_URL}/oficinas/faturamento-periodo?dataInicio=${dataInicio}&dataFim=${dataFim}`;
             } else {
                 url = `${API_URL}/oficinas/mes?diasUteisTotais=${diasUteisTotais}&diasUteisDecorridos=${diasUteisDecorridos}&diasUteisRestantes=${diasUteisRestantes}`;
@@ -359,7 +361,7 @@
             }
 
             if (periodoInfo) {
-                if (dataInicio && dataFim) {
+                if (isPeriodoPersonalizado) {
                     periodoInfo.innerHTML = `<span>Período Personalizado: <strong>${dataInicio} até ${dataFim}</strong></span>`;
                 } else if (data.periodo) {
                     const p = data.periodo;
@@ -391,6 +393,8 @@
                         ? `<span class="badge-status badge-offline">Offline</span>`
                         : `<span class="badge-status badge-online">Online</span>`;
 
+                    const valorAcumulado = item.acumulado !== undefined ? item.acumulado : (item.faturamento_total || item.total_periodo || 0);
+
                     const tr = document.createElement('tr');
                     tr.className = 'linha-loja';
                     tr.title = 'Clique para ver o detalhamento por grupo de serviços';
@@ -404,7 +408,7 @@
                         <td>${formatarMoeda(item.meta)}</td>
                         <td class="text-gold"><strong>${formatarNumero(item.percentual_meta)}%</strong></td>
                         <td>${formatarMoeda(item.falta)}</td>
-                        <td class="text-green"><strong>${formatarMoeda(item.acumulado)}</strong></td>
+                        <td class="text-green"><strong>${formatarMoeda(valorAcumulado)}</strong></td>
                         <td>${formatarMoeda(item.meta_diaria || 0)}</td>
                         <td>${formatarMoeda(item.media_diaria || 0)}</td>
                         <td>${formatarMoeda(item.projecao || 0)}</td>
@@ -419,6 +423,8 @@
 
             if (data.geral) {
                 const g = data.geral;
+                const acumuladoGeral = g.acumulado_total !== undefined ? g.acumulado_total : (g.faturamento_total || g.total_periodo || 0);
+
                 const trGeral = document.createElement('tr');
                 trGeral.className = 'row-geral';
                 trGeral.innerHTML = `
@@ -426,7 +432,7 @@
                     <td>${formatarMoeda(g.meta_total)}</td>
                     <td>${formatarNumero(g.percentual_meta)}%</td>
                     <td>${formatarMoeda(g.falta_total)}</td>
-                    <td>${formatarMoeda(g.acumulado_total)}</td>
+                    <td>${formatarMoeda(acumuladoGeral)}</td>
                     <td>${formatarMoeda(g.meta_diaria || 0)}</td>
                     <td>${formatarMoeda(g.media_diaria || 0)}</td>
                     <td>${formatarMoeda(g.projecao || 0)}</td>
@@ -444,7 +450,7 @@
         }
     }
 
-    // Função para buscar e exibir o modal com os grupos de serviço (com sincronia de datas)
+    // Função para buscar e exibir o modal com os grupos de serviço (com rodapé de totais e sincronia)
     async function abrirModalDetalhesLoja(codigoLoja, nomeLoja, dataInicioParam, dataFimParam) {
         const modal = document.getElementById('modalDetalhes');
         const titulo = document.getElementById('modalTitulo');
@@ -455,7 +461,6 @@
         corpo.innerHTML = '<div style="text-align:center; padding:20px;">Carregando grupos de serviços...</div>';
 
         try {
-            // Pega as datas direto dos inputs da tela ou usa os parâmetros passados
             const inputDataInicio = document.getElementById('filtro-data-inicio');
             const inputDataFim = document.getElementById('filtro-data-fim');
 
@@ -477,11 +482,16 @@
 
             const formatarMoeda = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
 
+            let totalServicos = 0;
+            let totalTickets = 0;
+            let totalFaturamento = 0;
+            let totalDesconto = 0;
+
             let html = `
                 <table style="width:100%;">
                     <thead>
                         <tr>
-                            <th>Grupo</th>
+                            <th style="text-align:left;">Grupo</th>
                             <th>Qtd Serviços</th>
                             <th>Qtd Tickets</th>
                             <th>Faturamento (R$)</th>
@@ -492,6 +502,11 @@
             `;
 
             resultado.grupos.forEach(g => {
+                totalServicos += Number(g.fcs_QuantidadeServicos) || 0;
+                totalTickets += Number(g.fcs_QtdTickestPorGrupo) || 0;
+                totalFaturamento += Number(g.fcs_ValorServicoGrupo) || 0;
+                totalDesconto += Number(g.fcs_DescontoServicoGrupo) || 0;
+
                 html += `
                     <tr>
                         <td style="text-align:left;"><strong>${g.fcs_DescricaoGrupo || 'OUTROS'}</strong></td>
@@ -503,7 +518,19 @@
                 `;
             });
 
-            html += `</tbody></table>`;
+            html += `
+                    </tbody>
+                    <tfoot>
+                        <tr class="row-geral">
+                            <td style="text-align:left;">TOTAL GERAL</td>
+                            <td>${totalServicos}</td>
+                            <td>${totalTickets}</td>
+                            <td class="text-green">${formatarMoeda(totalFaturamento)}</td>
+                            <td>${formatarMoeda(totalDesconto)}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            `;
             corpo.innerHTML = html;
 
         } catch (error) {

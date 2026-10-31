@@ -558,12 +558,18 @@
         if (modal) modal.style.display = 'none';
     };
 
-    window.carregarAcompanhamentoMensal = carregarAcompanhamentoMensal;
-
-    // Remove o destaque dos botões rápidos ao mexer manualmente nas datas ou filtrar personalizado
+    // Remove o destaque dos botões rápidos
     function removerDestaqueBotoes() {
         document.querySelectorAll('.btn-acao').forEach(btn => btn.classList.remove('ativo'));
     }
+
+    // Função chamada pelo botão "Filtrar Período"
+    window.dispararFiltroPeriodo = function() {
+        removerDestaqueBotoes(); // Remove seleção dos botões rápidos ao buscar por período personalizado
+        carregarAcompanhamentoMensal();
+    };
+
+    window.carregarAcompanhamentoMensal = carregarAcompanhamentoMensal;
 
     // Botão Hoje
     window.filtrarHoje = function(elementoBtn) {
@@ -595,7 +601,7 @@
         const inputInicio = document.getElementById('filtro-data-inicio');
         const inputFim = document.getElementById('filtro-data-fim');
 
-        // Se o usuário alterar as datas manualmente, tira o destaque dos botões rápidos
+        // Se o usuário alterar as datas manualmente nos inputs, remove o destaque dos botões rápidos
         if (inputInicio) inputInicio.addEventListener('change', removerDestaqueBotoes);
         if (inputFim) inputFim.addEventListener('change', removerDestaqueBotoes);
 
@@ -637,8 +643,8 @@
             <label for="filtro-data-fim">Data Fim</label>
             <input type="date" id="filtro-data-fim">
         </div>
-        <button class="btn-filtrar" onclick="carregarAcompanhamentoMensal()">Filtrar Período</button>
-        <!-- Passamos o 'this' nos parâmetros para o JavaScript saber qual botão recebeu o clique -->
+        <!-- Agora chama a função que limpa os destaques dos botões rápidos -->
+        <button class="btn-filtrar" onclick="dispararFiltroPeriodo()">Filtrar Período</button>
         <button class="btn-acao" onclick="filtrarHoje(this)">Hoje</button>
         <button class="btn-acao" id="btn-mes-atual" onclick="filtrarMesAtual(this)">Mês Atual</button>
     </div>

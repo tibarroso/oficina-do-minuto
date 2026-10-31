@@ -141,7 +141,7 @@
 
         .btn-filtrar:hover { opacity: 0.9; }
 
-        .btn-limpar {
+        .btn-acao {
             background-color: transparent;
             color: var(--text-secondary);
             border: 1px solid var(--border-color);
@@ -152,9 +152,10 @@
             transition: all 0.2s;
         }
 
-        .btn-limpar:hover {
+        .btn-acao:hover {
             color: var(--text-main);
             border-color: var(--text-main);
+            background-color: rgba(255, 255, 255, 0.05);
         }
 
         .card-table {
@@ -450,7 +451,7 @@
         }
     }
 
-    // Função para buscar e exibir o modal com os grupos de serviço (com rodapé de totais e sincronia segura)
+    // Função para abrir o modal de grupos
     async function abrirModalDetalhesLoja(codigoLoja, nomeLoja, dataInicioParam, dataFimParam) {
         const modal = document.getElementById('modalDetalhes');
         const titulo = document.getElementById('modalTitulo');
@@ -469,7 +470,6 @@
             let dataInicio = inputDataInicio ? inputDataInicio.value : dataInicioParam;
             let dataFim = inputDataFim ? inputDataFim.value : dataFimParam;
 
-            // Blindagem: se por acaso vierem vazios ou undefined, usa a data de hoje como fallback
             if (!dataInicio || !dataFim || dataInicio === 'undefined' || dataFim === 'undefined') {
                 const hoje = new Date().toISOString().split('T')[0];
                 dataInicio = hoje;
@@ -551,21 +551,37 @@
     };
 
     window.carregarAcompanhamentoMensal = carregarAcompanhamentoMensal;
-    window.limparFiltroPeriodo = function() {
+
+    // Botão Hoje (Filtra apenas a data de hoje)
+    window.filtrarHoje = function() {
         const hoje = new Date().toISOString().split('T')[0];
         document.getElementById('filtro-data-inicio').value = hoje;
         document.getElementById('filtro-data-fim').value = hoje;
         carregarAcompanhamentoMensal();
     };
 
+    // Botão Mês Atual (Filtra do dia 01 até o último dia do mês atual)
+    window.filtrarMesAtual = function() {
+        const d = new Date();
+        const primeiroDia = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
+        const ultimoDia = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0];
+
+        document.getElementById('filtro-data-inicio').value = primeiroDia;
+        document.getElementById('filtro-data-fim').value = ultimoDia;
+        carregarAcompanhamentoMensal();
+    };
+
     document.addEventListener('DOMContentLoaded', () => {
-        // Inicializa automaticamente com a data de hoje nos inputs ao carregar a página
-        const hoje = new Date().toISOString().split('T')[0];
+        // Inicializa por padrão com o Mês Atual ao carregar a página
+        const d = new Date();
+        const primeiroDia = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
+        const ultimoDia = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0];
+
         const inputInicio = document.getElementById('filtro-data-inicio');
         const inputFim = document.getElementById('filtro-data-fim');
 
-        if (inputInicio && !inputInicio.value) inputInicio.value = hoje;
-        if (inputFim && !inputFim.value) inputFim.value = hoje;
+        if (inputInicio && !inputInicio.value) inputInicio.value = primeiroDia;
+        if (inputFim && !inputFim.value) inputFim.value = ultimoDia;
 
         carregarSelectLojas();
         if (document.getElementById('tabelaCorpo')) {
@@ -597,7 +613,8 @@
             <input type="date" id="filtro-data-fim">
         </div>
         <button class="btn-filtrar" onclick="carregarAcompanhamentoMensal()">Filtrar Período</button>
-        <button class="btn-limpar" onclick="limparFiltroPeriodo()">Hoje</button>
+        <button class="btn-acao" onclick="filtrarHoje()">Hoje</button>
+        <button class="btn-acao" onclick="filtrarMesAtual()">Mês Atual</button>
     </div>
 
     <p class="instrucao-clique">💡 Dica: Clique em qualquer linha de loja na tabela abaixo para abrir o detalhamento por grupo de serviços.</p>

@@ -176,7 +176,7 @@ async function carregarAcompanhamentoMensal(diasUteisTotais = 26, diasUteisDecor
 }
 
 // =========================================================================
-// 🏢 FUNÇÃO PARA ABRIR O MODAL DE GRUPOS DE SERVIÇO DA LOJA (COM TOTAIS)
+// 🏢 FUNÇÃO PARA ABRIR O MODAL DE GRUPOS DE SERVIÇO DA LOJA (COM TOTAIS E VALIDAÇÃO)
 // =========================================================================
 async function abrirModalDetalhesLoja(codigoLoja, nomeLoja, dataInicioParam, dataFimParam) {
     const modal = document.getElementById('modalDetalhes');
@@ -190,16 +190,24 @@ async function abrirModalDetalhesLoja(codigoLoja, nomeLoja, dataInicioParam, dat
     if (corpo) corpo.innerHTML = '<div style="text-align:center; padding:20px;">Carregando grupos de serviços...</div>';
 
     try {
+        // Tenta pegar dos inputs da tela
         const inputDataInicio = document.getElementById('filtro-data-inicio');
         const inputDataFim = document.getElementById('filtro-data-fim');
 
-        const dataInicio = inputDataInicio ? inputDataInicio.value : dataInicioParam;
-        const dataFim = inputDataFim ? inputDataFim.value : dataFimParam;
+        let dataInicio = inputDataInicio ? inputDataInicio.value : dataInicioParam;
+        let dataFim = inputDataFim ? inputDataFim.value : dataFimParam;
 
-        let url = `${API_URL}/oficinas/grupos?codigoLoja=${codigoLoja}`;
-        if (dataInicio && dataFim) {
-            url += `&dataInicio=${dataInicio}&dataFim=${dataFim}`;
+        // Se ainda assim vierem vazios ou 'undefined', define o mês corrente como padrão
+        if (!dataInicio || !dataFim || dataInicio === 'undefined' || dataFim === 'undefined') {
+            const hoje = new Date();
+            const ano = hoje.getFullYear();
+            const mes = hoje.getMonth();
+
+            dataInicio = new Date(ano, mes, 1).toISOString().split('T')[0];
+            dataFim = new Date(ano, mes + 1, 0).toISOString().split('T')[0];
         }
+
+        let url = `${API_URL}/oficinas/grupos?codigoLoja=${codigoLoja}&dataInicio=${dataInicio}&dataFim=${dataFim}`;
 
         const response = await fetch(url);
         const resultado = await response.json();
@@ -264,11 +272,12 @@ async function abrirModalDetalhesLoja(codigoLoja, nomeLoja, dataInicioParam, dat
 
         if (corpo) corpo.innerHTML = html;
 
-    } catch (error) {
+     } catch (error) {
         console.error('Erro ao carregar grupos da loja:', error);
         if (corpo) corpo.innerHTML = '<div style="text-align:center; padding:20px; color:var(--danger-color);">Erro ao carregar detalhes dos grupos.</div>';
     }
 }
+
 
 window.fecharModal = function() {
     const modal = document.getElementById('modalDetalhes');

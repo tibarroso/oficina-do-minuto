@@ -450,33 +450,39 @@
         }
     }
 
-    // Função para buscar e exibir o modal com os grupos de serviço (com rodapé de totais e sincronia)
+    // Função para buscar e exibir o modal com os grupos de serviço (com rodapé de totais e sincronia segura)
     async function abrirModalDetalhesLoja(codigoLoja, nomeLoja, dataInicioParam, dataFimParam) {
         const modal = document.getElementById('modalDetalhes');
         const titulo = document.getElementById('modalTitulo');
         const corpo = document.getElementById('modalCorpo');
 
+        if (!modal) return;
+
         modal.style.display = 'flex';
-        titulo.textContent = `Detalhamento por Grupo - ${nomeLoja} (Loja ${codigoLoja})`;
-        corpo.innerHTML = '<div style="text-align:center; padding:20px;">Carregando grupos de serviços...</div>';
+        if (titulo) titulo.textContent = `Detalhamento por Grupo - ${nomeLoja} (Loja ${codigoLoja})`;
+        if (corpo) corpo.innerHTML = '<div style="text-align:center; padding:20px;">Carregando grupos de serviços...</div>';
 
         try {
             const inputDataInicio = document.getElementById('filtro-data-inicio');
             const inputDataFim = document.getElementById('filtro-data-fim');
 
-            const dataInicio = inputDataInicio ? inputDataInicio.value : dataInicioParam;
-            const dataFim = inputDataFim ? inputDataFim.value : dataFimParam;
+            let dataInicio = inputDataInicio ? inputDataInicio.value : dataInicioParam;
+            let dataFim = inputDataFim ? inputDataFim.value : dataFimParam;
 
-            let url = `${API_URL}/oficinas/grupos?codigoLoja=${codigoLoja}`;
-            if (dataInicio && dataFim) {
-                url += `&dataInicio=${dataInicio}&dataFim=${dataFim}`;
+            // Blindagem: se por acaso vierem vazios ou undefined, usa a data de hoje como fallback
+            if (!dataInicio || !dataFim || dataInicio === 'undefined' || dataFim === 'undefined') {
+                const hoje = new Date().toISOString().split('T')[0];
+                dataInicio = hoje;
+                dataFim = hoje;
             }
+
+            let url = `${API_URL}/oficinas/grupos?codigoLoja=${codigoLoja}&dataInicio=${dataInicio}&dataFim=${dataFim}`;
 
             const response = await fetch(url);
             const resultado = await response.json();
 
             if (!resultado.sucesso || !resultado.grupos || resultado.grupos.length === 0) {
-                corpo.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-secondary);">Nenhum grupo de serviço encontrado para este período.</div>';
+                if (corpo) corpo.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-secondary);">Nenhum grupo de serviço encontrado para este período.</div>';
                 return;
             }
 
@@ -531,26 +537,36 @@
                     </tfoot>
                 </table>
             `;
-            corpo.innerHTML = html;
+            if (corpo) corpo.innerHTML = html;
 
         } catch (error) {
             console.error('Erro ao carregar grupos da loja:', error);
-            corpo.innerHTML = '<div style="text-align:center; padding:20px; color:var(--danger-color);">Erro ao carregar detalhes dos grupos.</div>';
+            if (corpo) corpo.innerHTML = '<div style="text-align:center; padding:20px; color:var(--danger-color);">Erro ao carregar detalhes dos grupos.</div>';
         }
     }
 
     window.fecharModal = function() {
-        document.getElementById('modalDetalhes').style.display = 'none';
+        const modal = document.getElementById('modalDetalhes');
+        if (modal) modal.style.display = 'none';
     };
 
     window.carregarAcompanhamentoMensal = carregarAcompanhamentoMensal;
     window.limparFiltroPeriodo = function() {
-        document.getElementById('filtro-data-inicio').value = '';
-        document.getElementById('filtro-data-fim').value = '';
+        const hoje = new Date().toISOString().split('T')[0];
+        document.getElementById('filtro-data-inicio').value = hoje;
+        document.getElementById('filtro-data-fim').value = hoje;
         carregarAcompanhamentoMensal();
     };
 
     document.addEventListener('DOMContentLoaded', () => {
+        // Inicializa automaticamente com a data de hoje nos inputs ao carregar a página
+        const hoje = new Date().toISOString().split('T')[0];
+        const inputInicio = document.getElementById('filtro-data-inicio');
+        const inputFim = document.getElementById('filtro-data-fim');
+
+        if (inputInicio && !inputInicio.value) inputInicio.value = hoje;
+        if (inputFim && !inputFim.value) inputFim.value = hoje;
+
         carregarSelectLojas();
         if (document.getElementById('tabelaCorpo')) {
             carregarAcompanhamentoMensal();
@@ -574,14 +590,14 @@
     <div class="filter-bar">
         <div class="filter-group">
             <label for="filtro-data-inicio">Data Início</label>
-            <input type="date" id="filtro-data-inicio" value="2026-01-01">
+            <input type="date" id="filtro-data-inicio">
         </div>
         <div class="filter-group">
             <label for="filtro-data-fim">Data Fim</label>
-            <input type="date" id="filtro-data-fim" value="2026-09-30">
+            <input type="date" id="filtro-data-fim">
         </div>
         <button class="btn-filtrar" onclick="carregarAcompanhamentoMensal()">Filtrar Período</button>
-        <button class="btn-limpar" onclick="limparFiltroPeriodo()">Mês Atual</button>
+        <button class="btn-limpar" onclick="limparFiltroPeriodo()">Hoje</button>
     </div>
 
     <p class="instrucao-clique">💡 Dica: Clique em qualquer linha de loja na tabela abaixo para abrir o detalhamento por grupo de serviços.</p>

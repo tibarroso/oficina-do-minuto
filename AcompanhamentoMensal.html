@@ -308,7 +308,6 @@
         ? 'http://10.86.1.120:3000'
         : '';
 
-    // Função auxiliar para transformar 'YYYY-MM-DD' em 'DD/MM/YYYY'
     function formatarDataBr(dataStr) {
         if (!dataStr) return '';
         const partes = dataStr.split('-');
@@ -379,12 +378,16 @@
             }
 
             if (periodoInfo) {
-                if (isPeriodoPersonalizado) {
-                    // Aplica a formatação DD/MM/AAAA aqui
+                const btnHojeAtivo = document.getElementById('btn-hoje')?.classList.contains('ativo');
+                const btnMesAtivo = document.getElementById('btn-mes-atual')?.classList.contains('ativo');
+
+                if (btnHojeAtivo || btnMesAtivo || isPeriodoPersonalizado) {
+                    // Se algum botão rápido estiver ativo ou for período personalizado, exibe no formato DD/MM/AAAA até DD/MM/AAAA
                     const dataInicioBr = formatarDataBr(dataInicio);
                     const dataFimBr = formatarDataBr(dataFim);
                     periodoInfo.innerHTML = `<span>Período Personalizado: <strong>${dataInicioBr} até ${dataFimBr}</strong></span>`;
                 } else if (data.periodo) {
+                    // Caso contrário, usa o período padrão do mês
                     const p = data.periodo;
                     let refMes = p.referencia;
                     if (!refMes) {
@@ -650,7 +653,7 @@
             <input type="date" id="filtro-data-fim">
         </div>
         <button class="btn-filtrar" onclick="dispararFiltroPeriodo()">Filtrar Período</button>
-        <button class="btn-acao" onclick="filtrarHoje(this)">Hoje</button>
+        <button class="btn-acao" id="btn-hoje" onclick="filtrarHoje(this)">Hoje</button>
         <button class="btn-acao" id="btn-mes-atual" onclick="filtrarMesAtual(this)">Mês Atual</button>
     </div>
 

@@ -192,7 +192,6 @@
 
         tr:nth-child(even) { background-color: rgba(255, 255, 255, 0.02); }
         
-        /* Deixa claro que as linhas da tabela são clicáveis */
         .linha-loja {
             cursor: pointer;
             transition: background-color 0.15s;
@@ -225,7 +224,6 @@
         .text-gold { color: var(--accent-gold); }
         .loading { text-align: center; padding: 40px; font-size: 1rem; color: var(--text-secondary); }
 
-        /* Estilização do Modal de Detalhes */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -397,7 +395,6 @@
                     tr.className = 'linha-loja';
                     tr.title = 'Clique para ver o detalhamento por grupo de serviços';
                     
-                    // Evento de clique para abrir o modal de detalhes da loja
                     tr.addEventListener('click', () => {
                         abrirModalDetalhesLoja(item.loja, item.nome_oficina, dataInicio, dataFim);
                     });
@@ -447,8 +444,8 @@
         }
     }
 
-    // Função para buscar e exibir o modal com os grupos de serviço
-    async function abrirModalDetalhesLoja(codigoLoja, nomeLoja, dataInicio, dataFim) {
+    // Função para buscar e exibir o modal com os grupos de serviço (com sincronia de datas)
+    async function abrirModalDetalhesLoja(codigoLoja, nomeLoja, dataInicioParam, dataFimParam) {
         const modal = document.getElementById('modalDetalhes');
         const titulo = document.getElementById('modalTitulo');
         const corpo = document.getElementById('modalCorpo');
@@ -458,6 +455,13 @@
         corpo.innerHTML = '<div style="text-align:center; padding:20px;">Carregando grupos de serviços...</div>';
 
         try {
+            // Pega as datas direto dos inputs da tela ou usa os parâmetros passados
+            const inputDataInicio = document.getElementById('filtro-data-inicio');
+            const inputDataFim = document.getElementById('filtro-data-fim');
+
+            const dataInicio = inputDataInicio ? inputDataInicio.value : dataInicioParam;
+            const dataFim = inputDataFim ? inputDataFim.value : dataFimParam;
+
             let url = `${API_URL}/oficinas/grupos?codigoLoja=${codigoLoja}`;
             if (dataInicio && dataFim) {
                 url += `&dataInicio=${dataInicio}&dataFim=${dataFim}`;

@@ -158,7 +158,6 @@
             background-color: rgba(255, 255, 255, 0.05);
         }
 
-        /* Estilo visual quando o botão rápido estiver ativo/selecionado */
         .btn-acao.ativo {
             background-color: rgba(229, 184, 0, 0.15);
             border-color: var(--accent-gold);
@@ -309,6 +308,16 @@
         ? 'http://10.86.1.120:3000'
         : '';
 
+    // Função auxiliar para transformar 'YYYY-MM-DD' em 'DD/MM/YYYY'
+    function formatarDataBr(dataStr) {
+        if (!dataStr) return '';
+        const partes = dataStr.split('-');
+        if (partes.length === 3) {
+            return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+        return dataStr;
+    }
+
     async function carregarSelectLojas() {
         const selectLoja = document.getElementById("select-loja");
         if (!selectLoja) return;
@@ -371,7 +380,10 @@
 
             if (periodoInfo) {
                 if (isPeriodoPersonalizado) {
-                    periodoInfo.innerHTML = `<span>Período Personalizado: <strong>${dataInicio} até ${dataFim}</strong></span>`;
+                    // Aplica a formatação DD/MM/AAAA aqui
+                    const dataInicioBr = formatarDataBr(dataInicio);
+                    const dataFimBr = formatarDataBr(dataFim);
+                    periodoInfo.innerHTML = `<span>Período Personalizado: <strong>${dataInicioBr} até ${dataFimBr}</strong></span>`;
                 } else if (data.periodo) {
                     const p = data.periodo;
                     let refMes = p.referencia;
@@ -558,20 +570,17 @@
         if (modal) modal.style.display = 'none';
     };
 
-    // Remove o destaque dos botões rápidos
     function removerDestaqueBotoes() {
         document.querySelectorAll('.btn-acao').forEach(btn => btn.classList.remove('ativo'));
     }
 
-    // Função chamada pelo botão "Filtrar Período"
     window.dispararFiltroPeriodo = function() {
-        removerDestaqueBotoes(); // Remove seleção dos botões rápidos ao buscar por período personalizado
+        removerDestaqueBotoes();
         carregarAcompanhamentoMensal();
     };
 
     window.carregarAcompanhamentoMensal = carregarAcompanhamentoMensal;
 
-    // Botão Hoje
     window.filtrarHoje = function(elementoBtn) {
         removerDestaqueBotoes();
         if (elementoBtn) elementoBtn.classList.add('ativo');
@@ -582,7 +591,6 @@
         carregarAcompanhamentoMensal();
     };
 
-    // Botão Mês Atual
     window.filtrarMesAtual = function(elementoBtn) {
         removerDestaqueBotoes();
         if (elementoBtn) elementoBtn.classList.add('ativo');
@@ -601,11 +609,9 @@
         const inputInicio = document.getElementById('filtro-data-inicio');
         const inputFim = document.getElementById('filtro-data-fim');
 
-        // Se o usuário alterar as datas manualmente nos inputs, remove o destaque dos botões rápidos
         if (inputInicio) inputInicio.addEventListener('change', removerDestaqueBotoes);
         if (inputFim) inputFim.addEventListener('change', removerDestaqueBotoes);
 
-        // Inicializa por padrão com o Mês Atual e ativa a classe visual no botão correspondente
         const d = new Date();
         const primeiroDia = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
         const ultimoDia = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0];
@@ -643,7 +649,6 @@
             <label for="filtro-data-fim">Data Fim</label>
             <input type="date" id="filtro-data-fim">
         </div>
-        <!-- Agora chama a função que limpa os destaques dos botões rápidos -->
         <button class="btn-filtrar" onclick="dispararFiltroPeriodo()">Filtrar Período</button>
         <button class="btn-acao" onclick="filtrarHoje(this)">Hoje</button>
         <button class="btn-acao" id="btn-mes-atual" onclick="filtrarMesAtual(this)">Mês Atual</button>

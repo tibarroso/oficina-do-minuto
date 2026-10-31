@@ -158,6 +158,14 @@
             background-color: rgba(255, 255, 255, 0.05);
         }
 
+        /* Estilo visual quando o botão rápido estiver ativo/selecionado */
+        .btn-acao.ativo {
+            background-color: rgba(229, 184, 0, 0.15);
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+            font-weight: bold;
+        }
+
         .card-table {
             background-color: var(--bg-card);
             border-radius: 8px;
@@ -552,16 +560,27 @@
 
     window.carregarAcompanhamentoMensal = carregarAcompanhamentoMensal;
 
-    // Botão Hoje (Filtra apenas a data de hoje)
-    window.filtrarHoje = function() {
+    // Remove o destaque dos botões rápidos ao mexer manualmente nas datas ou filtrar personalizado
+    function removerDestaqueBotoes() {
+        document.querySelectorAll('.btn-acao').forEach(btn => btn.classList.remove('ativo'));
+    }
+
+    // Botão Hoje
+    window.filtrarHoje = function(elementoBtn) {
+        removerDestaqueBotoes();
+        if (elementoBtn) elementoBtn.classList.add('ativo');
+
         const hoje = new Date().toISOString().split('T')[0];
         document.getElementById('filtro-data-inicio').value = hoje;
         document.getElementById('filtro-data-fim').value = hoje;
         carregarAcompanhamentoMensal();
     };
 
-    // Botão Mês Atual (Filtra do dia 01 até o último dia do mês atual)
-    window.filtrarMesAtual = function() {
+    // Botão Mês Atual
+    window.filtrarMesAtual = function(elementoBtn) {
+        removerDestaqueBotoes();
+        if (elementoBtn) elementoBtn.classList.add('ativo');
+
         const d = new Date();
         const primeiroDia = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
         const ultimoDia = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0];
@@ -572,16 +591,22 @@
     };
 
     document.addEventListener('DOMContentLoaded', () => {
-        // Inicializa por padrão com o Mês Atual ao carregar a página
+        const btnMesAtual = document.getElementById('btn-mes-atual');
+        const inputInicio = document.getElementById('filtro-data-inicio');
+        const inputFim = document.getElementById('filtro-data-fim');
+
+        // Se o usuário alterar as datas manualmente, tira o destaque dos botões rápidos
+        if (inputInicio) inputInicio.addEventListener('change', removerDestaqueBotoes);
+        if (inputFim) inputFim.addEventListener('change', removerDestaqueBotoes);
+
+        // Inicializa por padrão com o Mês Atual e ativa a classe visual no botão correspondente
         const d = new Date();
         const primeiroDia = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
         const ultimoDia = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0];
 
-        const inputInicio = document.getElementById('filtro-data-inicio');
-        const inputFim = document.getElementById('filtro-data-fim');
-
         if (inputInicio && !inputInicio.value) inputInicio.value = primeiroDia;
         if (inputFim && !inputFim.value) inputFim.value = ultimoDia;
+        if (btnMesAtual) btnMesAtual.classList.add('ativo');
 
         carregarSelectLojas();
         if (document.getElementById('tabelaCorpo')) {
@@ -613,8 +638,9 @@
             <input type="date" id="filtro-data-fim">
         </div>
         <button class="btn-filtrar" onclick="carregarAcompanhamentoMensal()">Filtrar Período</button>
-        <button class="btn-acao" onclick="filtrarHoje()">Hoje</button>
-        <button class="btn-acao" onclick="filtrarMesAtual()">Mês Atual</button>
+        <!-- Passamos o 'this' nos parâmetros para o JavaScript saber qual botão recebeu o clique -->
+        <button class="btn-acao" onclick="filtrarHoje(this)">Hoje</button>
+        <button class="btn-acao" id="btn-mes-atual" onclick="filtrarMesAtual(this)">Mês Atual</button>
     </div>
 
     <p class="instrucao-clique">💡 Dica: Clique em qualquer linha de loja na tabela abaixo para abrir o detalhamento por grupo de serviços.</p>

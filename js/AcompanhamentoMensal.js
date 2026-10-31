@@ -121,6 +121,14 @@ async function carregarAcompanhamentoMensal(diasUteisTotais = 26, diasUteisDecor
                     : `<span class="badge-status badge-online">Online</span>`;
 
                 const tr = document.createElement('tr');
+                tr.className = 'linha-loja';
+                tr.title = 'Clique para ver o detalhamento por grupo de serviços';
+
+                // Evento de clique para abrir o modal de detalhes por grupo de serviços da loja
+                tr.addEventListener('click', () => {
+                    abrirModalDetalhesLoja(item.loja, item.nome_oficina, dataInicio, dataFim);
+                });
+
                 tr.innerHTML = `
                     <td><strong>${item.nome_oficina || '-'}</strong></td>
                     <td>${formatarMoeda(item.meta)}</td>
@@ -166,6 +174,106 @@ async function carregarAcompanhamentoMensal(diasUteisTotais = 26, diasUteisDecor
         tabelaCorpo.innerHTML = '<tr><td colspan="12" style="color:red; text-align:center;">Erro de conexão com o servidor.</td></tr>';
     }
 }
+
+// =========================================================================
+// 🏢 FUNÇÃO PARA ABRIR O MODAL DE GRUPOS DE SERVIÇO DA LOJA (COM TOTAIS)
+// =========================================================================
+async function abrirModalDetalhesLoja(codigoLoja, nomeLoja, dataInicioParam, dataFimParam) {
+    const modal = document.getElementById('modalDetalhes');
+    const titulo = document.getElementById('modalTitulo');
+    const corpo = document.getElementById('modalCorpo');
+
+    if (!modal) return;
+
+    modal.style.display = 'flex';
+    if (titulo) titulo.textContent = `Detalhamento por Grupo - ${nomeLoja} (Loja ${codigoLoja})`;
+    if (corpo) corpo.innerHTML = '<div style="text-align:center; padding:20px;">Carregando grupos de serviços...</div>';
+
+    try {
+        const inputDataInicio = document.getElementById('filtro-data-inicio');
+        const inputDataFim = document.getElementById('filtro-data-fim');
+
+        const dataInicio = inputDataInicio ? inputDataInicio.value : dataInicioParam;
+        const dataFim = inputDataFim ? inputDataFim.value : dataFimParam;
+
+        let url = `${API_URL}/oficinas/grupos?codigoLoja=${codigoLoja}`;
+        if (dataInicio && dataFim) {
+            url += `&dataInicio=${dataInicio}&dataFim=${dataFim}`;
+        }
+
+        const response = await fetch(url);
+        const resultado = await response.json();
+
+        if (!resultado.sucesso || !resultado.grupos || resultado.grupos.length === 0) {
+            if (corpo) corpo.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-secondary);">Nenhum grupo de serviço encontrado para este período.</div>';
+            return;
+        }
+
+        const formatarMoeda = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
+
+        let totalServicos = 0;
+        let totalTickets = 0;
+        let totalFaturamento = 0;
+        let totalDesconto = 0;
+
+        let html = `
+            <table style="width:100%;">
+                <thead>
+                    <tr>
+                        <th style="text-align:left;">Grupo</th>
+                        <th>Qtd Serviços</th>
+                        <th>Qtd Tickets</th>
+                        <th>Faturamento (R$)</th>
+                        <th>Desconto (R$)</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        resultado.grupos.forEach(g => {
+            totalServicos += Number(g.fcs_QuantidadeServicos) || 0;
+            totalTickets += Number(g.fcs_QtdTickestPorGrupo) || 0;
+            totalFaturamento += Number(g.fcs_ValorServicoGrupo) || 0;
+            totalDesconto += Number(g.fcs_DescontoServicoGrupo) || 0;
+
+            html += `
+                <tr>
+                    <td style="text-align:left;"><strong>${g.fcs_DescricaoGrupo || 'OUTROS'}</strong></td>
+                    <td>${g.fcs_QuantidadeServicos || 0}</td>
+                    <td>${g.fcs_QtdTickestPorGrupo || 0}</td>
+                    <td class="text-green"><strong>${formatarMoeda(g.fcs_ValorServicoGrupo)}</strong></td>
+                    <td>${formatarMoeda(g.fcs_DescontoServicoGrupo)}</td>
+                </tr>
+            `;
+        });
+
+        // Adiciona a linha de totais gerais ao final da tabela do modal
+        html += `
+                </tbody>
+                <tfoot>
+                    <tr class="row-geral">
+                        <td style="text-align:left;">TOTAL GERAL</td>
+                        <td>${totalServicos}</td>
+                        <td>${totalTickets}</td>
+                        <td class="text-green">${formatarMoeda(totalFaturamento)}</td>
+                        <td>${formatarMoeda(totalDesconto)}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        `;
+
+        if (corpo) corpo.innerHTML = html;
+
+    } catch (error) {
+        console.error('Erro ao carregar grupos da loja:', error);
+        if (corpo) corpo.innerHTML = '<div style="text-align:center; padding:20px; color:var(--danger-color);">Erro ao carregar detalhes dos grupos.</div>';
+    }
+}
+
+window.fecharModal = function() {
+    const modal = document.getElementById('modalDetalhes');
+    if (modal) modal.style.display = 'none';
+};
 
 document.addEventListener('DOMContentLoaded', () => {
     carregarSelectLojas();

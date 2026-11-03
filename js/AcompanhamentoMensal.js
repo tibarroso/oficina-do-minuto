@@ -43,12 +43,12 @@ async function carregarSelectLojas() {
 // =========================================================================
 // 📅 FUNÇÃO PARA CALCULAR DIAS ÚTEIS DE CADA LOJA COM BASE NOS HORÁRIOS E PERÍODO
 // =========================================================================
-function calcularDiasUteisLojaPorPeriodo(dadosLoja, dataInicioStr, dataFimStr) {
+function calcularDiasUteisPorPeriodo(dadosLoja, dataInicioStr, dataFimStr) {
     const abreDomingo = dadosLoja && dadosLoja.abertura_domingo && dadosLoja.abertura_domingo !== "00:00";
 
     const inicio = new Date(dataInicioStr + 'T00:00:00');
     const fim = new Date(dataFimStr + 'T00:00:00');
-    
+
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
 
@@ -59,7 +59,7 @@ function calcularDiasUteisLojaPorPeriodo(dadosLoja, dataInicioStr, dataFimStr) {
     let dataAtualLoop = new Date(inicio);
 
     while (dataAtualLoop <= fim) {
-        const diaDaSemana = dataAtualLoop.getDay(); // 0 = Domingo, 6 = Sábado
+        const diaDaSemana = dataAtualLoop.getDay();
         const ehDomingoSemAbertura = (diaDaSemana === 0 && !abreDomingo);
 
         if (!ehDomingoSemAbertura) {
@@ -138,9 +138,7 @@ async function carregarAcompanhamentoMensal() {
         }
 
         if (periodoInfo) {
-            periodoInfo.innerHTML = `
-                <span>Período: <strong>${dataInicio.split('-').reverse().join('/')} até ${dataFim.split('-').reverse().join('/')}</strong></span>
-            `;
+            periodoInfo.innerHTML = `<span>Período: <strong>${dataInicio.split('-').reverse().join('/')} até ${dataFim.split('-').reverse().join('/')}</strong></span>`;
         }
 
         tabelaCorpo.innerHTML = '';
@@ -158,38 +156,47 @@ async function carregarAcompanhamentoMensal() {
                 const valorAcumulado = item.acumulado !== undefined ? item.acumulado : (item.faturamento_total || item.total_periodo || 0);
 
                 const dadosLoja = item.dados || mapaLojasDados[item.loja] || {};
-                const diasCalculados = calcularDiasUteisLojaPorPeriodo(dadosLoja, dataInicio, dataFim);
-
-                const diasTotais = item.dias_uteis_totais !== undefined ? item.dias_uteis_totais : diasCalculados.total;
-                const diasPassados = item.dias_uteis_decorridos !== undefined ? item.dias_uteis_decorridos : diasCalculados.passados;
-                const diasRestantes = item.dias_uteis_restantes !== undefined ? item.dias_uteis_restantes : diasCalculados.restantes;
+                const calculoDias = calcularDiasUteisPorPeriodo(dadosLoja, dataInicio, dataFim);
+                
+                const diasTotais = item.dias_uteis_totais !== undefined ? item.dias_uteis_totais : calculoDias.total;
+                const diasPassados = item.dias_uteis_decorridos !== undefined ? item.dias_uteis_decorridos : calculoDias.passados;
+                const diasRestantes = item.dias_uteis_restantes !== undefined ? item.dias_uteis_restantes : calculoDias.restantes;
 
                 const tr = document.createElement('tr');
                 tr.className = 'linha-loja';
-                tr.title = 'Dê dois cliques para ver o detalhamento por grupo de serviços';
-
-                // Evento de duplo clique na linha para abrir o modal flutuante
-                tr.addEventListener('dblclick', () => {
-                    abrirModalDetalhesLoja(item.loja, item.nome_oficina, dataInicio, dataFim);
-                });
+                
+                // Armazena dados originais para recálculo dinâmico ao editar os inputs de dias úteis
+                tr.dataset.metaBase = item.meta || 0;
+                tr.dataset.acumulado = valorAcumulado;
 
                 tr.innerHTML = `
-                    <td><strong>${item.nome_oficina || '-'}</strong></td>
-                    <td>${formatarMoeda(item.meta)}</td>
-                    <td class="text-gold"><strong>${formatarNumero(item.percentual_meta)}%</strong></td>
-                    <td>${formatarMoeda(item.falta)}</td>
+                    <td>
+                        <strong style="cursor: pointer; color: var(--accent-gold);" title="Clique para ver os grupos" onclick="abrirModalDetalhesLoja('${item.loja}', '${item.nome_oficina}')">
+                            ${item.nome_oficina || '-'}
+                        </strong>
+                    </td>
+                    <td class="celula-meta">${formatarMoeda(item.meta)}</td>
+                    <td class="text-gold celula-percentual"><strong>${formatarNumero(item.percentual_meta)}%</strong></td>
+                    <td class="celula-falta">${formatarMoeda(item.falta)}</td>
                     <td class="text-green"><strong>${formatarMoeda(valorAcumulado)}</strong></td>
-                    <td><input type="number" class="input-dias-tabela" value="${diasTotais}" data-loja="${item.loja}" data-tipo="totais"></td>
-                    <td><input type="number" class="input-dias-tabela" value="${diasPassados}" data-loja="${item.loja}" data-tipo="passados"></td>
-                    <td><input type="number" class="input-dias-tabela" value="${diasRestantes}" data-loja="${item.loja}" data-tipo="restantes"></td>
-                    <td>${formatarMoeda(item.meta_diaria || 0)}</td>
+                    <td><input type="number" class="input-dias-tabela input-dias-totais" value="${diasTotais}"></td>
+                    <td><input type="number" class="input-dias-tabela input-dias-passados" value="${diasPassados}"></td>
+                    <td><input type="number" class="input-dias-tabela input-dias-restantes" value="${diasRestantes}"></td>
+                    <td class="celula-meta-diaria">${formatarMoeda(item.meta_diaria || 0)}</td>
                     <td>${formatarMoeda(item.media_diaria || 0)}</td>
-                    <td>${formatarMoeda(item.projecao || 0)}</td>
-                    <td>${formatarMoeda(item.meta_diaria_restante || 0)}</td>
+                    <td class="celula-projecao">${formatarMoeda(item.projecao || 0)}</td>
+                    <td class="celula-meta-diaria-restante">${formatarMoeda(item.meta_diaria_restante || 0)}</td>
                     <td>${item.qtd_vendas || 0}</td>
                     <td>${item.total_pecas || 0}</td>
                     <td>${statusBadge}</td>
                 `;
+
+                // Adiciona o evento para recalcular a meta instantaneamente ao editar os dias úteis na linha
+                const inputsDias = tr.querySelectorAll('.input-dias-tabela');
+                inputsDias.forEach(input => {
+                    input.addEventListener('input', () => recalcularLinhaDinamica(tr));
+                });
+
                 tabelaCorpo.appendChild(tr);
             });
         }
@@ -206,7 +213,7 @@ async function carregarAcompanhamentoMensal() {
                 <td>${formatarNumero(g.percentual_meta)}%</td>
                 <td>${formatarMoeda(g.falta_total)}</td>
                 <td>${formatarMoeda(acumuladoGeral)}</td>
-                <td colspan="3" style="text-align: center; font-size: 0.8rem; color: var(--text-secondary);">Individual por Loja</td>
+                <td colspan="3" style="text-align: center; font-size: 0.8rem; color: var(--text-secondary);">Dinâmico por Período</td>
                 <td>${formatarMoeda(g.meta_diaria || 0)}</td>
                 <td>${formatarMoeda(g.media_diaria || 0)}</td>
                 <td>${formatarMoeda(g.projecao || 0)}</td>
@@ -225,9 +232,44 @@ async function carregarAcompanhamentoMensal() {
 }
 
 // =========================================================================
-// 🏢 FUNÇÃO PARA ABRIR O MODAL DE GRUPOS DE SERVIÇO DA LOJA (TELA FLUTUANTE)
+// 🔄 FUNÇÃO DE RECÁLCULO DINÂMICO DA LINHA AO ALTERAR DIAS ÚTEIS
 // =========================================================================
-async function abrirModalDetalhesLoja(codigoLoja, nomeLoja, dataInicioParam, dataFimParam) {
+function recalcularLinhaDinamica(tr) {
+    const inputTotais = tr.querySelector('.input-dias-totais');
+    const inputPassados = tr.querySelector('.input-dias-passados');
+    const inputRestantes = tr.querySelector('.input-dias-restantes');
+
+    const diasTotais = Number(inputTotais ? inputTotais.value : 0) || 0;
+    const diasPassados = Number(inputPassados ? inputPassados.value : 0) || 0;
+    const diasRestantes = Number(inputRestantes ? inputRestantes.value : 0) || 0;
+
+    const metaBaseOriginal = Number(tr.dataset.metaBase) || 0;
+    const acumulado = Number(tr.dataset.acumulado) || 0;
+
+    const metaDiaria = diasTotais > 0 ? (metaBaseOriginal / diasTotais) : 0;
+    const metaAtualizada = metaDiaria * diasTotais;
+    const falta = Math.max(0, metaAtualizada - acumulado);
+    const percentual = metaAtualizada > 0 ? (acumulado / metaAtualizada) * 100 : 0;
+    
+    const mediaDiaria = diasPassados > 0 ? (acumulado / diasPassados) : 0;
+    const projecao = mediaDiaria * diasTotais;
+    const metaDiariaRestante = diasRestantes > 0 ? Math.max(0, (metaAtualizada - acumulado) / diasRestantes) : 0;
+
+    const formatarMoeda = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
+    const formatarNumero = (val) => (Number(val) || 0).toFixed(2);
+
+    tr.querySelector('.celula-meta').textContent = formatarMoeda(metaAtualizada);
+    tr.querySelector('.celula-percentual').innerHTML = `<strong>${formatarNumero(percentual)}%</strong>`;
+    tr.querySelector('.celula-falta').textContent = formatarMoeda(falta);
+    tr.querySelector('.celula-meta-diaria').textContent = formatarMoeda(metaDiaria);
+    tr.querySelector('.celula-projecao').textContent = formatarMoeda(projecao);
+    tr.querySelector('.celula-meta-diaria-restante').textContent = formatarMoeda(metaDiariaRestante);
+}
+
+// =========================================================================
+// 🏢 FUNÇÃO PARA ABRIR O MODAL DE GRUPOS DE SERVIÇO DA LOJA
+// =========================================================================
+window.abrirModalDetalhesLoja = async function(codigoLoja, nomeLoja) {
     const modal = document.getElementById('modalDetalhes');
     const titulo = document.getElementById('modalTitulo');
     const corpo = document.getElementById('modalCorpo');
@@ -242,17 +284,8 @@ async function abrirModalDetalhesLoja(codigoLoja, nomeLoja, dataInicioParam, dat
         const inputDataInicio = document.getElementById('filtro-data-inicio');
         const inputDataFim = document.getElementById('filtro-data-fim');
 
-        let dataInicio = inputDataInicio ? inputDataInicio.value : dataInicioParam;
-        let dataFim = inputDataFim ? inputDataFim.value : dataFimParam;
-
-        if (!dataInicio || !dataFim || dataInicio === 'undefined' || dataFim === 'undefined') {
-            const hoje = new Date();
-            const ano = hoje.getFullYear();
-            const mes = hoje.getMonth();
-
-            dataInicio = new Date(ano, mes, 1).toISOString().split('T')[0];
-            dataFim = new Date(ano, mes + 1, 0).toISOString().split('T')[0];
-        }
+        let dataInicio = inputDataInicio ? inputDataInicio.value : '';
+        let dataFim = inputDataFim ? inputDataFim.value : '';
 
         let url = `${API_URL}/oficinas/grupos?codigoLoja=${codigoLoja}&dataInicio=${dataInicio}&dataFim=${dataFim}`;
 
@@ -315,35 +348,67 @@ async function abrirModalDetalhesLoja(codigoLoja, nomeLoja, dataInicioParam, dat
                 </tfoot>
             </table>
         `;
-
         if (corpo) corpo.innerHTML = html;
 
     } catch (error) {
         console.error('Erro ao carregar grupos da loja:', error);
         if (corpo) corpo.innerHTML = '<div style="text-align:center; padding:20px; color:var(--danger-color);">Erro ao carregar detalhes dos grupos.</div>';
     }
-}
+};
 
 window.fecharModal = function() {
     const modal = document.getElementById('modalDetalhes');
     if (modal) modal.style.display = 'none';
 };
 
+window.dispararFiltroPeriodo = function() {
+    carregarAcompanhamentoMensal();
+};
+
+window.filtrarHoje = function(elementoBtn) {
+    document.querySelectorAll('.btn-acao').forEach(btn => btn.classList.remove('ativo'));
+    if (elementoBtn) elementoBtn.classList.add('ativo');
+
+    const hoje = new Date().toISOString().split('T')[0];
+    document.getElementById('filtro-data-inicio').value = hoje;
+    document.getElementById('filtro-data-fim').value = hoje;
+    carregarAcompanhamentoMensal();
+};
+
+window.filtrarMesAtual = function(elementoBtn) {
+    document.querySelectorAll('.btn-acao').forEach(btn => btn.classList.remove('ativo'));
+    if (elementoBtn) elementoBtn.classList.add('ativo');
+
+    const d = new Date();
+    const primeiroDia = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
+    const ultimoDia = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0];
+
+    document.getElementById('filtro-data-inicio').value = primeiroDia;
+    document.getElementById('filtro-data-fim').value = ultimoDia;
+    carregarAcompanhamentoMensal();
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     carregarSelectLojas();
+
+    const btnMesAtual = document.getElementById('btn-mes-atual');
+    const inputInicio = document.getElementById('filtro-data-inicio');
+    const inputFim = document.getElementById('filtro-data-fim');
+
+    const d = new Date();
+    const primeiroDia = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
+    const ultimoDia = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0];
+
+    if (inputInicio && !inputInicio.value) inputInicio.value = primeiroDia;
+    if (inputFim && !inputFim.value) inputFim.value = ultimoDia;
+    if (btnMesAtual) btnMesAtual.classList.add('ativo');
 
     if (document.getElementById('tabelaCorpo')) {
         carregarAcompanhamentoMensal();
         setInterval(carregarAcompanhamentoMensal, 60000); 
     }
 
-    const btnFiltrarPeriodo = document.getElementById('btn-filtrar-periodo');
-    if (btnFiltrarPeriodo) {
-        btnFiltrarPeriodo.addEventListener('click', () => {
-            carregarAcompanhamentoMensal();
-        });
-    }
-
+    // Gerenciamento de busca de clientes/tickets (caso o arquivo compartilhe a mesma tela de pesquisa)
     const inputTelefone = document.getElementById('filtro-telefone');
     const inputNome = document.getElementById('filtro-nome');
     const inputCodigo = document.getElementById('filtro-codigo');

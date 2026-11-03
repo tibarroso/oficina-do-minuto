@@ -41,70 +41,105 @@ async function carregarSelectLojas() {
 }
 
 // =========================================================================
+// 📅 FUNÇÃO PARA CALCULAR DIAS ÚTEIS DE CADA LOJA COM BASE NOS HORÁRIOS E PERÍODO
+// =========================================================================
+function calcularDiasUteisLojaPorPeriodo(dadosLoja, dataInicioStr, dataFimStr) {
+    const abreDomingo = dadosLoja && dadosLoja.abertura_domingo && dadosLoja.abertura_domingo !== "00:00";
+
+    const inicio = new Date(dataInicioStr + 'T00:00:00');
+    const fim = new Date(dataFimStr + 'T00:00:00');
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    let total = 0;
+    let passados = 0;
+    let restantes = 0;
+
+    let dataAtualLoop = new Date(inicio);
+
+    while (dataAtualLoop <= fim) {
+        const diaDaSemana = dataAtualLoop.getDay(); // 0 = Domingo, 6 = Sábado
+
+        // Se for domingo e a loja não abre, pula
+        const ehDomingoSemAbertura = (diaDaSemana === 0 && !abreDomingo);
+
+        if (!ehDomingoSemAbertura) {
+            total++;
+
+            if (dataAtualLoop < hoje) {
+                passados++;
+            } else {
+                restantes++;
+            }
+        }
+
+        dataAtualLoop.setDate(dataAtualLoop.getDate() + 1);
+    }
+
+    if (restantes < 0) restantes = 0;
+    if (passados > total) passados = total;
+
+    return { total, passados, restantes };
+}
+
+// =========================================================================
 // 📊 FUNÇÃO PARA CARREGAR O RELATÓRIO DE DESEMPENHO (MÊS OU PERÍODO)
 // =========================================================================
-async function carregarAcompanhamentoMensal(diasUteisTotais = 26, diasUteisDecorridos = 24, diasUteisRestantes = 2) {
+async function carregarAcompanhamentoMensal() {
     const tabelaCorpo = document.getElementById('tabelaCorpo');
     const periodoInfo = document.getElementById('periodoInfo');
 
     if (!tabelaCorpo) return;
 
-    // Verifica se existem inputs de data na tela para busca por período personalizado
     const inputDataInicio = document.getElementById('filtro-data-inicio');
     const inputDataFim = document.getElementById('filtro-data-fim');
     
-    const dataInicio = inputDataInicio ? inputDataInicio.value : '';
-    const dataFim = inputDataFim ? inputDataFim.value : '';
+    let dataInicio = inputDataInicio ? inputDataInicio.value : '';
+    let dataFim = inputDataFim ? inputDataFim.value : '';
+
+    // Se as datas estiverem vazias, define o mês atual por padrão
+    if (!dataInicio || !dataFim) {
+        const d = new Date();
+        const ano = d.getFullYear();
+        const mes = d.getMonth();
+        dataInicio = new Date(ano, mes, 1).toISOString().split('T')[0];
+        dataFim = new Date(ano, mes + 1, 0).toISOString().split('T')[0];
+
+        if (inputDataInicio) inputDataInicio.value = dataInicio;
+        if (inputDataFim) inputDataFim.value = dataFim;
+    }
 
     try {
-        tabelaCorpo.innerHTML = '<tr><td colspan="12" style="text-align:center; padding:20px;">Carregando dados mensais...</td></tr>';
+        tabelaCorpo.innerHTML = '<tr><td colspan="15" style="text-align:center; padding:20px;">Carregando dados mensais...</td></tr>';
 
-        let url = '';
-        
-        // Se o usuário preencheu datas, consome a nova rota de faturamento por período
-        if (dataInicio && dataFim) {
-            url = `${API_URL}/oficinas/faturamento-periodo?dataInicio=${dataInicio}&dataFim=${dataFim}`;
-        } else {
-            // Caso contrário, usa a rota padrão do mês corrente
-            url = `${API_URL}/oficinas/mes?diasUteisTotais=${diasUteisTotais}&diasUteisDecorridos=${diasUteisDecorridos}&diasUteisRestantes=${diasUteisRestantes}`;
+        const [respDesempenho, respLojas] = await Promise.all([
+            fetch(`${API_URL}/oficinas/faturamento-periodo?dataInicio=${dataInicio}&dataFim=${dataFim}`),
+            fetch(`${API_URL}/lojas/lista`).catch(() => null)
+        ]);
+
+        if (!respDesempenho.ok) throw new Error(`Status ${respDesempenho.status}`);
+
+        const data = await respDesempenho.json();
+        let mapaLojasDados = {};
+
+        if (respLojas) {
+            const resLojasJson = await respLojas.json();
+            if (resLojasJson.sucesso && resLojasJson.lojas) {
+                resLojasJson.lojas.forEach(l => {
+                    mapaLojasDados[l.loja] = l.dados;
+                });
+            }
         }
-
-        const response = await fetch(url);
-
-        if (!response.ok) {
-            throw new Error(`Status ${response.status}`);
-        }
-
-        const data = await response.json();
 
         if (!data.sucesso) {
-            tabelaCorpo.innerHTML = '<tr><td colspan="12" style="color:red; text-align:center;">Falha ao carregar relatório.</td></tr>';
+            tabelaCorpo.innerHTML = '<tr><td colspan="15" style="color:red; text-align:center;">Falha ao carregar relatório.</td></tr>';
             return;
         }
 
-        // Atualiza cabeçalho do período
         if (periodoInfo) {
-            if (dataInicio && dataFim) {
-                periodoInfo.innerHTML = `
-                    <span>Período Personalizado: <strong>${dataInicio} até ${dataFim}</strong></span>
-                `;
-            } else if (data.periodo) {
-                const p = data.periodo;
-                let refMes = p.referencia;
-                if (!refMes) {
-                    const d = new Date();
-                    const ultDia = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-                    const mesExtenso = d.toLocaleDateString('pt-BR', { month: 'long' }).toUpperCase();
-                    refMes = `${mesExtenso} ${d.getFullYear()} (01 À ${ultDia})`;
-                }
-
-                periodoInfo.innerHTML = `
-                    <span>Período: <strong>${refMes}</strong></span>
-                    <span>Dias Úteis Totais: <strong>${p.dias_uteis_totais || 0}</strong></span>
-                    <span>Decorridos: <strong>${p.dias_uteis_decorridos || 0}</strong></span>
-                    <span>Restantes: <strong>${p.dias_uteis_restantes || 0}</strong></span>
-                `;
-            }
+            periodoInfo.innerHTML = `
+                <span>Período: <strong>${dataInicio.split('-').reverse().join('/')} até ${dataFim.split('-').reverse().join('/')}</strong></span>
+            `;
         }
 
         tabelaCorpo.innerHTML = '';
@@ -112,7 +147,6 @@ async function carregarAcompanhamentoMensal(diasUteisTotais = 26, diasUteisDecor
         const formatarMoeda = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
         const formatarNumero = (val) => (Number(val) || 0).toFixed(2);
 
-        // Renderiza linhas de cada oficina
         if (data.oficinas && Array.isArray(data.oficinas)) {
             data.oficinas.forEach(item => {
                 const isOffline = item.status === 'Offline';
@@ -120,11 +154,19 @@ async function carregarAcompanhamentoMensal(diasUteisTotais = 26, diasUteisDecor
                     ? `<span class="badge-status badge-offline">Offline</span>`
                     : `<span class="badge-status badge-online">Online</span>`;
 
+                const valorAcumulado = item.acumulado !== undefined ? item.acumulado : (item.faturamento_total || item.total_periodo || 0);
+
+                const dadosLoja = item.dados || mapaLojasDados[item.loja] || {};
+                const diasCalculados = calcularDiasUteisLojaPorPeriodo(dadosLoja, dataInicio, dataFim);
+
+                const diasTotais = item.dias_uteis_totais !== undefined ? item.dias_uteis_totais : diasCalculados.total;
+                const diasPassados = item.dias_uteis_decorridos !== undefined ? item.dias_uteis_decorridos : diasCalculados.passados;
+                const diasRestantes = item.dias_uteis_restantes !== undefined ? item.dias_uteis_restantes : diasCalculados.restantes;
+
                 const tr = document.createElement('tr');
                 tr.className = 'linha-loja';
                 tr.title = 'Clique para ver o detalhamento por grupo de serviços';
 
-                // Evento de clique para abrir o modal de detalhes por grupo de serviços da loja
                 tr.addEventListener('click', () => {
                     abrirModalDetalhesLoja(item.loja, item.nome_oficina, dataInicio, dataFim);
                 });
@@ -134,7 +176,10 @@ async function carregarAcompanhamentoMensal(diasUteisTotais = 26, diasUteisDecor
                     <td>${formatarMoeda(item.meta)}</td>
                     <td class="text-gold"><strong>${formatarNumero(item.percentual_meta)}%</strong></td>
                     <td>${formatarMoeda(item.falta)}</td>
-                    <td class="text-green"><strong>${formatarMoeda(item.acumulado)}</strong></td>
+                    <td class="text-green"><strong>${formatarMoeda(valorAcumulado)}</strong></td>
+                    <td><input type="number" class="input-dias-tabela" value="${diasTotais}" data-loja="${item.loja}" data-tipo="totais"></td>
+                    <td><input type="number" class="input-dias-tabela" value="${diasPassados}" data-loja="${item.loja}" data-tipo="passados"></td>
+                    <td><input type="number" class="input-dias-tabela" value="${diasRestantes}" data-loja="${item.loja}" data-tipo="restantes"></td>
                     <td>${formatarMoeda(item.meta_diaria || 0)}</td>
                     <td>${formatarMoeda(item.media_diaria || 0)}</td>
                     <td>${formatarMoeda(item.projecao || 0)}</td>
@@ -147,9 +192,10 @@ async function carregarAcompanhamentoMensal(diasUteisTotais = 26, diasUteisDecor
             });
         }
 
-        // Linha Consolidada GERAL
         if (data.geral) {
             const g = data.geral;
+            const acumuladoGeral = g.acumulado_total !== undefined ? g.acumulado_total : (g.faturamento_total || g.total_periodo || 0);
+
             const trGeral = document.createElement('tr');
             trGeral.className = 'row-geral';
             trGeral.innerHTML = `
@@ -157,7 +203,8 @@ async function carregarAcompanhamentoMensal(diasUteisTotais = 26, diasUteisDecor
                 <td>${formatarMoeda(g.meta_total)}</td>
                 <td>${formatarNumero(g.percentual_meta)}%</td>
                 <td>${formatarMoeda(g.falta_total)}</td>
-                <td>${formatarMoeda(g.acumulado_total)}</td>
+                <td>${formatarMoeda(acumuladoGeral)}</td>
+                <td colspan="3" style="text-align: center; font-size: 0.8rem; color: var(--text-secondary);">Individual por Loja</td>
                 <td>${formatarMoeda(g.meta_diaria || 0)}</td>
                 <td>${formatarMoeda(g.media_diaria || 0)}</td>
                 <td>${formatarMoeda(g.projecao || 0)}</td>
@@ -171,12 +218,12 @@ async function carregarAcompanhamentoMensal(diasUteisTotais = 26, diasUteisDecor
 
     } catch (error) {
         console.error('❌ Erro ao carregar acompanhamento mensal:', error);
-        tabelaCorpo.innerHTML = '<tr><td colspan="12" style="color:red; text-align:center;">Erro de conexão com o servidor.</td></tr>';
+        tabelaCorpo.innerHTML = '<tr><td colspan="15" style="color:red; text-align:center;">Erro de conexão com o servidor.</td></tr>';
     }
 }
 
 // =========================================================================
-// 🏢 FUNÇÃO PARA ABRIR O MODAL DE GRUPOS DE SERVIÇO DA LOJA (COM TOTAIS E VALIDAÇÃO)
+// 🏢 FUNÇÃO PARA ABRIR O MODAL DE GRUPOS DE SERVIÇO DA LOJA
 // =========================================================================
 async function abrirModalDetalhesLoja(codigoLoja, nomeLoja, dataInicioParam, dataFimParam) {
     const modal = document.getElementById('modalDetalhes');
@@ -190,14 +237,12 @@ async function abrirModalDetalhesLoja(codigoLoja, nomeLoja, dataInicioParam, dat
     if (corpo) corpo.innerHTML = '<div style="text-align:center; padding:20px;">Carregando grupos de serviços...</div>';
 
     try {
-        // Tenta pegar dos inputs da tela
         const inputDataInicio = document.getElementById('filtro-data-inicio');
         const inputDataFim = document.getElementById('filtro-data-fim');
 
         let dataInicio = inputDataInicio ? inputDataInicio.value : dataInicioParam;
         let dataFim = inputDataFim ? inputDataFim.value : dataFimParam;
 
-        // Se ainda assim vierem vazios ou 'undefined', define o mês corrente como padrão
         if (!dataInicio || !dataFim || dataInicio === 'undefined' || dataFim === 'undefined') {
             const hoje = new Date();
             const ano = hoje.getFullYear();
@@ -255,7 +300,6 @@ async function abrirModalDetalhesLoja(codigoLoja, nomeLoja, dataInicioParam, dat
             `;
         });
 
-        // Adiciona a linha de totais gerais ao final da tabela do modal
         html += `
                 </tbody>
                 <tfoot>
@@ -272,12 +316,11 @@ async function abrirModalDetalhesLoja(codigoLoja, nomeLoja, dataInicioParam, dat
 
         if (corpo) corpo.innerHTML = html;
 
-     } catch (error) {
+    } catch (error) {
         console.error('Erro ao carregar grupos da loja:', error);
         if (corpo) corpo.innerHTML = '<div style="text-align:center; padding:20px; color:var(--danger-color);">Erro ao carregar detalhes dos grupos.</div>';
     }
 }
-
 
 window.fecharModal = function() {
     const modal = document.getElementById('modalDetalhes');
@@ -292,7 +335,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setInterval(carregarAcompanhamentoMensal, 60000); 
     }
 
-    // Botão opcional para filtrar por período caso exista no HTML
     const btnFiltrarPeriodo = document.getElementById('btn-filtrar-periodo');
     if (btnFiltrarPeriodo) {
         btnFiltrarPeriodo.addEventListener('click', () => {

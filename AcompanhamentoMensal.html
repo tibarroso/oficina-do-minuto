@@ -324,7 +324,6 @@
         ? 'http://10.86.1.120:3000'
         : '';
 
-    // Função para calcular os dias úteis com base no período selecionado e na abertura de domingo
     function calcularDiasUteisPorPeriodo(dadosLoja, dataInicioStr, dataFimStr) {
         const abreDomingo = dadosLoja && dadosLoja.abertura_domingo && dadosLoja.abertura_domingo !== "00:00";
 
@@ -341,7 +340,7 @@
         let dataAtualLoop = new Date(inicio);
 
         while (dataAtualLoop <= fim) {
-            const diaDaSemana = dataAtualLoop.getDay(); // 0 = Domingo, 6 = Sábado
+            const diaDaSemana = dataAtualLoop.getDay();
             const ehDomingoSemAbertura = (diaDaSemana === 0 && !abreDomingo);
 
             if (!ehDomingoSemAbertura) {
@@ -432,6 +431,9 @@
 
                     const tr = document.createElement('tr');
                     tr.className = 'linha-loja';
+                    // Armazena a meta base original para recálculos dinâmicos
+                    tr.dataset.metaBase = item.meta || 0;
+                    tr.dataset.acumulado = valorAcumulado;
 
                     tr.innerHTML = `
                         <td>
@@ -439,21 +441,28 @@
                                 ${item.nome_oficina || '-'}
                             </strong>
                         </td>
-                        <td>${formatarMoeda(item.meta)}</td>
-                        <td class="text-gold"><strong>${formatarNumero(item.percentual_meta)}%</strong></td>
-                        <td>${formatarMoeda(item.falta)}</td>
+                        <td class="celula-meta">${formatarMoeda(item.meta)}</td>
+                        <td class="text-gold celula-percentual"><strong>${formatarNumero(item.percentual_meta)}%</strong></td>
+                        <td class="celula-falta">${formatarMoeda(item.falta)}</td>
                         <td class="text-green"><strong>${formatarMoeda(valorAcumulado)}</strong></td>
-                        <td><input type="number" class="input-dias-tabela" value="${diasTotais}" data-loja="${item.loja}" data-tipo="totais"></td>
-                        <td><input type="number" class="input-dias-tabela" value="${diasPassados}" data-loja="${item.loja}" data-tipo="passados"></td>
-                        <td><input type="number" class="input-dias-tabela" value="${diasRestantes}" data-loja="${item.loja}" data-tipo="restantes"></td>
-                        <td>${formatarMoeda(item.meta_diaria || 0)}</td>
+                        <td><input type="number" class="input-dias-tabela input-dias-totais" value="${diasTotais}"></td>
+                        <td><input type="number" class="input-dias-tabela input-dias-passados" value="${diasPassados}"></td>
+                        <td><input type="number" class="input-dias-tabela input-dias-restantes" value="${diasRestantes}"></td>
+                        <td class="celula-meta-diaria">${formatarMoeda(item.meta_diaria || 0)}</td>
                         <td>${formatarMoeda(item.media_diaria || 0)}</td>
-                        <td>${formatarMoeda(item.projecao || 0)}</td>
-                        <td>${formatarMoeda(item.meta_diaria_restante || 0)}</td>
+                        <td class="celula-projecao">${formatarMoeda(item.projecao || 0)}</td>
+                        <td class="celula-meta-diaria-restante">${formatarMoeda(item.meta_diaria_restante || 0)}</td>
                         <td>${item.qtd_vendas || 0}</td>
                         <td>${item.total_pecas || 0}</td>
                         <td>${statusBadge}</td>
                     `;
+                    
+                    // Adiciona evento de escuta para recalcular quando o usuário alterar os dias úteis na tabela
+                    const inputsDias = tr.querySelectorAll('.input-dias-tabela');
+                    inputsDias.forEach(input => {
+                        input.addEventListener('input', () => recalcularLinhaDinamica(tr));
+                    });
+
                     tabelaCorpo.appendChild(tr);
                 });
             }
@@ -486,6 +495,47 @@
             console.error('❌ Erro ao carregar acompanhamento mensal:', error);
             tabelaCorpo.innerHTML = '<tr><td colspan="15" style="color:red; text-align:center;">Erro de conexão com o servidor.</td></tr>';
         }
+    }
+
+    // Função para recalcular os valores da linha instantaneamente ao alterar os dias úteis
+    function recalcularLinhaDinamica(tr) {
+        const inputTotais = tr.querySelector('.input-dias-totais');
+        const inputPassados = tr.querySelector('.input-dias-passados');
+        const inputRestantes = tr.querySelector('.input-dias-restantes');
+
+        const diasTotais = Number(inputTotais ? inputTotais.value : 0) || 0;
+        const diasPassados = Number(inputPassados ? inputPassados.value : 0) || 0;
+        const diasRestantes = Number(inputRestantes ? inputRestantes.value : 0) || 0;
+
+        const metaBaseOriginal = Number(tr.dataset.metaBase) || 0;
+        const acumulado = Number(tr.dataset.acumulado) || 0;
+
+        // Se sua regra for ajustar a meta proporcionalmente aos dias úteis alterados:
+        // (Exemplo: Se a meta era baseada em X dias e mudou para Y dias, ajusta a meta proporcionalmente, ou mantém se preferir)
+        // Aqui recalculamos a meta diária e metas restantes com base nos novos dias informados:
+        
+        const metaDiaria = diasTotais > 0 ? (metaBaseOriginal / diasTotais) : 0;
+        const metaAtualizada = metaDiaria * diasTotais;
+        const falta = Math.max(0, metaAtualizada - acumulado);
+        const percentual = metaAtualizada > 0 ? (acumulado / metaAtualizada) * 100 : 0;
+        
+        // Média diária baseada nos dias passados
+        const mediaDiaria = diasPassados > 0 ? (acumulado / diasPassados) : 0;
+        const projecao = mediaDiaria * diasTotais;
+
+        // Meta diária restante baseada nos dias restantes
+        const metaDiariaRestante = diasRestantes > 0 ? Math.max(0, (metaAtualizada - acumulado) / diasRestantes) : 0;
+
+        const formatarMoeda = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
+        const formatarNumero = (val) => (Number(val) || 0).toFixed(2);
+
+        // Atualiza os campos visuais na linha
+        tr.querySelector('.celula-meta').textContent = formatarMoeda(metaAtualizada);
+        tr.querySelector('.celula-percentual').innerHTML = `<strong>${formatarNumero(percentual)}%</strong>`;
+        tr.querySelector('.celula-falta').textContent = formatarMoeda(falta);
+        tr.querySelector('.celula-meta-diaria').textContent = formatarMoeda(metaDiaria);
+        tr.querySelector('.celula-projecao').textContent = formatarMoeda(projecao);
+        tr.querySelector('.celula-meta-diaria-restante').textContent = formatarMoeda(metaDiariaRestante);
     }
 
     window.abrirModalDetalhesLoja = async function(codigoLoja, nomeLoja) {
@@ -651,7 +701,7 @@
         <button class="btn-acao" id="btn-mes-atual" onclick="filtrarMesAtual(this)">Mês Atual</button>
     </div>
 
-    <p class="instrucao-clique">💡 Dica: Clique no nome da loja para ver o detalhamento por grupo de serviços. Os dias úteis respeitam perfeitamente o intervalo de datas selecionado.</p>
+    <p class="instrucao-clique">💡 Dica: Clique no nome da loja para ver o detalhamento por grupo de serviços. Altere os dias úteis na tabela para recalcular as metas e projeções instantaneamente.</p>
 
     <div class="card-table">
         <table>

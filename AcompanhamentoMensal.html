@@ -324,38 +324,33 @@
         ? 'http://10.86.1.120:3000'
         : '';
 
-    // Função para calcular automaticamente os dias úteis do mês com base na regra de funcionamento da loja
-    function calcularDiasUteisLoja(dadosLoja) {
-        const hoje = new Date();
-        const ano = hoje.getFullYear();
-        const mes = hoje.getMonth(); // 0 a 11
-        const diaAtual = hoje.getDate();
-
+    // Função para calcular os dias úteis com base no período selecionado (Data Início e Data Fim)
+    function calcularDiasUteisPorPeriodo(dadosLoja, dataInicioStr, dataFimStr) {
         const abreDomingo = dadosLoja && dadosLoja.abertura_domingo && dadosLoja.abertura_domingo !== "00:00";
 
+        const inicio = new Date(dataInicioStr + 'T00:00:00');
+        const fim = new Date(dataFimStr + 'T00:00:00');
+
         let total = 0;
-        let passados = 0;
-        let restantes = 0;
+        let passados = 0; // Neste contexto de período fechado, todos os dias úteis do intervalo entram como "contabilizados/passados" do filtro
 
-        const ultimoDiaDoMes = new Date(ano, mes + 1, 0).getDate();
+        let dataAtualLoop = new Date(inicio);
 
-        for (let d = 1; d <= ultimoDiaDoMes; d++) {
-            const dataAtualLoop = new Date(ano, mes, d);
+        while (dataAtualLoop <= fim) {
             const diaDaSemana = dataAtualLoop.getDay(); // 0 = Domingo, 6 = Sábado
 
             // Se for domingo e a loja não abre, pula
-            if (diaDaSemana === 0 && !abreDomingo) {
-                continue;
+            if (!(diaDaSemana === 0 && !abreDomingo)) {
+                total++;
             }
 
-            total++;
-
-            if (d < diaAtual) {
-                passados++;
-            } else {
-                restantes++;
-            }
+            // Avança 1 dia
+            dataAtualLoop.setDate(dataAtualLoop.getDate() + 1);
         }
+
+        // Se o usuário selecionou o mês inteiro, passados = total e restantes = 0 (pois o período já encerrou em 31/10)
+        passados = total;
+        let restantes = 0;
 
         return { total, passados, restantes };
     }
@@ -394,9 +389,7 @@
             }
 
             if (periodoInfo) {
-                const d = new Date();
-                const mesExtenso = d.toLocaleDateString('pt-BR', { month: 'long' }).toUpperCase();
-                periodoInfo.innerHTML = `<span>Período de Acompanhamento: <strong>${mesExtenso} ${d.getFullYear()}</strong> (Dias Úteis Calculados Automaticamente por Loja)</span>`;
+                periodoInfo.innerHTML = `<span>Período Selecionado: <strong>${dataInicio.split('-').reverse().join('/')} até ${dataFim.split('-').reverse().join('/')}</strong></span>`;
             }
 
             tabelaCorpo.innerHTML = '';
@@ -413,8 +406,8 @@
 
                     const valorAcumulado = item.acumulado !== undefined ? item.acumulado : (item.faturamento_total || item.total_periodo || 0);
 
-                    // Calcula automaticamente com base nos dados da rota /lojas/lista (ou nos dados que venham na própria oficina)
-                    const calculoDias = calcularDiasUteisLoja(item.dados);
+                    // Calcula com base no intervalo de datas escolhido nos filtros
+                    const calculoDias = calcularDiasUteisPorPeriodo(item.dados, dataInicio, dataFim);
                     const diasTotais = item.dias_uteis_totais !== undefined ? item.dias_uteis_totais : calculoDias.total;
                     const diasPassados = item.dias_uteis_decorridos !== undefined ? item.dias_uteis_decorridos : calculoDias.passados;
                     const diasRestantes = item.dias_uteis_restantes !== undefined ? item.dias_uteis_restantes : calculoDias.restantes;
@@ -459,7 +452,7 @@
                     <td>${formatarNumero(g.percentual_meta)}%</td>
                     <td>${formatarMoeda(g.falta_total)}</td>
                     <td>${formatarMoeda(acumuladoGeral)}</td>
-                    <td colspan="3" style="text-align: center; font-size: 0.8rem; color: var(--text-secondary);">Dinâmico por Loja</td>
+                    <td colspan="3" style="text-align: center; font-size: 0.8rem; color: var(--text-secondary);">Dinâmico por Período</td>
                     <td>${formatarMoeda(g.meta_diaria || 0)}</td>
                     <td>${formatarMoeda(g.media_diaria || 0)}</td>
                     <td>${formatarMoeda(g.projecao || 0)}</td>
@@ -494,12 +487,6 @@
 
             let dataInicio = inputDataInicio ? inputDataInicio.value : '';
             let dataFim = inputDataFim ? inputDataFim.value : '';
-
-            if (!dataInicio || !dataFim) {
-                const d = new Date();
-                dataInicio = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
-                dataFim = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0];
-            }
 
             let url = `${API_URL}/oficinas/grupos?codigoLoja=${codigoLoja}&dataInicio=${dataInicio}&dataFim=${dataFim}`;
 
@@ -646,7 +633,7 @@
         <button class="btn-acao" id="btn-mes-atual" onclick="filtrarMesAtual(this)">Mês Atual</button>
     </div>
 
-    <p class="instrucao-clique">💡 Dica: Clique no nome da loja para ver o detalhamento por grupo de serviços. Os dias úteis, passados e restantes são calculados automaticamente com base no horário de domingo de cada unidade, mas podem ser ajustados manualmente se necessário.</p>
+    <p class="instrucao-clique">💡 Dica: Clique no nome da loja para ver o detalhamento por grupo de serviços. Os dias úteis respeitam perfeitamente o intervalo de datas selecionado.</p>
 
     <div class="card-table">
         <table>

@@ -165,8 +165,9 @@ async function carregarAcompanhamentoMensal() {
                 const tr = document.createElement('tr');
                 tr.className = 'linha-loja';
                 
-                // Armazena dados originais para recálculo dinâmico ao editar os inputs de dias úteis
-                tr.dataset.metaBase = item.meta || 0;
+                // Salva a Meta original e os dias úteis originais para o recálculo proporcional
+                tr.dataset.metaOriginal = item.meta || 0;
+                tr.dataset.diasUteisOriginais = diasTotais > 0 ? diasTotais : 1;
                 tr.dataset.acumulado = valorAcumulado;
 
                 tr.innerHTML = `
@@ -182,19 +183,19 @@ async function carregarAcompanhamentoMensal() {
                     <td><input type="number" class="input-dias-tabela input-dias-totais" value="${diasTotais}"></td>
                     <td><input type="number" class="input-dias-tabela input-dias-passados" value="${diasPassados}"></td>
                     <td><input type="number" class="input-dias-tabela input-dias-restantes" value="${diasRestantes}"></td>
-                    <td class="celula-meta-diaria">${formatarMoeda(item.meta_diaria || 0)}</td>
+                    <td>${formatarMoeda(item.meta_diaria || 0)}</td>
                     <td>${formatarMoeda(item.media_diaria || 0)}</td>
                     <td class="celula-projecao">${formatarMoeda(item.projecao || 0)}</td>
-                    <td class="celula-meta-diaria-restante">${formatarMoeda(item.meta_diaria_restante || 0)}</td>
+                    <td>${formatarMoeda(item.meta_diaria_restante || 0)}</td>
                     <td>${item.qtd_vendas || 0}</td>
                     <td>${item.total_pecas || 0}</td>
                     <td>${statusBadge}</td>
                 `;
 
-                // Adiciona o evento para recalcular a meta instantaneamente ao editar os dias úteis na linha
+                // Dispara o recálculo da Meta do Mês ao alterar qualquer campo de dias úteis
                 const inputsDias = tr.querySelectorAll('.input-dias-tabela');
                 inputsDias.forEach(input => {
-                    input.addEventListener('input', () => recalcularLinhaDinamica(tr));
+                    input.addEventListener('input', () => recalcularMetaMesDinamica(tr));
                 });
 
                 tabelaCorpo.appendChild(tr);
@@ -232,38 +233,39 @@ async function carregarAcompanhamentoMensal() {
 }
 
 // =========================================================================
-// 🔄 FUNÇÃO DE RECÁLCULO DINÂMICO DA LINHA AO ALTERAR DIAS ÚTEIS
+// 🔄 FUNÇÃO PARA RECALCULAR A META DO MÊS PROPORCIONALMENTE AOS DIAS ÚTEIS
 // =========================================================================
-function recalcularLinhaDinamica(tr) {
+function recalcularMetaMesDinamica(tr) {
     const inputTotais = tr.querySelector('.input-dias-totais');
     const inputPassados = tr.querySelector('.input-dias-passados');
-    const inputRestantes = tr.querySelector('.input-dias-restantes');
 
-    const diasTotais = Number(inputTotais ? inputTotais.value : 0) || 0;
+    const novosDiasTotais = Number(inputTotais ? inputTotais.value : 0) || 0;
     const diasPassados = Number(inputPassados ? inputPassados.value : 0) || 0;
-    const diasRestantes = Number(inputRestantes ? inputRestantes.value : 0) || 0;
 
-    const metaBaseOriginal = Number(tr.dataset.metaBase) || 0;
+    const metaOriginal = Number(tr.dataset.metaOriginal) || 0;
+    const diasOriginais = Number(tr.dataset.diasUteisOriginais) || 1;
     const acumulado = Number(tr.dataset.acumulado) || 0;
 
-    const metaDiaria = diasTotais > 0 ? (metaBaseOriginal / diasTotais) : 0;
-    const metaAtualizada = metaDiaria * diasTotais;
-    const falta = Math.max(0, metaAtualizada - acumulado);
-    const percentual = metaAtualizada > 0 ? (acumulado / metaAtualizada) * 100 : 0;
-    
+    // Calcula o valor da meta por dia útil original e aplica aos novos dias úteis totais
+    const valorMetaPorDia = metaOriginal / diasOriginais;
+    const novaMetaMes = valorMetaPorDia * novosDiasTotais;
+
+    // Recalcula Falta e % com base na nova Meta do Mês
+    const novaFalta = Math.max(0, novaMetaMes - acumulado);
+    const novoPercentual = novaMetaMes > 0 ? (acumulado / novaMetaMes) * 100 : 0;
+
+    // Recalcula projeção com base nos dias passados
     const mediaDiaria = diasPassados > 0 ? (acumulado / diasPassados) : 0;
-    const projecao = mediaDiaria * diasTotais;
-    const metaDiariaRestante = diasRestantes > 0 ? Math.max(0, (metaAtualizada - acumulado) / diasRestantes) : 0;
+    const novaProjecao = mediaDiaria * novosDiasTotais;
 
     const formatarMoeda = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
     const formatarNumero = (val) => (Number(val) || 0).toFixed(2);
 
-    tr.querySelector('.celula-meta').textContent = formatarMoeda(metaAtualizada);
-    tr.querySelector('.celula-percentual').innerHTML = `<strong>${formatarNumero(percentual)}%</strong>`;
-    tr.querySelector('.celula-falta').textContent = formatarMoeda(falta);
-    tr.querySelector('.celula-meta-diaria').textContent = formatarMoeda(metaDiaria);
-    tr.querySelector('.celula-projecao').textContent = formatarMoeda(projecao);
-    tr.querySelector('.celula-meta-diaria-restante').textContent = formatarMoeda(metaDiariaRestante);
+    // Atualiza visualmente na linha apenas a Meta, Falta, % e Projeção
+    tr.querySelector('.celula-meta').textContent = formatarMoeda(novaMetaMes);
+    tr.querySelector('.celula-percentual').innerHTML = `<strong>${formatarNumero(novoPercentual)}%</strong>`;
+    tr.querySelector('.celula-falta').textContent = formatarMoeda(novaFalta);
+    tr.querySelector('.celula-projecao').textContent = formatarMoeda(novaProjecao);
 }
 
 // =========================================================================

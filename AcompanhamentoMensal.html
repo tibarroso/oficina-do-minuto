@@ -31,7 +31,7 @@
         }
 
         .container {
-            max-width: 1650px;
+            max-width: 1700px;
             margin: 0 auto;
         }
 
@@ -128,13 +128,6 @@
             font-size: 0.9rem;
         }
 
-        .filter-group input.input-dias {
-            width: 90px;
-            text-align: center;
-            font-weight: bold;
-            color: var(--accent-gold);
-        }
-
         .btn-filtrar {
             background-color: var(--accent-gold);
             color: #121214;
@@ -209,11 +202,10 @@
         tr:nth-child(even) { background-color: rgba(255, 255, 255, 0.02); }
         
         .linha-loja {
-            cursor: pointer;
             transition: background-color 0.15s;
         }
         .linha-loja:hover {
-            background-color: rgba(229, 184, 0, 0.08) !important;
+            background-color: rgba(229, 184, 0, 0.04) !important;
         }
 
         .row-geral {
@@ -224,6 +216,22 @@
         }
 
         .row-geral td { color: var(--accent-gold); }
+
+        .input-dias-tabela {
+            width: 65px;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            text-align: center;
+            padding: 4px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+        .input-dias-tabela:focus {
+            border-color: var(--accent-gold);
+            outline: none;
+        }
 
         .badge-status {
             padding: 3px 8px;
@@ -325,33 +333,6 @@
         return dataStr;
     }
 
-    async function carregarSelectLojas() {
-        const selectLoja = document.getElementById("select-loja");
-        if (!selectLoja) return;
-
-        try {
-            selectLoja.innerHTML = '<option value="">Carregando lojas...</option>';
-            const resposta = await fetch(`${API_URL}/lojas/lista`);
-            const resultado = await resposta.json();
-
-            if (resultado.sucesso && resultado.lojas) {
-                selectLoja.innerHTML = '<option value="">Selecione uma loja...</option>';
-                resultado.lojas.forEach(oficina => {
-                    const option = document.createElement("option");
-                    option.value = oficina.loja;
-                    const statusBolinha = oficina.status === "Online" ? "🟢" : "🔴";
-                    option.textContent = `${statusBolinha} ${oficina.loja} - ${oficina.nome_oficina} (${oficina.status})`;
-                    selectLoja.appendChild(option);
-                });
-            } else {
-                selectLoja.innerHTML = '<option value="">Erro ao carregar lojas</option>';
-            }
-        } catch (error) {
-            console.error("Erro ao carregar as lojas:", error);
-            selectLoja.innerHTML = '<option value="">Erro de conexão</option>';
-        }
-    }
-
     async function carregarAcompanhamentoMensal() {
         const tabelaCorpo = document.getElementById('tabelaCorpo');
         const periodoInfo = document.getElementById('periodoInfo');
@@ -360,16 +341,9 @@
 
         const inputDataInicio = document.getElementById('filtro-data-inicio');
         const inputDataFim = document.getElementById('filtro-data-fim');
-        const inputDiasTotais = document.getElementById('dias-uteis-totais');
-        const inputDiasPassados = document.getElementById('dias-uteis-passados');
-        const inputDiasRestantes = document.getElementById('dias-uteis-restantes');
         
         const dataInicio = inputDataInicio ? inputDataInicio.value : '';
         const dataFim = inputDataFim ? inputDataFim.value : '';
-        
-        const diasUteisTotais = inputDiasTotais ? Number(inputDiasTotais.value) || 26 : 26;
-        const diasUteisDecorridos = inputDiasPassados ? Number(inputDiasPassados.value) || 24 : 24;
-        const diasUteisRestantes = inputDiasRestantes ? Number(inputDiasRestantes.value) || 2 : 2;
 
         try {
             tabelaCorpo.innerHTML = '<tr><td colspan="15" style="text-align:center; padding:20px;">Carregando dados...</td></tr>';
@@ -378,9 +352,9 @@
             const isPeriodoPersonalizado = (dataInicio && dataFim);
 
             if (isPeriodoPersonalizado) {
-                url = `${API_URL}/oficinas/faturamento-periodo?dataInicio=${dataInicio}&dataFim=${dataFim}&diasUteisTotais=${diasUteisTotais}&diasUteisDecorridos=${diasUteisDecorridos}&diasUteisRestantes=${diasUteisRestantes}`;
+                url = `${API_URL}/oficinas/faturamento-periodo?dataInicio=${dataInicio}&dataFim=${dataFim}`;
             } else {
-                url = `${API_URL}/oficinas/mes?diasUteisTotais=${diasUteisTotais}&diasUteisDecorridos=${diasUteisDecorridos}&diasUteisRestantes=${diasUteisRestantes}`;
+                url = `${API_URL}/oficinas/mes`;
             }
 
             const response = await fetch(url);
@@ -393,34 +367,9 @@
             }
 
             if (periodoInfo) {
-                const btnHojeAtivo = document.getElementById('btn-hoje')?.classList.contains('ativo');
-                const btnMesAtivo = document.getElementById('btn-mes-atual')?.classList.contains('ativo');
-
-                if (btnHojeAtivo || btnMesAtivo || isPeriodoPersonalizado) {
-                    const dataInicioBr = formatarDataBr(dataInicio);
-                    const dataFimBr = formatarDataBr(dataFim);
-                    periodoInfo.innerHTML = `
-                        <span>Período: <strong>${dataInicioBr} até ${dataFimBr}</strong></span>
-                        <span>Dias Úteis Totais: <strong>${diasUteisTotais}</strong></span>
-                        <span>Passados: <strong>${diasUteisDecorridos}</strong></span>
-                        <span>Restantes: <strong>${diasUteisRestantes}</strong></span>
-                    `;
-                } else if (data.periodo) {
-                    const p = data.periodo;
-                    let refMes = p.referencia;
-                    if (!refMes) {
-                        const d = new Date();
-                        const ultDia = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-                        const mesExtenso = d.toLocaleDateString('pt-BR', { month: 'long' }).toUpperCase();
-                        refMes = `${mesExtenso} ${d.getFullYear()} (01 À ${ultDia})`;
-                    }
-                    periodoInfo.innerHTML = `
-                        <span>Período: <strong>${refMes}</strong></span>
-                        <span>Dias Úteis Totais: <strong>${p.dias_uteis_totais || diasUteisTotais}</strong></span>
-                        <span>Decorridos: <strong>${p.dias_uteis_decorridos || diasUteisDecorridos}</strong></span>
-                        <span>Restantes: <strong>${p.dias_uteis_restantes || diasUteisRestantes}</strong></span>
-                    `;
-                }
+                const d = new Date();
+                const mesExtenso = d.toLocaleDateString('pt-BR', { month: 'long' }).toUpperCase();
+                periodoInfo.innerHTML = `<span>Período de Acompanhamento: <strong>${mesExtenso} ${d.getFullYear()}</strong> (Configurado por Loja)</span>`;
             }
 
             tabelaCorpo.innerHTML = '';
@@ -437,28 +386,27 @@
 
                     const valorAcumulado = item.acumulado !== undefined ? item.acumulado : (item.faturamento_total || item.total_periodo || 0);
 
-                    // Permite individualizar caso a loja possua dias úteis próprios definidos no backend, senão assume o global
-                    const lojaDiasTotais = item.dias_uteis_totais || diasUteisTotais;
-                    const lojaDiasDecorridos = item.dias_uteis_decorridos || diasUteisDecorridos;
-                    const lojaDiasRestantes = item.dias_uteis_restantes || diasUteisRestantes;
+                    // Pega os dias úteis específicos vindos da API da loja (ou define padrão caso não venha)
+                    const diasTotais = item.dias_uteis_totais !== undefined ? item.dias_uteis_totais : 26;
+                    const diasPassados = item.dias_uteis_decorridos !== undefined ? item.dias_uteis_decorridos : 24;
+                    const diasRestantes = item.dias_uteis_restantes !== undefined ? item.dias_uteis_restantes : 2;
 
                     const tr = document.createElement('tr');
                     tr.className = 'linha-loja';
-                    tr.title = 'Clique para ver o detalhamento por grupo de serviços';
-                    
-                    tr.addEventListener('click', () => {
-                        abrirModalDetalhesLoja(item.loja, item.nome_oficina, dataInicio, dataFim);
-                    });
 
                     tr.innerHTML = `
-                        <td><strong>${item.nome_oficina || '-'}</strong></td>
+                        <td>
+                            <strong style="cursor: pointer; color: var(--accent-gold);" title="Clique para ver os grupos" onclick="abrirModalDetalhesLoja('${item.loja}', '${item.nome_oficina}')">
+                                ${item.nome_oficina || '-'}
+                            </strong>
+                        </td>
                         <td>${formatarMoeda(item.meta)}</td>
                         <td class="text-gold"><strong>${formatarNumero(item.percentual_meta)}%</strong></td>
                         <td>${formatarMoeda(item.falta)}</td>
                         <td class="text-green"><strong>${formatarMoeda(valorAcumulado)}</strong></td>
-                        <td style="text-align: center; color: var(--text-secondary);">${lojaDiasTotais}</td>
-                        <td style="text-align: center; color: var(--accent-green);">${lojaDiasDecorridos}</td>
-                        <td style="text-align: center; color: var(--accent-gold);">${lojaDiasRestantes}</td>
+                        <td><input type="number" class="input-dias-tabela" value="${diasTotais}" data-loja="${item.loja}" data-tipo="totais"></td>
+                        <td><input type="number" class="input-dias-tabela" value="${diasPassados}" data-loja="${item.loja}" data-tipo="passados"></td>
+                        <td><input type="number" class="input-dias-tabela" value="${diasRestantes}" data-loja="${item.loja}" data-tipo="restantes"></td>
                         <td>${formatarMoeda(item.meta_diaria || 0)}</td>
                         <td>${formatarMoeda(item.media_diaria || 0)}</td>
                         <td>${formatarMoeda(item.projecao || 0)}</td>
@@ -483,9 +431,7 @@
                     <td>${formatarNumero(g.percentual_meta)}%</td>
                     <td>${formatarMoeda(g.falta_total)}</td>
                     <td>${formatarMoeda(acumuladoGeral)}</td>
-                    <td style="text-align: center;">${diasUteisTotais}</td>
-                    <td style="text-align: center;">${diasUteisDecorridos}</td>
-                    <td style="text-align: center;">${diasUteisRestantes}</td>
+                    <td colspan="3" style="text-align: center; font-size: 0.8rem; color: var(--text-secondary);">Média / Dinâmico por Loja</td>
                     <td>${formatarMoeda(g.meta_diaria || 0)}</td>
                     <td>${formatarMoeda(g.media_diaria || 0)}</td>
                     <td>${formatarMoeda(g.projecao || 0)}</td>
@@ -503,7 +449,7 @@
         }
     }
 
-    async function abrirModalDetalhesLoja(codigoLoja, nomeLoja, dataInicioParam, dataFimParam) {
+    async function abrirModalDetalhesLoja(codigoLoja, nomeLoja) {
         const modal = document.getElementById('modalDetalhes');
         const titulo = document.getElementById('modalTitulo');
         const corpo = document.getElementById('modalCorpo');
@@ -518,13 +464,13 @@
             const inputDataInicio = document.getElementById('filtro-data-inicio');
             const inputDataFim = document.getElementById('filtro-data-fim');
 
-            let dataInicio = inputDataInicio ? inputDataInicio.value : dataInicioParam;
-            let dataFim = inputDataFim ? inputDataFim.value : dataFimParam;
+            let dataInicio = inputDataInicio ? inputDataInicio.value : '';
+            let dataFim = inputDataFim ? inputDataFim.value : '';
 
-            if (!dataInicio || !dataFim || dataInicio === 'undefined' || dataFim === 'undefined') {
-                const hoje = new Date().toISOString().split('T')[0];
-                dataInicio = hoje;
-                dataFim = hoje;
+            if (!dataInicio || !dataFim) {
+                const d = new Date();
+                dataInicio = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
+                dataFim = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0];
             }
 
             let url = `${API_URL}/oficinas/grupos?codigoLoja=${codigoLoja}&dataInicio=${dataInicio}&dataFim=${dataFim}`;
@@ -601,19 +547,12 @@
         if (modal) modal.style.display = 'none';
     };
 
-    function removerDestaqueBotoes() {
-        document.querySelectorAll('.btn-acao').forEach(btn => btn.classList.remove('ativo'));
-    }
-
     window.dispararFiltroPeriodo = function() {
-        removerDestaqueBotoes();
         carregarAcompanhamentoMensal();
     };
 
-    window.carregarAcompanhamentoMensal = carregarAcompanhamentoMensal;
-
     window.filtrarHoje = function(elementoBtn) {
-        removerDestaqueBotoes();
+        document.querySelectorAll('.btn-acao').forEach(btn => btn.classList.remove('ativo'));
         if (elementoBtn) elementoBtn.classList.add('ativo');
 
         const hoje = new Date().toISOString().split('T')[0];
@@ -623,7 +562,7 @@
     };
 
     window.filtrarMesAtual = function(elementoBtn) {
-        removerDestaqueBotoes();
+        document.querySelectorAll('.btn-acao').forEach(btn => btn.classList.remove('ativo'));
         if (elementoBtn) elementoBtn.classList.add('ativo');
 
         const d = new Date();
@@ -640,9 +579,6 @@
         const inputInicio = document.getElementById('filtro-data-inicio');
         const inputFim = document.getElementById('filtro-data-fim');
 
-        if (inputInicio) inputInicio.addEventListener('change', removerDestaqueBotoes);
-        if (inputFim) inputFim.addEventListener('change', removerDestaqueBotoes);
-
         const d = new Date();
         const primeiroDia = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
         const ultimoDia = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0];
@@ -651,11 +587,8 @@
         if (inputFim && !inputFim.value) inputFim.value = ultimoDia;
         if (btnMesAtual) btnMesAtual.classList.add('ativo');
 
-        carregarSelectLojas();
-        if (document.getElementById('tabelaCorpo')) {
-            carregarAcompanhamentoMensal();
-            setInterval(() => carregarAcompanhamentoMensal(), 60000); 
-        }
+        carregarAcompanhamentoMensal();
+        setInterval(() => carregarAcompanhamentoMensal(), 60000); 
     });
 </script>
 
@@ -680,24 +613,12 @@
             <label for="filtro-data-fim">Data Fim</label>
             <input type="date" id="filtro-data-fim">
         </div>
-        <div class="filter-group">
-            <label for="dias-uteis-totais">Dias Totais</label>
-            <input type="number" id="dias-uteis-totais" value="26" class="input-dias" min="1" max="31">
-        </div>
-        <div class="filter-group">
-            <label for="dias-uteis-passados">Dias Passados</label>
-            <input type="number" id="dias-uteis-passados" value="24" class="input-dias" min="0" max="31">
-        </div>
-        <div class="filter-group">
-            <label for="dias-uteis-restantes">Dias Restantes</label>
-            <input type="number" id="dias-uteis-restantes" value="2" class="input-dias" min="0" max="31">
-        </div>
-        <button class="btn-filtrar" onclick="dispararFiltroPeriodo()">Filtrar / Recalcular</button>
+        <button class="btn-filtrar" onclick="dispararFiltroPeriodo()">Filtrar Período</button>
         <button class="btn-acao" id="btn-hoje" onclick="filtrarHoje(this)">Hoje</button>
         <button class="btn-acao" id="btn-mes-atual" onclick="filtrarMesAtual(this)">Mês Atual</button>
     </div>
 
-    <p class="instrucao-clique">💡 Dica: Clique em qualquer linha de loja na tabela abaixo para abrir o detalhamento por grupo de serviços.</p>
+    <p class="instrucao-clique">💡 Dica: Clique no nome da loja para ver o detalhamento por grupo de serviços. Os dias úteis, passados e restantes podem ser ajustados individualmente por linha.</p>
 
     <div class="card-table">
         <table>

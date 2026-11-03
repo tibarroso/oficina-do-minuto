@@ -324,33 +324,44 @@
         ? 'http://10.86.1.120:3000'
         : '';
 
-    // Função para calcular os dias úteis com base no período selecionado (Data Início e Data Fim)
+    // Função para calcular os dias úteis com base no período selecionado e na abertura de domingo
     function calcularDiasUteisPorPeriodo(dadosLoja, dataInicioStr, dataFimStr) {
         const abreDomingo = dadosLoja && dadosLoja.abertura_domingo && dadosLoja.abertura_domingo !== "00:00";
 
         const inicio = new Date(dataInicioStr + 'T00:00:00');
         const fim = new Date(dataFimStr + 'T00:00:00');
 
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+
         let total = 0;
-        let passados = 0; // Neste contexto de período fechado, todos os dias úteis do intervalo entram como "contabilizados/passados" do filtro
+        let passados = 0;
+        let restantes = 0;
 
         let dataAtualLoop = new Date(inicio);
 
         while (dataAtualLoop <= fim) {
             const diaDaSemana = dataAtualLoop.getDay(); // 0 = Domingo, 6 = Sábado
+            const ehDomingoSemAbertura = (diaDaSemana === 0 && !abreDomingo);
 
-            // Se for domingo e a loja não abre, pula
-            if (!(diaDaSemana === 0 && !abreDomingo)) {
+            if (!ehDomingoSemAbertura) {
                 total++;
+
+                if (dataAtualLoop < hoje) {
+                    passados++;
+                } else {
+                    restantes++;
+                }
             }
 
-            // Avança 1 dia
             dataAtualLoop.setDate(dataAtualLoop.getDate() + 1);
         }
 
-        // Se o usuário selecionou o mês inteiro, passados = total e restantes = 0 (pois o período já encerrou em 31/10)
-        passados = total;
-        let restantes = 0;
+        if (passados < 0) passados = 0;
+        if (restantes < 0) restantes = 0;
+        if (passados + restantes !== total) {
+            total = passados + restantes;
+        }
 
         return { total, passados, restantes };
     }
@@ -370,19 +381,25 @@
         try {
             tabelaCorpo.innerHTML = '<tr><td colspan="15" style="text-align:center; padding:20px;">Carregando dados...</td></tr>';
 
-            let url = '';
-            const isPeriodoPersonalizado = (dataInicio && dataFim);
+            const [respDesempenho, respLojas] = await Promise.all([
+                fetch(`${API_URL}/oficinas/faturamento-periodo?dataInicio=${dataInicio}&dataFim=${dataFim}`),
+                fetch(`${API_URL}/lojas/lista`).catch(() => null)
+            ]);
 
-            if (isPeriodoPersonalizado) {
-                url = `${API_URL}/oficinas/faturamento-periodo?dataInicio=${dataInicio}&dataFim=${dataFim}`;
-            } else {
-                url = `${API_URL}/oficinas/mes`;
+            if (!respDesempenho.ok) throw new Error(`Status ${respDesempenho.status}`);
+
+            const data = await respDesempenho.json();
+            let mapaLojasDados = {};
+
+            if (respLojas) {
+                const resLojasJson = await respLojas.json();
+                if (resLojasJson.sucesso && resLojasJson.lojas) {
+                    resLojasJson.lojas.forEach(l => {
+                        mapaLojasDados[l.loja] = l.dados;
+                    });
+                }
             }
 
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`Status ${response.status}`);
-
-            const data = await response.json();
             if (!data.sucesso) {
                 tabelaCorpo.innerHTML = '<tr><td colspan="15" style="color:red; text-align:center;">Falha ao carregar relatório.</td></tr>';
                 return;
@@ -406,8 +423,9 @@
 
                     const valorAcumulado = item.acumulado !== undefined ? item.acumulado : (item.faturamento_total || item.total_periodo || 0);
 
-                    // Calcula com base no intervalo de datas escolhido nos filtros
-                    const calculoDias = calcularDiasUteisPorPeriodo(item.dados, dataInicio, dataFim);
+                    const dadosLoja = item.dados || mapaLojasDados[item.loja] || {};
+                    const calculoDias = calcularDiasUteisPorPeriodo(dadosLoja, dataInicio, dataFim);
+                    
                     const diasTotais = item.dias_uteis_totais !== undefined ? item.dias_uteis_totais : calculoDias.total;
                     const diasPassados = item.dias_uteis_decorridos !== undefined ? item.dias_uteis_decorridos : calculoDias.passados;
                     const diasRestantes = item.dias_uteis_restantes !== undefined ? item.dias_uteis_restantes : calculoDias.restantes;
@@ -470,7 +488,7 @@
         }
     }
 
-    async function abrirModalDetalhesLoja(codigoLoja, nomeLoja) {
+    window.abrirModalDetalhesLoja = async function(codigoLoja, nomeLoja) {
         const modal = document.getElementById('modalDetalhes');
         const titulo = document.getElementById('modalTitulo');
         const corpo = document.getElementById('modalCorpo');
@@ -555,7 +573,7 @@
             console.error('Erro ao carregar grupos da loja:', error);
             if (corpo) corpo.innerHTML = '<div style="text-align:center; padding:20px; color:var(--danger-color);">Erro ao carregar detalhes dos grupos.</div>';
         }
-    }
+    };
 
     window.fecharModal = function() {
         const modal = document.getElementById('modalDetalhes');

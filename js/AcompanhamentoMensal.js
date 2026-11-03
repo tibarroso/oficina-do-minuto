@@ -44,13 +44,11 @@ async function carregarSelectLojas() {
 // 📅 FUNÇÃO PARA CALCULAR DIAS ÚTEIS DE CADA LOJA COM BASE NOS HORÁRIOS E PERÍODO
 // =========================================================================
 function calcularDiasUteisLojaPorPeriodo(dadosLoja, dataInicioStr, dataFimStr) {
-    // Verifica se a loja abre aos domingos (se tem horário diferente de "00:00")
     const abreDomingo = dadosLoja && dadosLoja.abertura_domingo && dadosLoja.abertura_domingo !== "00:00";
 
     const inicio = new Date(dataInicioStr + 'T00:00:00');
     const fim = new Date(dataFimStr + 'T00:00:00');
     
-    // Data de "hoje" real zerando as horas para comparar corretamente
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
 
@@ -64,24 +62,19 @@ function calcularDiasUteisLojaPorPeriodo(dadosLoja, dataInicioStr, dataFimStr) {
         const diaDaSemana = dataAtualLoop.getDay(); // 0 = Domingo, 6 = Sábado
         const ehDomingoSemAbertura = (diaDaSemana === 0 && !abreDomingo);
 
-        // Se o dia não for domingo fechado, conta como dia útil de funcionamento
         if (!ehDomingoSemAbertura) {
             total++;
 
-            // Se o dia do loop for estritamente ANTES de hoje, já passou (decorrido)
             if (dataAtualLoop < hoje) {
                 passados++;
             } else {
-                // Caso contrário, é hoje ou futuro (restante)
                 restantes++;
             }
         }
 
-        // Avança 1 dia com segurança
         dataAtualLoop.setDate(dataAtualLoop.getDate() + 1);
     }
 
-    // Travas de segurança matemáticas
     if (passados < 0) passados = 0;
     if (restantes < 0) restantes = 0;
     if (passados + restantes !== total) {
@@ -106,7 +99,6 @@ async function carregarAcompanhamentoMensal() {
     let dataInicio = inputDataInicio ? inputDataInicio.value : '';
     let dataFim = inputDataFim ? inputDataFim.value : '';
 
-    // Se as datas estiverem vazias, define o mês atual por padrão
     if (!dataInicio || !dataFim) {
         const d = new Date();
         const ano = d.getFullYear();
@@ -121,7 +113,6 @@ async function carregarAcompanhamentoMensal() {
     try {
         tabelaCorpo.innerHTML = '<tr><td colspan="15" style="text-align:center; padding:20px;">Carregando dados mensais...</td></tr>';
 
-        // Busca o faturamento e a lista de lojas em paralelo para mapear os horários de domingo
         const [respDesempenho, respLojas] = await Promise.all([
             fetch(`${API_URL}/oficinas/faturamento-periodo?dataInicio=${dataInicio}&dataFim=${dataFim}`),
             fetch(`${API_URL}/lojas/lista`).catch(() => null)
@@ -166,7 +157,6 @@ async function carregarAcompanhamentoMensal() {
 
                 const valorAcumulado = item.acumulado !== undefined ? item.acumulado : (item.faturamento_total || item.total_periodo || 0);
 
-                // Recupera os dados da loja (da rota de desempenho ou do mapa da rota /lojas/lista)
                 const dadosLoja = item.dados || mapaLojasDados[item.loja] || {};
                 const diasCalculados = calcularDiasUteisLojaPorPeriodo(dadosLoja, dataInicio, dataFim);
 
@@ -176,9 +166,10 @@ async function carregarAcompanhamentoMensal() {
 
                 const tr = document.createElement('tr');
                 tr.className = 'linha-loja';
-                tr.title = 'Clique para ver o detalhamento por grupo de serviços';
+                tr.title = 'Dê dois cliques para ver o detalhamento por grupo de serviços';
 
-                tr.addEventListener('click', () => {
+                // Evento de duplo clique na linha para abrir o modal flutuante
+                tr.addEventListener('dblclick', () => {
                     abrirModalDetalhesLoja(item.loja, item.nome_oficina, dataInicio, dataFim);
                 });
 
@@ -234,7 +225,7 @@ async function carregarAcompanhamentoMensal() {
 }
 
 // =========================================================================
-// 🏢 FUNÇÃO PARA ABRIR O MODAL DE GRUPOS DE SERVIÇO DA LOJA
+// 🏢 FUNÇÃO PARA ABRIR O MODAL DE GRUPOS DE SERVIÇO DA LOJA (TELA FLUTUANTE)
 // =========================================================================
 async function abrirModalDetalhesLoja(codigoLoja, nomeLoja, dataInicioParam, dataFimParam) {
     const modal = document.getElementById('modalDetalhes');

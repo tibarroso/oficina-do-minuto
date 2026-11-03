@@ -324,13 +324,40 @@
         ? 'http://10.86.1.120:3000'
         : '';
 
-    function formatarDataBr(dataStr) {
-        if (!dataStr) return '';
-        const partes = dataStr.split('-');
-        if (partes.length === 3) {
-            return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    // Função para calcular automaticamente os dias úteis do mês com base na regra de funcionamento da loja
+    function calcularDiasUteisLoja(dadosLoja) {
+        const hoje = new Date();
+        const ano = hoje.getFullYear();
+        const mes = hoje.getMonth(); // 0 a 11
+        const diaAtual = hoje.getDate();
+
+        const abreDomingo = dadosLoja && dadosLoja.abertura_domingo && dadosLoja.abertura_domingo !== "00:00";
+
+        let total = 0;
+        let passados = 0;
+        let restantes = 0;
+
+        const ultimoDiaDoMes = new Date(ano, mes + 1, 0).getDate();
+
+        for (let d = 1; d <= ultimoDiaDoMes; d++) {
+            const dataAtualLoop = new Date(ano, mes, d);
+            const diaDaSemana = dataAtualLoop.getDay(); // 0 = Domingo, 6 = Sábado
+
+            // Se for domingo e a loja não abre, pula
+            if (diaDaSemana === 0 && !abreDomingo) {
+                continue;
+            }
+
+            total++;
+
+            if (d < diaAtual) {
+                passados++;
+            } else {
+                restantes++;
+            }
         }
-        return dataStr;
+
+        return { total, passados, restantes };
     }
 
     async function carregarAcompanhamentoMensal() {
@@ -369,7 +396,7 @@
             if (periodoInfo) {
                 const d = new Date();
                 const mesExtenso = d.toLocaleDateString('pt-BR', { month: 'long' }).toUpperCase();
-                periodoInfo.innerHTML = `<span>Período de Acompanhamento: <strong>${mesExtenso} ${d.getFullYear()}</strong> (Configurado por Loja)</span>`;
+                periodoInfo.innerHTML = `<span>Período de Acompanhamento: <strong>${mesExtenso} ${d.getFullYear()}</strong> (Dias Úteis Calculados Automaticamente por Loja)</span>`;
             }
 
             tabelaCorpo.innerHTML = '';
@@ -386,10 +413,11 @@
 
                     const valorAcumulado = item.acumulado !== undefined ? item.acumulado : (item.faturamento_total || item.total_periodo || 0);
 
-                    // Pega os dias úteis específicos vindos da API da loja (ou define padrão caso não venha)
-                    const diasTotais = item.dias_uteis_totais !== undefined ? item.dias_uteis_totais : 26;
-                    const diasPassados = item.dias_uteis_decorridos !== undefined ? item.dias_uteis_decorridos : 24;
-                    const diasRestantes = item.dias_uteis_restantes !== undefined ? item.dias_uteis_restantes : 2;
+                    // Calcula automaticamente com base nos dados da rota /lojas/lista (ou nos dados que venham na própria oficina)
+                    const calculoDias = calcularDiasUteisLoja(item.dados);
+                    const diasTotais = item.dias_uteis_totais !== undefined ? item.dias_uteis_totais : calculoDias.total;
+                    const diasPassados = item.dias_uteis_decorridos !== undefined ? item.dias_uteis_decorridos : calculoDias.passados;
+                    const diasRestantes = item.dias_uteis_restantes !== undefined ? item.dias_uteis_restantes : calculoDias.restantes;
 
                     const tr = document.createElement('tr');
                     tr.className = 'linha-loja';
@@ -431,7 +459,7 @@
                     <td>${formatarNumero(g.percentual_meta)}%</td>
                     <td>${formatarMoeda(g.falta_total)}</td>
                     <td>${formatarMoeda(acumuladoGeral)}</td>
-                    <td colspan="3" style="text-align: center; font-size: 0.8rem; color: var(--text-secondary);">Média / Dinâmico por Loja</td>
+                    <td colspan="3" style="text-align: center; font-size: 0.8rem; color: var(--text-secondary);">Dinâmico por Loja</td>
                     <td>${formatarMoeda(g.meta_diaria || 0)}</td>
                     <td>${formatarMoeda(g.media_diaria || 0)}</td>
                     <td>${formatarMoeda(g.projecao || 0)}</td>
@@ -618,7 +646,7 @@
         <button class="btn-acao" id="btn-mes-atual" onclick="filtrarMesAtual(this)">Mês Atual</button>
     </div>
 
-    <p class="instrucao-clique">💡 Dica: Clique no nome da loja para ver o detalhamento por grupo de serviços. Os dias úteis, passados e restantes podem ser ajustados individualmente por linha.</p>
+    <p class="instrucao-clique">💡 Dica: Clique no nome da loja para ver o detalhamento por grupo de serviços. Os dias úteis, passados e restantes são calculados automaticamente com base no horário de domingo de cada unidade, mas podem ser ajustados manualmente se necessário.</p>
 
     <div class="card-table">
         <table>

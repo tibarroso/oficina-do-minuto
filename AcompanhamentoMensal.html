@@ -31,7 +31,7 @@
         }
 
         .container {
-            max-width: 1550px;
+            max-width: 1650px;
             margin: 0 auto;
         }
 
@@ -87,6 +87,7 @@
             border: 1px solid var(--border-color);
             font-size: 0.9rem;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .periodo-info span strong {
@@ -125,6 +126,13 @@
             padding: 8px 12px;
             border-radius: 6px;
             font-size: 0.9rem;
+        }
+
+        .filter-group input.input-dias {
+            width: 90px;
+            text-align: center;
+            font-weight: bold;
+            color: var(--accent-gold);
         }
 
         .btn-filtrar {
@@ -344,7 +352,7 @@
         }
     }
 
-    async function carregarAcompanhamentoMensal(diasUteisTotais = 26, diasUteisDecorridos = 24, diasUteisRestantes = 2) {
+    async function carregarAcompanhamentoMensal() {
         const tabelaCorpo = document.getElementById('tabelaCorpo');
         const periodoInfo = document.getElementById('periodoInfo');
 
@@ -352,18 +360,25 @@
 
         const inputDataInicio = document.getElementById('filtro-data-inicio');
         const inputDataFim = document.getElementById('filtro-data-fim');
+        const inputDiasTotais = document.getElementById('dias-uteis-totais');
+        const inputDiasPassados = document.getElementById('dias-uteis-passados');
+        const inputDiasRestantes = document.getElementById('dias-uteis-restantes');
         
         const dataInicio = inputDataInicio ? inputDataInicio.value : '';
         const dataFim = inputDataFim ? inputDataFim.value : '';
+        
+        const diasUteisTotais = inputDiasTotais ? Number(inputDiasTotais.value) || 26 : 26;
+        const diasUteisDecorridos = inputDiasPassados ? Number(inputDiasPassados.value) || 24 : 24;
+        const diasUteisRestantes = inputDiasRestantes ? Number(inputDiasRestantes.value) || 2 : 2;
 
         try {
-            tabelaCorpo.innerHTML = '<tr><td colspan="12" style="text-align:center; padding:20px;">Carregando dados...</td></tr>';
+            tabelaCorpo.innerHTML = '<tr><td colspan="15" style="text-align:center; padding:20px;">Carregando dados...</td></tr>';
 
             let url = '';
             const isPeriodoPersonalizado = (dataInicio && dataFim);
 
             if (isPeriodoPersonalizado) {
-                url = `${API_URL}/oficinas/faturamento-periodo?dataInicio=${dataInicio}&dataFim=${dataFim}`;
+                url = `${API_URL}/oficinas/faturamento-periodo?dataInicio=${dataInicio}&dataFim=${dataFim}&diasUteisTotais=${diasUteisTotais}&diasUteisDecorridos=${diasUteisDecorridos}&diasUteisRestantes=${diasUteisRestantes}`;
             } else {
                 url = `${API_URL}/oficinas/mes?diasUteisTotais=${diasUteisTotais}&diasUteisDecorridos=${diasUteisDecorridos}&diasUteisRestantes=${diasUteisRestantes}`;
             }
@@ -373,7 +388,7 @@
 
             const data = await response.json();
             if (!data.sucesso) {
-                tabelaCorpo.innerHTML = '<tr><td colspan="12" style="color:red; text-align:center;">Falha ao carregar relatório.</td></tr>';
+                tabelaCorpo.innerHTML = '<tr><td colspan="15" style="color:red; text-align:center;">Falha ao carregar relatório.</td></tr>';
                 return;
             }
 
@@ -382,12 +397,15 @@
                 const btnMesAtivo = document.getElementById('btn-mes-atual')?.classList.contains('ativo');
 
                 if (btnHojeAtivo || btnMesAtivo || isPeriodoPersonalizado) {
-                    // Se algum botão rápido estiver ativo ou for período personalizado, exibe no formato DD/MM/AAAA até DD/MM/AAAA
                     const dataInicioBr = formatarDataBr(dataInicio);
                     const dataFimBr = formatarDataBr(dataFim);
-                    periodoInfo.innerHTML = `<span>Período Personalizado: <strong>${dataInicioBr} até ${dataFimBr}</strong></span>`;
+                    periodoInfo.innerHTML = `
+                        <span>Período: <strong>${dataInicioBr} até ${dataFimBr}</strong></span>
+                        <span>Dias Úteis Totais: <strong>${diasUteisTotais}</strong></span>
+                        <span>Passados: <strong>${diasUteisDecorridos}</strong></span>
+                        <span>Restantes: <strong>${diasUteisRestantes}</strong></span>
+                    `;
                 } else if (data.periodo) {
-                    // Caso contrário, usa o período padrão do mês
                     const p = data.periodo;
                     let refMes = p.referencia;
                     if (!refMes) {
@@ -398,9 +416,9 @@
                     }
                     periodoInfo.innerHTML = `
                         <span>Período: <strong>${refMes}</strong></span>
-                        <span>Dias Úteis Totais: <strong>${p.dias_uteis_totais || 0}</strong></span>
-                        <span>Decorridos: <strong>${p.dias_uteis_decorridos || 0}</strong></span>
-                        <span>Restantes: <strong>${p.dias_uteis_restantes || 0}</strong></span>
+                        <span>Dias Úteis Totais: <strong>${p.dias_uteis_totais || diasUteisTotais}</strong></span>
+                        <span>Decorridos: <strong>${p.dias_uteis_decorridos || diasUteisDecorridos}</strong></span>
+                        <span>Restantes: <strong>${p.dias_uteis_restantes || diasUteisRestantes}</strong></span>
                     `;
                 }
             }
@@ -419,6 +437,11 @@
 
                     const valorAcumulado = item.acumulado !== undefined ? item.acumulado : (item.faturamento_total || item.total_periodo || 0);
 
+                    // Permite individualizar caso a loja possua dias úteis próprios definidos no backend, senão assume o global
+                    const lojaDiasTotais = item.dias_uteis_totais || diasUteisTotais;
+                    const lojaDiasDecorridos = item.dias_uteis_decorridos || diasUteisDecorridos;
+                    const lojaDiasRestantes = item.dias_uteis_restantes || diasUteisRestantes;
+
                     const tr = document.createElement('tr');
                     tr.className = 'linha-loja';
                     tr.title = 'Clique para ver o detalhamento por grupo de serviços';
@@ -433,6 +456,9 @@
                         <td class="text-gold"><strong>${formatarNumero(item.percentual_meta)}%</strong></td>
                         <td>${formatarMoeda(item.falta)}</td>
                         <td class="text-green"><strong>${formatarMoeda(valorAcumulado)}</strong></td>
+                        <td style="text-align: center; color: var(--text-secondary);">${lojaDiasTotais}</td>
+                        <td style="text-align: center; color: var(--accent-green);">${lojaDiasDecorridos}</td>
+                        <td style="text-align: center; color: var(--accent-gold);">${lojaDiasRestantes}</td>
                         <td>${formatarMoeda(item.meta_diaria || 0)}</td>
                         <td>${formatarMoeda(item.media_diaria || 0)}</td>
                         <td>${formatarMoeda(item.projecao || 0)}</td>
@@ -457,6 +483,9 @@
                     <td>${formatarNumero(g.percentual_meta)}%</td>
                     <td>${formatarMoeda(g.falta_total)}</td>
                     <td>${formatarMoeda(acumuladoGeral)}</td>
+                    <td style="text-align: center;">${diasUteisTotais}</td>
+                    <td style="text-align: center;">${diasUteisDecorridos}</td>
+                    <td style="text-align: center;">${diasUteisRestantes}</td>
                     <td>${formatarMoeda(g.meta_diaria || 0)}</td>
                     <td>${formatarMoeda(g.media_diaria || 0)}</td>
                     <td>${formatarMoeda(g.projecao || 0)}</td>
@@ -470,11 +499,10 @@
 
         } catch (error) {
             console.error('❌ Erro ao carregar acompanhamento mensal:', error);
-            tabelaCorpo.innerHTML = '<tr><td colspan="12" style="color:red; text-align:center;">Erro de conexão com o servidor.</td></tr>';
+            tabelaCorpo.innerHTML = '<tr><td colspan="15" style="color:red; text-align:center;">Erro de conexão com o servidor.</td></tr>';
         }
     }
 
-    // Função para abrir o modal de grupos
     async function abrirModalDetalhesLoja(codigoLoja, nomeLoja, dataInicioParam, dataFimParam) {
         const modal = document.getElementById('modalDetalhes');
         const titulo = document.getElementById('modalTitulo');
@@ -652,7 +680,19 @@
             <label for="filtro-data-fim">Data Fim</label>
             <input type="date" id="filtro-data-fim">
         </div>
-        <button class="btn-filtrar" onclick="dispararFiltroPeriodo()">Filtrar Período</button>
+        <div class="filter-group">
+            <label for="dias-uteis-totais">Dias Totais</label>
+            <input type="number" id="dias-uteis-totais" value="26" class="input-dias" min="1" max="31">
+        </div>
+        <div class="filter-group">
+            <label for="dias-uteis-passados">Dias Passados</label>
+            <input type="number" id="dias-uteis-passados" value="24" class="input-dias" min="0" max="31">
+        </div>
+        <div class="filter-group">
+            <label for="dias-uteis-restantes">Dias Restantes</label>
+            <input type="number" id="dias-uteis-restantes" value="2" class="input-dias" min="0" max="31">
+        </div>
+        <button class="btn-filtrar" onclick="dispararFiltroPeriodo()">Filtrar / Recalcular</button>
         <button class="btn-acao" id="btn-hoje" onclick="filtrarHoje(this)">Hoje</button>
         <button class="btn-acao" id="btn-mes-atual" onclick="filtrarMesAtual(this)">Mês Atual</button>
     </div>
@@ -668,6 +708,9 @@
                     <th>%</th>
                     <th>Falta</th>
                     <th>Acumulado</th>
+                    <th>Dias Úteis</th>
+                    <th>Passados</th>
+                    <th>Restantes</th>
                     <th>Meta Diária</th>
                     <th>Média Diária</th>
                     <th>Projeção</th>
@@ -679,7 +722,7 @@
             </thead>
             <tbody id="tabelaCorpo">
                 <tr>
-                    <td colspan="12" class="loading">Carregando dados do servidor...</td>
+                    <td colspan="15" class="loading">Carregando dados do servidor...</td>
                 </tr>
             </tbody>
         </table>

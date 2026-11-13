@@ -17,21 +17,41 @@
         .relatorio-container { 
             background: #fff; 
             padding: 40px; 
-            border-radius: 10px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08); 
+            border-radius: 12px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06); 
         }
         .report-header { 
-            border-bottom: 3px solid #2c3e50; 
+            border-bottom: 2px solid #2c3e50; 
             padding-bottom: 20px; 
             margin-bottom: 25px; 
         }
+        .filter-card {
+            background: #ffffff;
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .form-control, .form-select {
+            border-radius: 8px;
+            padding: 0.55rem 0.8rem;
+            border-color: #dee2e6;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+        }
         .operador-section { 
             margin-bottom: 20px; 
-            border: 1px solid #e0e0e0; 
-            border-radius: 8px; 
-            padding: 18px; 
+            border: 1px solid #e9ecef; 
+            border-radius: 10px; 
+            padding: 20px; 
             background: #ffffff; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.01);
+            transition: all 0.2s ease;
+        }
+        .operador-section:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
         }
         /* Aumenta o tamanho da fonte do nome do operador de forma bem destacada */
         .operador-section h5, .operador-section h4 {
@@ -45,8 +65,11 @@
         .total-card {
             background-color: #f8f9fa;
             border-left: 5px solid #198754;
-            padding: 15px 20px;
-            border-radius: 6px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            border-top: 1px solid #e9ecef;
+            border-right: 1px solid #e9ecef;
+            border-bottom: 1px solid #e9ecef;
         }
         @media print {
             .no-print { display: none !important; }
@@ -59,29 +82,40 @@
 </head>
 <body>
 
-<div class="container my-4">
+<div class="container my-5">
     <!-- Filtros de Pesquisa (Não saem na impressão) -->
-    <div class="card mb-4 no-print shadow-sm border-0">
-        <div class="card-body bg-white rounded-3 p-4">
-            <h5 class="card-title mb-3 fw-bold text-secondary"><i class="bi bi-filter-circle"></i> Filtros do Relatório</h5>
-            <div class="row g-3">
+    <div class="card mb-4 no-print filter-card">
+        <div class="card-body p-4">
+            <h5 class="card-title mb-3 fw-bold text-dark d-flex align-items-center gap-2">
+                <i class="bi bi-filter-circle text-primary fs-4"></i> Filtros do Relatório
+            </h5>
+            <div class="row g-3 align-items-end">
                 <div class="col-md-4">
-                    <label for="select-loja" class="form-label fw-semibold">Loja</label>
-                    <select id="select-loja" class="form-select shadow-sm">
-                        <option value="">Carregando lojas...</option>
-                    </select>
+                    <label for="select-loja" class="form-label fw-semibold small text-uppercase text-muted">Loja</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-shop"></i></span>
+                        <select id="select-loja" class="form-select border-start-0 ps-0 shadow-none">
+                            <option value="">Carregando lojas...</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="col-md-3">
-                    <label for="dataInicio" class="form-label fw-semibold">Data Início</label>
-                    <input type="date" id="dataInicio" class="form-control shadow-sm">
+                    <label for="dataInicio" class="form-label fw-semibold small text-uppercase text-muted">Data Início</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-calendar-event"></i></span>
+                        <input type="date" id="dataInicio" class="form-control border-start-0 ps-0 shadow-none">
+                    </div>
                 </div>
                 <div class="col-md-3">
-                    <label for="dataFim" class="form-label fw-semibold">Data Fim</label>
-                    <input type="date" id="dataFim" class="form-control shadow-sm">
+                    <label for="dataFim" class="form-label fw-semibold small text-uppercase text-muted">Data Fim</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-calendar-check"></i></span>
+                        <input type="date" id="dataFim" class="form-control border-start-0 ps-0 shadow-none">
+                    </div>
                 </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <button class="btn btn-primary w-100 shadow-sm fw-semibold" onclick="carregarRelatorio()">
-                        <i class="bi bi-search"></i> Gerar
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100 fw-semibold py-2 shadow-sm" onclick="carregarRelatorio()" style="border-radius: 8px;">
+                        <i class="bi bi-search me-1"></i> Gerar
                     </button>
                 </div>
             </div>
@@ -90,27 +124,35 @@
 
     <!-- Área Impressível do Relatório -->
     <div class="relatorio-container" id="relatorioArea">
-        <div class="report-header d-flex justify-content-between align-items-center">
+        <div class="report-header d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div>
-                <h3 class="mb-1 text-uppercase fw-bold text-dark">Premiação Geral Resumido</h3>
-                <p class="mb-0 text-muted fw-semibold" id="lblPeriodo">Período de --/--/---- até --/--/----</p>
+                <h3 class="mb-1 text-uppercase fw-bold text-dark tracking-tight">Premiação Geral Resumido</h3>
+                <p class="mb-0 text-muted fw-semibold small" id="lblPeriodo">
+                    <i class="bi bi-calendar3 me-1"></i> Período de --/--/---- até --/--/----
+                </p>
             </div>
-            <div class="text-end">
-                <p class="mb-1 text-muted small"><strong>Geração:</strong> <span id="lblGeracao">--/--/---- --:--</span></p>
-                <button class="btn btn-dark btn-sm no-print shadow-sm" onclick="window.print()">
-                    <i class="bi bi-printer"></i> Imprimir / PDF
+            <div class="text-end d-flex align-items-center gap-3">
+                <p class="mb-0 text-muted small">
+                    <i class="bi bi-clock-history me-1"></i> <strong>Geração:</strong> <span id="lblGeracao">--/--/---- --:--</span>
+                </p>
+                <button class="btn btn-outline-dark btn-sm no-print shadow-sm px-3 py-2 rounded-2" onclick="window.print()">
+                    <i class="bi bi-printer me-1"></i> Imprimir / PDF
                 </button>
             </div>
         </div>
 
-        <div class="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2 bg-light p-3 rounded-3 border">
             <div>
                 <h5 id="lblLoja" class="fw-bold text-primary mb-1">Loja: --</h5>
-                <p class="text-secondary small mb-0">Premiações Fechadas no período selecionado</p>
+                <p class="text-secondary small mb-0"><i class="bi bi-info-circle me-1"></i> Premiações Fechadas no período selecionado</p>
             </div>
             <div class="d-flex gap-2">
-                <span class="badge bg-light text-dark border px-3 py-2 fs-6" id="lblTotalOperadores">Qtd Operadores: 0</span>
-                <span class="badge bg-light text-dark border px-3 py-2 fs-6" id="lblTotalPaginas">Total de Páginas: 1</span>
+                <span class="badge bg-white text-dark border px-3 py-2 fs-6 shadow-sm d-flex align-items-center gap-1" id="lblTotalOperadores">
+                    <i class="bi bi-people text-primary"></i> Qtd Operadores: 0
+                </span>
+                <span class="badge bg-white text-dark border px-3 py-2 fs-6 shadow-sm d-flex align-items-center gap-1" id="lblTotalPaginas">
+                    <i class="bi bi-file-earmark text-secondary"></i> Total de Páginas: 1
+                </span>
             </div>
         </div>
 
@@ -118,14 +160,16 @@
         <div id="conteudoOperadores">
             <div class="text-center text-muted py-5">
                 <i class="bi bi-file-earmark-text display-4 d-block mb-3 text-secondary opacity-50"></i>
-                Selecione a loja, escolha o período desejado e clique em "Gerar" para exibir os dados do relatório.
+                Selecione a loja, escolha o período desejado e clique em <strong>"Gerar"</strong> para exibir os dados do relatório.
             </div>
         </div>
 
         <!-- Rodapé Geral Consolidado -->
-        <div class="mt-4 pt-3 border-top text-end" id="divValorGeral" style="display: none;">
+        <div class="mt-4 pt-4 border-top text-end" id="divValorGeral" style="display: none;">
             <div class="total-card d-inline-block text-end shadow-sm">
-                <span class="text-muted d-block small text-uppercase fw-bold">Valor Geral da Premiação</span>
+                <span class="text-muted d-block small text-uppercase fw-bold mb-1">
+                    <i class="bi bi-cash-stack text-success me-1"></i> Valor Geral da Premiação
+                </span>
                 <h3 class="fw-bold text-success mb-0">R$ <span id="lblValorGeralTotal">0,00</span></h3>
             </div>
         </div>

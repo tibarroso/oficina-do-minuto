@@ -169,11 +169,11 @@ window.carregarRelatorio = async function() {
 
             valorGeralTotal += premiaTotalOperador;
 
-            // Exibe apenas o resumo limpo por operador
+            // Exibe o resumo limpo com o nome do operador em destaque maior (font-size 1.35rem)
             htmlGeral += `
                 <div class="operador-section mb-3 p-3 border rounded bg-white shadow-sm">
-                    <h6 class="fw-bold text-primary mb-2">Operador: ${operador}</h6>
-                    <div class="text-secondary small" style="line-height: 1.6;">
+                    <div class="text-primary fw-bold mb-2" style="font-size: 1.35rem;">Operador: ${operador}</div>
+                    <div class="text-secondary" style="font-size: 1.05rem; line-height: 1.6;">
                         <div>Valor Base de Cálculo: <strong>R$ ${formatarMoeda(baseCalcTotal)}</strong></div>
                         <div>Total Geral da Premiação por Operador: <strong class="text-success">R$ ${formatarMoeda(premiaTotalOperador)}</strong></div>
                     </div>

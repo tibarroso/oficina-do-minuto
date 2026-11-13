@@ -3,19 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatório de Premiação / Comissão</title>
-    <!-- Bootstrap 5 CDN para um layout limpo -->
+    <title>Relatório de Premiação / Comissão - Oficina do Minuto</title>
+    <!-- Bootstrap 5 CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Ícones Bootstrap (opcional, deixa mais bonito) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        body { background-color: #f8f9fa; font-family: Arial, sans-serif; }
-        .relatorio-container { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); }
-        .report-header { border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 20px; }
-        .operador-section { margin-bottom: 30px; border: 1px solid #dee2e6; border-radius: 6px; padding: 15px; background: #fff; }
-        .table-sm td, .table-sm th { font-size: 0.9rem; }
+        body { 
+            background-color: #f4f6f9; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            color: #333;
+        }
+        .relatorio-container { 
+            background: #fff; 
+            padding: 40px; 
+            border-radius: 10px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08); 
+        }
+        .report-header { 
+            border-bottom: 3px solid #2c3e50; 
+            padding-bottom: 20px; 
+            margin-bottom: 25px; 
+        }
+        .operador-section { 
+            margin-bottom: 25px; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 8px; 
+            padding: 20px; 
+            background: #ffffff; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .table-sm td, .table-sm th { 
+            font-size: 0.9rem; 
+            padding: 8px 12px;
+        }
+        .total-card {
+            background-color: #f8f9fa;
+            border-left: 5px solid #198754;
+            padding: 15px 20px;
+            border-radius: 6px;
+        }
         @media print {
             .no-print { display: none !important; }
             body { background: #fff; }
-            .relatorio-container { box-shadow: none; padding: 0; }
+            .container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+            .relatorio-container { box-shadow: none; padding: 10px; }
+            .operador-section { border: 1px solid #ccc; break-inside: avoid; }
         }
     </style>
 </head>
@@ -23,26 +56,28 @@
 
 <div class="container my-4">
     <!-- Filtros de Pesquisa (Não saem na impressão) -->
-    <div class="card mb-4 no-print shadow-sm">
-        <div class="card-body">
-            <h5 class="card-title mb-3">Filtros do Relatório</h5>
+    <div class="card mb-4 no-print shadow-sm border-0">
+        <div class="card-body bg-white rounded-3 p-4">
+            <h5 class="card-title mb-3 fw-bold text-secondary"><i class="bi bi-filter-circle"></i> Filtros do Relatório</h5>
             <div class="row g-3">
-                <div class="col-md-3">
-                    <label for="select-loja" class="form-label">Loja</label>
-                    <select id="select-loja" class="form-select">
+                <div class="col-md-4">
+                    <label for="select-loja" class="form-label fw-semibold">Loja</label>
+                    <select id="select-loja" class="form-select shadow-sm">
                         <option value="">Carregando lojas...</option>
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label for="dataInicio" class="form-label">Data Início</label>
-                    <input type="date" id="dataInicio" class="form-control" value="2026-10-01">
+                    <label for="dataInicio" class="form-label fw-semibold">Data Início</label>
+                    <input type="date" id="dataInicio" class="form-control shadow-sm" value="2026-10-01">
                 </div>
                 <div class="col-md-3">
-                    <label for="dataFim" class="form-label">Data Fim</label>
-                    <input type="date" id="dataFim" class="form-control" value="2026-10-31">
+                    <label for="dataFim" class="form-label fw-semibold">Data Fim</label>
+                    <input type="date" id="dataFim" class="form-control shadow-sm" value="2026-10-31">
                 </div>
-                <div class="col-md-3 d-flex align-items-end">
-                    <button class="btn btn-primary w-100" onclick="carregarRelatorio()">Gerar Relatório</button>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-primary w-100 shadow-sm fw-semibold" onclick="carregarRelatorio()">
+                        <i class="bi bi-search"></i> Gerar
+                    </button>
                 </div>
             </div>
         </div>
@@ -52,33 +87,41 @@
     <div class="relatorio-container" id="relatorioArea">
         <div class="report-header d-flex justify-content-between align-items-center">
             <div>
-                <h4 class="mb-1 text-uppercase">Premiação Geral Resumido</h4>
-                <p class="mb-0 text-muted" id="lblPeriodo">Período de --/--/---- até --/--/----</p>
+                <h3 class="mb-1 text-uppercase fw-bold text-dark">Premiação Geral Resumido</h3>
+                <p class="mb-0 text-muted fw-semibold" id="lblPeriodo">Período de --/--/---- até --/--/----</p>
             </div>
             <div class="text-end">
-                <p class="mb-1"><strong>Geração:</strong> <span id="lblGeracao">--/--/---- --:--</span></p>
-                <button class="btn btn-secondary btn-sm no-print" onclick="window.print()">Imprimir / PDF</button>
+                <p class="mb-1 text-muted small"><strong>Geração:</strong> <span id="lblGeracao">--/--/---- --:--</span></p>
+                <button class="btn btn-dark btn-sm no-print shadow-sm" onclick="window.print()">
+                    <i class="bi bi-printer"></i> Imprimir / PDF
+                </button>
             </div>
         </div>
 
         <div class="mb-4">
-            <h5 id="lblLoja" class="fw-bold">Loja: --</h5>
-            <p class="text-secondary small">Premiações Fechadas no período selecionado</p>
+            <h5 id="lblLoja" class="fw-bold text-primary">Loja: --</h5>
+            <p class="text-secondary small mb-0">Premiações Fechadas no período selecionado</p>
         </div>
 
         <!-- Conteúdo Dinâmico dos Operadores -->
         <div id="conteudoOperadores">
-            <div class="text-center text-muted py-5">Selecione a loja e clique em "Gerar Relatório" para exibir os dados.</div>
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-file-earmark-text display-4 d-block mb-3 text-secondary opacity-50"></i>
+                Selecione a loja e clique em "Gerar" para exibir os dados do relatório.
+            </div>
         </div>
 
-        <!-- Rodapé Geral -->
+        <!-- Rodapé Geral Consolidado -->
         <div class="mt-4 pt-3 border-top text-end" id="divValorGeral" style="display: none;">
-            <h4 class="fw-bold text-success">Valor Geral da Premiação: R$ <span id="lblValorGeralTotal">0,00</span></h4>
+            <div class="total-card d-inline-block text-end shadow-sm">
+                <span class="text-muted d-block small text-uppercase fw-bold">Valor Geral da Premiação</span>
+                <h3 class="fw-bold text-success mb-0">R$ <span id="lblValorGeralTotal">0,00</span></h3>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Importação do script externo mapeado como type="module" para suportar o import do supabase.js -->
+<!-- Importação do script externo mapeado como type="module" -->
 <script type="module" src="js/comissao.js"></script>
 
 </body>

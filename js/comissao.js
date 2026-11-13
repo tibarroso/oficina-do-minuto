@@ -173,31 +173,20 @@ window.carregarRelatorio = async function() {
 
             valorGeralTotal += premiaTotalOperador;
 
+            // HTML atualizado: Sem o cabeçalho <thead> e com os totais alinhados e limpos embaixo
             htmlGeral += `
                 <div class="operador-section">
-                    <h6 class="fw-bold text-primary mb-2">Operador: ${operador}</h6>
+                    <h6 class="fw-bold text-primary mb-3">Operador: ${operador}</h6>
                     <div class="table-responsive">
-                        <table class="table table-sm table-bordered align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Execução</th>
-                                    <th class="text-end">Vl. Total</th>
-                                    <th class="text-end">Desc</th>
-                                    <th class="text-end">Tx. Ad.</th>
-                                    <th class="text-end">Base Calc.</th>
-                                    <th class="text-center">% P.</th>
-                                    <th class="text-end">Vl. Prem.</th>
-                                </tr>
-                            </thead>
+                        <table class="table table-sm table-bordered align-middle mb-2">
                             <tbody>
                                 ${linhasTabela}
                             </tbody>
                         </table>
                     </div>
-                    <div class="text-end mt-2">
-                        <span class="me-4 text-muted">Valor Base de Cálculo: <strong>R$ ${formatarMoeda(baseCalcTotal)}</strong></span>
-                        <span class="me-4 text-muted">Total Premiação por Execução: <strong>R$ ${formatarMoeda(premiaTotalOperador)}</strong></span>
-                        <span class="text-dark">Total Geral da Premiação por Operador: <strong>R$ ${formatarMoeda(premiaTotalOperador)}</strong></span>
+                    <div class="text-end mt-2 pt-2 border-top">
+                        <span class="me-4 text-muted small">Valor Base de Cálculo: <strong>R$ ${formatarMoeda(baseCalcTotal)}</strong></span>
+                        <span class="text-dark small">Total Geral da Premiação por Operador: <strong class="text-success">R$ ${formatarMoeda(premiaTotalOperador)}</strong></span>
                     </div>
                 </div>
             `;
@@ -216,11 +205,10 @@ window.carregarRelatorio = async function() {
     }
 };
 
-// Executa a listagem de lojas automaticamente ao carregar a página (sem travar datas fixas ao iniciar)
+// Executa a listagem de lojas automaticamente ao carregar a página
 document.addEventListener('DOMContentLoaded', () => {
     carregarSelectLojas();
 
-    // Opcional: define o mês atual caso os inputs estejam vazios, permitindo total liberdade de alteração pelo usuário
     const inputInicio = document.getElementById('dataInicio');
     const inputFim = document.getElementById('dataFim');
 

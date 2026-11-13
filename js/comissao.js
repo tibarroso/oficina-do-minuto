@@ -56,6 +56,11 @@ function formatarDataHora(dataStr) {
 
 function formatarApenasData(dataStr) {
     if (!dataStr) return '';
+    // Ajuste para evitar deslocamento de fuso horário em datas vindas como string YYYY-MM-DD
+    const [ano, mes, dia] = dataStr.split('T')[0].split('-');
+    if (ano && mes && dia) {
+        return `${dia}/${mes}/${ano}`;
+    }
     const data = new Date(dataStr);
     return data.toLocaleDateString('pt-BR');
 }

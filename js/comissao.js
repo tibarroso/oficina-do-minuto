@@ -100,7 +100,7 @@ window.carregarRelatorio = async function() {
         
         // Zera os contadores enquanto busca
         document.getElementById('lblTotalOperadores').innerText = `Qtd Operadores: 0`;
-        document.getElementById('lblTotalPaginas').innerText = `Total de Páginas: 3`;
+        document.getElementById('lblTotalPaginas').innerText = `Total de Páginas: 1`;
 
         const response = await fetch(`${API_URL}/api/relatorio-comissao?codigoLoja=${codigoLoja}&dataInicio=${dataInicio}&dataFim=${dataFim}`);
         
@@ -182,8 +182,16 @@ window.carregarRelatorio = async function() {
         document.getElementById('lblValorGeralTotal').innerText = formatarMoeda(valorGeralTotal);
         document.getElementById('divValorGeral').style.display = 'inline-flex';
 
-        // Sincroniza o número real de páginas para exibição e impressão (ajustado para 3 páginas reais)
-        document.getElementById('lblTotalPaginas').innerText = `Total de Páginas: 3`;
+        // 📐 CÁLCULO DINÂMICO DA QUANTIDADE DE PÁGINAS COM BASE NO CONTEÚDO REAL
+        setTimeout(() => {
+            const relatorioArea = document.getElementById('relatorioArea');
+            if (relatorioArea) {
+                const alturaConteudo = relatorioArea.scrollHeight;
+                const alturaUtilA4 = 920; // Altura útil padrão de uma página A4 em pixels web
+                const paginasDinamicas = Math.max(1, Math.ceil(alturaConteudo / alturaUtilA4));
+                document.getElementById('lblTotalPaginas').innerText = `Total de Páginas: ${paginasDinamicas}`;
+            }
+        }, 50);
 
     } catch (error) {
         console.error('Erro ao processar o relatório de comissões:', error);

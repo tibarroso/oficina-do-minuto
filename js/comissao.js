@@ -97,6 +97,10 @@ window.carregarRelatorio = async function() {
             <div class="text-center text-muted py-5">Buscando dados do período selecionado...</div>
         `;
         document.getElementById('divValorGeral').style.display = 'none';
+        
+        // Zera os contadores enquanto busca
+        document.getElementById('lblTotalOperadores').innerText = `Qtd Operadores: 0`;
+        document.getElementById('lblTotalPaginas').innerText = `Total de Páginas: 1`;
 
         const response = await fetch(`${API_URL}/api/relatorio-comissao?codigoLoja=${codigoLoja}&dataInicio=${dataInicio}&dataFim=${dataFim}`);
         
@@ -137,6 +141,13 @@ window.carregarRelatorio = async function() {
             agrupadoPorOperador[operador].push(item);
         });
 
+        // Atualiza a quantidade de operadores e o total de páginas estimado (ex: ~6 operadores por folha A4 em formato resumido)
+        const totalOperadores = Object.keys(agrupadoPorOperador).length;
+        document.getElementById('lblTotalOperadores').innerText = `Qtd Operadores: ${totalOperadores}`;
+        
+        const totalPaginasEstimado = Math.max(1, Math.ceil(totalOperadores / 6));
+        document.getElementById('lblTotalPaginas').innerText = `Total de Páginas: ${totalPaginasEstimado}`;
+
         let htmlGeral = '';
         let valorGeralTotal = 0;
 
@@ -158,7 +169,7 @@ window.carregarRelatorio = async function() {
 
             valorGeralTotal += premiaTotalOperador;
 
-            // Exibe apenas o resumo limpo por operador (sem a tabela detalhada de execuções)
+            // Exibe apenas o resumo limpo por operador
             htmlGeral += `
                 <div class="operador-section mb-3 p-3 border rounded bg-white shadow-sm">
                     <h6 class="fw-bold text-primary mb-2">Operador: ${operador}</h6>

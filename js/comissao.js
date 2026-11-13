@@ -88,48 +88,65 @@ window.carregarRelatorio = async function() {
     }
 
     // Atualiza os cabeçalhos fixos do relatório na tela
-    document.getElementById('lblPeriodo').innerText = `Período de ${formatarApenasData(dataInicio)} até ${formatarApenasData(dataFim)}`;
-    document.getElementById('lblGeracao').innerText = formatarDataHora(new Date());
+    const lblPeriodo = document.getElementById('lblPeriodo');
+    if (lblPeriodo) lblPeriodo.innerText = `Período de ${formatarApenasData(dataInicio)} até ${formatarApenasData(dataFim)}`;
+    
+    const lblGeracao = document.getElementById('lblGeracao');
+    if (lblGeracao) lblGeracao.innerText = formatarDataHora(new Date());
 
     try {
         // Exibe feedback de carregamento
-        document.getElementById('conteudoOperadores').innerHTML = `
-            <div class="text-center text-muted py-5">Buscando dados do período selecionado...</div>
-        `;
-        document.getElementById('divValorGeral').style.display = 'none';
+        const conteudoOp = document.getElementById('conteudoOperadores');
+        if (conteudoOp) {
+            conteudoOp.innerHTML = `<div class="text-center text-muted py-5">Buscando dados do período selecionado...</div>`;
+        }
+
+        const divValorGeral = document.getElementById('divValorGeral');
+        if (divValorGeral) divValorGeral.style.display = 'none';
         
         // Zera os contadores enquanto busca
-        document.getElementById('lblTotalOperadores').innerText = `Qtd Operadores: 0`;
-        document.getElementById('lblTotalPaginas').innerText = `Total de Páginas: 1`;
+        const lblTotalOp = document.getElementById('lblTotalOperadores');
+        if (lblTotalOp) lblTotalOp.innerText = `Qtd Operadores: 0`;
+        
+        const lblTotalPag = document.getElementById('lblTotalPaginas');
+        if (lblTotalPag) lblTotalPag.innerText = `Total de Páginas: 1`;
 
-        const response = await fetch(`${API_URL}/api/relatorio-comissao?codigoLoja=${codigoLoja}&dataInicio=${dataInicio}&dataFim=${dataFim}`);
+        const urlRequisicao = `${API_URL}/api/relatorio-comissao?codigoLoja=${codigoLoja}&dataInicio=${dataInicio}&dataFim=${dataFim}`;
+        console.log("Requisitando URL:", urlRequisicao);
+
+        const response = await fetch(urlRequisicao);
         
         if (!response.ok) {
-            throw new Error('Erro na resposta do servidor ao buscar comissões.');
+            throw new Error(`Erro HTTP: ${response.status} ao buscar comissões.`);
         }
 
         const dados = await response.json();
 
         if (dados.error) {
             alert(dados.error);
-            document.getElementById('conteudoOperadores').innerHTML = `<div class="alert alert-danger text-center">${dados.error}</div>`;
+            if (conteudoOp) conteudoOp.innerHTML = `<div class="alert alert-danger text-center">${dados.error}</div>`;
             return;
         }
 
         // Se não houver registros no período escolhido
-        if (dados.length === 0) {
-            document.getElementById('conteudoOperadores').innerHTML = `
-                <div class="alert alert-warning text-center">Nenhum registro de comissão encontrado para o período de ${formatarApenasData(dataInicio)} até ${formatarApenasData(dataFim)}.</div>
-            `;
-            document.getElementById('divValorGeral').style.display = 'none';
+        if (!Array.isArray(dados) || dados.length === 0) {
+            if (conteudoOp) {
+                conteudoOp.innerHTML = `
+                    <div class="alert alert-warning text-center">Nenhum registro de comissão encontrado para o período de ${formatarApenasData(dataInicio)} até ${formatarApenasData(dataFim)}.</div>
+                `;
+            }
+            if (divValorGeral) divValorGeral.style.display = 'none';
+            
             const nomeLojaText = selectLoja.selectedOptions[0] ? selectLoja.selectedOptions[0].text : codigoLoja;
-            document.getElementById('lblLoja').innerText = `Loja: ${nomeLojaText}`;
+            const lblLoja = document.getElementById('lblLoja');
+            if (lblLoja) lblLoja.innerText = `Loja: ${nomeLojaText}`;
             return;
         }
 
         // Define o título da Loja formatado
         const nomeLojaText = selectLoja.selectedOptions[0] ? selectLoja.selectedOptions[0].text : codigoLoja;
-        document.getElementById('lblLoja').innerText = `Loja: ${nomeLojaText}`;
+        const lblLoja = document.getElementById('lblLoja');
+        if (lblLoja) lblLoja.innerText = `Loja: ${nomeLojaText}`;
 
         // Agrupando os registros por OperadorComissionado
         const agrupadoPorOperador = {};
@@ -143,7 +160,7 @@ window.carregarRelatorio = async function() {
 
         // Atualiza a quantidade de operadores
         const totalOperadores = Object.keys(agrupadoPorOperador).length;
-        document.getElementById('lblTotalOperadores').innerText = `Qtd Operadores: ${totalOperadores}`;
+        if (lblTotalOp) lblTotalOp.innerText = `Qtd Operadores: ${totalOperadores}`;
 
         let htmlGeral = '';
         let valorGeralTotal = 0;
@@ -166,7 +183,6 @@ window.carregarRelatorio = async function() {
 
             valorGeralTotal += premiaTotalOperador;
 
-            // Exibe o resumo limpo com o nome do operador em destaque maior (font-size 1.35rem)
             htmlGeral += `
                 <div class="operador-section mb-3 p-3 border rounded bg-white shadow-sm">
                     <div class="text-primary fw-bold mb-2" style="font-size: 1.35rem;">Operador: ${operador}</div>
@@ -178,27 +194,32 @@ window.carregarRelatorio = async function() {
             `;
         }
 
-        document.getElementById('conteudoOperadores').innerHTML = htmlGeral;
-        document.getElementById('lblValorGeralTotal').innerText = formatarMoeda(valorGeralTotal);
-        document.getElementById('divValorGeral').style.display = 'inline-flex';
+        if (conteudoOp) conteudoOp.innerHTML = htmlGeral;
+        
+        const lblValorGeralTotal = document.getElementById('lblValorGeralTotal');
+        if (lblValorGeralTotal) lblValorGeralTotal.innerText = formatarMoeda(valorGeralTotal);
+        
+        if (divValorGeral) divValorGeral.style.display = 'inline-flex';
 
-        // 📐 CÁLCULO DINÂMICO DA QUANTIDADE DE PÁGINAS COM BASE NO CONTEÚDO REAL
+        // 📐 CÁLCULO DINÂMICO DA QUANTIDADE DE PÁGINAS
         setTimeout(() => {
             const relatorioArea = document.getElementById('relatorioArea');
             if (relatorioArea) {
                 const alturaConteudo = relatorioArea.scrollHeight;
-                const alturaUtilA4 = 920; // Altura útil padrão de uma página A4 em pixels web
+                const alturaUtilA4 = 920; 
                 const paginasDinamicas = Math.max(1, Math.ceil(alturaConteudo / alturaUtilA4));
-                document.getElementById('lblTotalPaginas').innerText = `Total de Páginas: ${paginasDinamicas}`;
+                const lblTotalPag = document.getElementById('lblTotalPaginas');
+                if (lblTotalPag) lblTotalPag.innerText = `Total de Páginas: ${paginasDinamicas}`;
             }
         }, 50);
 
     } catch (error) {
         console.error('Erro ao processar o relatório de comissões:', error);
         alert('Ocorreu um erro ao buscar os dados da comissão. Verifique a conexão com o servidor.');
-        document.getElementById('conteudoOperadores').innerHTML = `
-            <div class="alert alert-danger text-center">Erro de conexão ao buscar os dados.</div>
-        `;
+        const conteudoOp = document.getElementById('conteudoOperadores');
+        if (conteudoOp) {
+            conteudoOp.innerHTML = `<div class="alert alert-danger text-center">Erro de conexão ao buscar os dados.</div>`;
+        }
     }
 };
 

@@ -54,7 +54,6 @@ function formatarDataHora(dataStr) {
 
 function formatarApenasData(dataStr) {
     if (!dataStr) return '';
-    // Evita problemas de fuso horário ao converter strings YYYY-MM-DD
     const partes = dataStr.split('T')[0].split('-');
     if (partes.length === 3) {
         return `${partes[2]}/${partes[1]}/${partes[0]}`;
@@ -173,20 +172,20 @@ window.carregarRelatorio = async function() {
 
             valorGeralTotal += premiaTotalOperador;
 
-            // HTML atualizado: Sem o cabeçalho <thead> e com os totais alinhados e limpos embaixo
+            // HTML ajustado para o formato exato solicitado: Operador e totais em cima, tabela logo abaixo
             htmlGeral += `
                 <div class="operador-section">
-                    <h6 class="fw-bold text-primary mb-3">Operador: ${operador}</h6>
+                    <h6 class="fw-bold text-primary mb-2">Operador: ${operador}</h6>
+                    <div class="mb-3 text-muted small" style="line-height: 1.6;">
+                        <div>Valor Base de Cálculo: <strong>R$ ${formatarMoeda(baseCalcTotal)}</strong></div>
+                        <div>Total Geral da Premiação por Operador: <strong class="text-success">R$ ${formatarMoeda(premiaTotalOperador)}</strong></div>
+                    </div>
                     <div class="table-responsive">
-                        <table class="table table-sm table-bordered align-middle mb-2">
+                        <table class="table table-sm table-bordered align-middle mb-0">
                             <tbody>
                                 ${linhasTabela}
                             </tbody>
                         </table>
-                    </div>
-                    <div class="text-end mt-2 pt-2 border-top">
-                        <span class="me-4 text-muted small">Valor Base de Cálculo: <strong>R$ ${formatarMoeda(baseCalcTotal)}</strong></span>
-                        <span class="text-dark small">Total Geral da Premiação por Operador: <strong class="text-success">R$ ${formatarMoeda(premiaTotalOperador)}</strong></span>
                     </div>
                 </div>
             `;

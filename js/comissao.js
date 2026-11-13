@@ -1,8 +1,7 @@
 import { supabase } from "./supabase.js";
 // nao remover linha do supabase pois vai ser utilizada neste arquivo no futuro.
 
-// Configuração da URL da API (mesmo padrão do seu código que funciona)
-// const API_URL = 'http://localhost:3000';
+// Configuração da URL da API
 const API_URL = 'http://10.86.1.120:3000';
 
 // =========================================================================
@@ -55,16 +54,17 @@ function formatarDataHora(dataStr) {
 
 function formatarApenasData(dataStr) {
     if (!dataStr) return '';
-    const [ano, mes, dia] = dataStr.split('T')[0].split('-');
-    if (ano && mes && dia) {
-        return `${dia}/${mes}/${ano}`;
+    // Evita problemas de fuso horário ao converter strings YYYY-MM-DD
+    const partes = dataStr.split('T')[0].split('-');
+    if (partes.length === 3) {
+        return `${partes[2]}/${partes[1]}/${partes[0]}`;
     }
     const data = new Date(dataStr);
     return data.toLocaleDateString('pt-BR');
 }
 
 // =========================================================================
-// 📊 FUNÇÃO PARA GERAR O RELATÓRIO DE COMISSÃO
+// 📊 FUNÇÃO PARA GERAR O RELATÓRIO DE COMISSÃO POR PERÍODO LIVRE
 // =========================================================================
 window.carregarRelatorio = async function() {
     const selectLoja = document.getElementById("select-loja");
@@ -73,8 +73,18 @@ window.carregarRelatorio = async function() {
     const dataInicio = document.getElementById('dataInicio').value;
     const dataFim = document.getElementById('dataFim').value;
 
-    if (!codigoLoja || !dataInicio || !dataFim) {
-        alert('Por favor, selecione uma loja e preencha as datas de início e fim.');
+    if (!codigoLoja) {
+        alert('Por favor, selecione uma loja.');
+        return;
+    }
+
+    if (!dataInicio || !dataFim) {
+        alert('Por favor, preencha a Data Início e a Data Fim.');
+        return;
+    }
+
+    if (dataInicio > dataFim) {
+        alert('A data de início não pode ser maior que a data fim.');
         return;
     }
 
@@ -83,6 +93,12 @@ window.carregarRelatorio = async function() {
     document.getElementById('lblGeracao').innerText = formatarDataHora(new Date());
 
     try {
+        // Exibe feedback de carregamento
+        document.getElementById('conteudoOperadores').innerHTML = `
+            <div class="text-center text-muted py-5">Buscando dados do período selecionado...</div>
+        `;
+        document.getElementById('divValorGeral').style.display = 'none';
+
         const response = await fetch(`${API_URL}/api/relatorio-comissao?codigoLoja=${codigoLoja}&dataInicio=${dataInicio}&dataFim=${dataFim}`);
         
         if (!response.ok) {
@@ -93,13 +109,14 @@ window.carregarRelatorio = async function() {
 
         if (dados.error) {
             alert(dados.error);
+            document.getElementById('conteudoOperadores').innerHTML = `<div class="alert alert-danger text-center">${dados.error}</div>`;
             return;
         }
 
-        // Se não houver registros
+        // Se não houver registros no período escolhido
         if (dados.length === 0) {
             document.getElementById('conteudoOperadores').innerHTML = `
-                <div class="alert alert-warning text-center">Nenhum registro de comissão encontrado para o período informado.</div>
+                <div class="alert alert-warning text-center">Nenhum registro de comissão encontrado para o período de ${formatarApenasData(dataInicio)} até ${formatarApenasData(dataFim)}.</div>
             `;
             document.getElementById('divValorGeral').style.display = 'none';
             const nomeLojaText = selectLoja.selectedOptions[0] ? selectLoja.selectedOptions[0].text : codigoLoja;
@@ -193,21 +210,26 @@ window.carregarRelatorio = async function() {
     } catch (error) {
         console.error('Erro ao processar o relatório de comissões:', error);
         alert('Ocorreu um erro ao buscar os dados da comissão. Verifique a conexão com o servidor.');
+        document.getElementById('conteudoOperadores').innerHTML = `
+            <div class="alert alert-danger text-center">Erro de conexão ao buscar os dados.</div>
+        `;
     }
 };
 
-// Executa a listagem de lojas automaticamente ao carregar a página
+// Executa a listagem de lojas automaticamente ao carregar a página (sem travar datas fixas ao iniciar)
 document.addEventListener('DOMContentLoaded', () => {
     carregarSelectLojas();
 
-    // Define datas padrão caso os inputs existam e estejam vazios
+    // Opcional: define o mês atual caso os inputs estejam vazios, permitindo total liberdade de alteração pelo usuário
     const inputInicio = document.getElementById('dataInicio');
     const inputFim = document.getElementById('dataFim');
 
     if (inputInicio && !inputInicio.value) {
-        inputInicio.value = '2026-10-01';
+        const d = new Date();
+        inputInicio.value = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
     }
     if (inputFim && !inputFim.value) {
-        inputFim.value = '2026-10-31';
+        const d = new Date();
+        inputFim.value = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0];
     }
 });

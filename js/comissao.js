@@ -183,7 +183,7 @@ window.carregarRelatorio = async function() {
 
         document.getElementById('conteudoOperadores').innerHTML = htmlGeral;
         document.getElementById('lblValorGeralTotal').innerText = formatarMoeda(valorGeralTotal);
-        document.getElementById('divValorGeral').style.display = 'block';
+        document.getElementById('divValorGeral').style.display = 'inline-flex'; // Exibe o badge no topo perfeitamente
 
     } catch (error) {
         console.error('Erro ao processar o relatório de comissões:', error);

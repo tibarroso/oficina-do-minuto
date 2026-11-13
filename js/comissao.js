@@ -1,4 +1,46 @@
-// Função auxiliar para formatar valores monetários no padrão brasileiro (R$)
+import { supabase } from "./supabase.js";
+// nao remover linha do supabase pois vai ser utilizada neste arquivo no futuro.
+
+// Configuração dinâmica da URL da API (conforme seu padrão)
+const API_URL = (window.location.protocol === 'file:' || window.location.hostname === 'tibarroso.github.io')
+    ? 'http://10.86.1.120:3000'
+    : '';
+
+// =========================================================================
+// 🏢 FUNÇÃO PARA CARREGAR DINAMICAMENTE AS LOJAS DA API
+// =========================================================================
+async function carregarSelectLojas() {
+    const selectLoja = document.getElementById("select-loja");
+    if (!selectLoja) return;
+
+    try {
+        selectLoja.innerHTML = '<option value="">Carregando lojas...</option>';
+
+        const resposta = await fetch(`${API_URL}/lojas/lista`);
+        const resultado = await resposta.json();
+
+        if (resultado.sucesso && resultado.lojas) {
+            selectLoja.innerHTML = '<option value="">Selecione uma loja...</option>';
+
+            resultado.lojas.forEach(oficina => {
+                const option = document.createElement("option");
+                option.value = oficina.loja;
+
+                const statusBolinha = oficina.status === "Online" ? "🟢" : "🔴";
+                option.textContent = `${statusBolinha} ${oficina.loja} - ${oficina.nome_oficina} (${oficina.status})`;
+                
+                selectLoja.appendChild(option);
+            });
+        } else {
+            selectLoja.innerHTML = '<option value="">Erro ao carregar lojas</option>';
+        }
+    } catch (error) {
+        console.error("Erro ao carregar as lojas:", error);
+        selectLoja.innerHTML = '<option value="">Erro de conexão</option>';
+    }
+}
+
+// Funções auxiliares de formatação
 function formatarMoeda(valor) {
     return Number(valor || 0).toLocaleString('pt-BR', { 
         minimumFractionDigits: 2, 
@@ -6,28 +48,31 @@ function formatarMoeda(valor) {
     });
 }
 
-// Função auxiliar para formatar Data e Hora (ex: para o campo Geração)
 function formatarDataHora(dataStr) {
     if (!dataStr) return '';
     const data = new Date(dataStr);
     return data.toLocaleDateString('pt-BR') + ' ' + data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
-// Função auxiliar para formatar apenas a Data (DD/MM/AAAA)
 function formatarApenasData(dataStr) {
     if (!dataStr) return '';
     const data = new Date(dataStr);
     return data.toLocaleDateString('pt-BR');
 }
 
-// Função principal disparada pelo botão "Gerar Relatório"
+// =========================================================================
+// 📊 FUNÇÃO PARA GERAR O RELATÓRIO DE COMISSÃO
+// =========================================================================
 async function carregarRelatorio() {
-    const codigoLoja = document.getElementById('codigoLoja').value;
+    // Pega do select se existir, senão tenta pegar de um input comum (caso retrocompatível)
+    const selectLoja = document.getElementById("select-loja");
+    const codigoLoja = selectLoja ? selectLoja.value : document.getElementById('codigoLoja')?.value;
+    
     const dataInicio = document.getElementById('dataInicio').value;
     const dataFim = document.getElementById('dataFim').value;
 
     if (!codigoLoja || !dataInicio || !dataFim) {
-        alert('Por favor, preencha todos os campos do filtro (Loja, Data Início e Data Fim).');
+        alert('Por favor, selecione a loja e preencha o período (Data Início e Data Fim).');
         return;
     }
 
@@ -36,8 +81,8 @@ async function carregarRelatorio() {
     document.getElementById('lblGeracao').innerText = formatarDataHora(new Date());
 
     try {
-        // Chamada para a rota do backend que criamos anteriormente
-        const response = await fetch(`/api/relatorio-comissao?codigoLoja=${codigoLoja}&dataInicio=${dataInicio}&dataFim=${dataFim}`);
+        // Chamada para a rota do backend usando o API_URL dinâmico
+        const response = await fetch(`${API_URL}/api/relatorio-comissao?codigoLoja=${codigoLoja}&dataInicio=${dataInicio}&dataFim=${dataFim}`);
         
         if (!response.ok) {
             throw new Error('Erro na resposta do servidor ao buscar comissões.');
@@ -61,7 +106,8 @@ async function carregarRelatorio() {
         }
 
         // Define o título da Loja
-        document.getElementById('lblLoja').innerText = `Loja: ${dados[0].com_CodigoLoja} - OFICINA DO MINUTO`;
+        const nomeLojaText = selectLoja && selectLoja.selectedOptions[0] ? selectLoja.selectedOptions[0].text : codigoLoja;
+        document.getElementById('lblLoja').innerText = `Loja: ${nomeLojaText}`;
 
         // Agrupando os registros por OperadorComissionado
         const agrupadoPorOperador = {};
@@ -108,10 +154,8 @@ async function carregarRelatorio() {
                 `;
             });
 
-            // Soma acumulada para o valor geral da premiação de todos os operadores
             valorGeralTotal += premiaTotalOperador;
 
-            // Bloco HTML renderizado para cada operador
             htmlGeral += `
                 <div class="operador-section">
                     <h6 class="fw-bold text-primary mb-2">Operador: ${operador}</h6>
@@ -142,7 +186,6 @@ async function carregarRelatorio() {
             `;
         }
 
-        // Injeta o conteúdo gerado no HTML e atualiza o rodapé geral com o valor somado de todos os operadores
         document.getElementById('conteudoOperadores').innerHTML = htmlGeral;
         document.getElementById('lblValorGeralTotal').innerText = formatarMoeda(valorGeralTotal);
         document.getElementById('divValorGeral').style.display = 'block';
@@ -152,3 +195,8 @@ async function carregarRelatorio() {
         alert('Ocorreu um erro ao buscar os dados da comissão. Verifique a conexão com o servidor.');
     }
 }
+
+// Executa a listagem de lojas automaticamente ao carregar a página
+document.addEventListener("DOMContentLoaded", () => {
+    carregarSelectLojas();
+});

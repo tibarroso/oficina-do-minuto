@@ -141,12 +141,9 @@ window.carregarRelatorio = async function() {
             agrupadoPorOperador[operador].push(item);
         });
 
-        // Atualiza a quantidade de operadores e o total de páginas estimado (ex: ~6 operadores por folha A4 em formato resumido)
+        // Atualiza a quantidade de operadores
         const totalOperadores = Object.keys(agrupadoPorOperador).length;
         document.getElementById('lblTotalOperadores').innerText = `Qtd Operadores: ${totalOperadores}`;
-        
-        const totalPaginasEstimado = Math.max(1, Math.ceil(totalOperadores / 6));
-        document.getElementById('lblTotalPaginas').innerText = `Total de Páginas: ${totalPaginasEstimado}`;
 
         let htmlGeral = '';
         let valorGeralTotal = 0;
@@ -183,7 +180,18 @@ window.carregarRelatorio = async function() {
 
         document.getElementById('conteudoOperadores').innerHTML = htmlGeral;
         document.getElementById('lblValorGeralTotal').innerText = formatarMoeda(valorGeralTotal);
-        document.getElementById('divValorGeral').style.display = 'inline-flex'; // Exibe o badge no topo perfeitamente
+        document.getElementById('divValorGeral').style.display = 'inline-flex';
+
+        // Cálculo dinâmico e real do total de páginas com base na altura do conteúdo renderizado (considerando uma folha A4 útil de ~950px)
+        setTimeout(() => {
+            const containerRelatorio = document.getElementById('relatorioArea');
+            if (containerRelatorio) {
+                const alturaTotal = containerRelatorio.scrollHeight;
+                const alturaPaginaA4Util = 950; // altura média em pixels de uma página A4 para impressão web
+                const paginasReais = Math.max(1, Math.ceil(alturaTotal / alturaPaginaA4Util));
+                document.getElementById('lblTotalPaginas').innerText = `Total de Páginas: ${paginasReais}`;
+            }
+        }, 100);
 
     } catch (error) {
         console.error('Erro ao processar o relatório de comissões:', error);

@@ -14,6 +14,12 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             color: #333;
         }
+        /* Centraliza e limita a largura máxima de toda a tela em harmonia */
+        .layout-centralizado {
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+        }
         .relatorio-container { 
             background: #fff; 
             padding: 40px; 
@@ -74,7 +80,7 @@
         @media print {
             .no-print { display: none !important; }
             body { background: #fff; }
-            .container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+            .layout-centralizado { max-width: 100% !important; margin: 0 !important; }
             .relatorio-container { box-shadow: none; padding: 10px; }
             .operador-section { border: 1px solid #ccc; break-inside: avoid; }
         }
@@ -83,96 +89,100 @@
 <body>
 
 <div class="container my-5">
-    <!-- Filtros de Pesquisa (Não saem na impressão) -->
-    <div class="card mb-4 no-print filter-card">
-        <div class="card-body p-4">
-            <h5 class="card-title mb-3 fw-bold text-dark d-flex align-items-center gap-2">
-                <i class="bi bi-filter-circle text-primary fs-4"></i> Filtros do Relatório
-            </h5>
-            <div class="row g-3 align-items-end">
-                <div class="col-md-4">
-                    <label for="select-loja" class="form-label fw-semibold small text-uppercase text-muted">Loja</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-shop"></i></span>
-                        <select id="select-loja" class="form-select border-start-0 ps-0 shadow-none">
-                            <option value="">Carregando lojas...</option>
-                        </select>
+    <div class="layout-centralizado">
+        
+        <!-- Filtros de Pesquisa (Não saem na impressão) -->
+        <div class="card mb-4 no-print filter-card">
+            <div class="card-body p-4">
+                <h5 class="card-title mb-3 fw-bold text-dark d-flex align-items-center gap-2">
+                    <i class="bi bi-filter-circle text-primary fs-4"></i> Filtros do Relatório
+                </h5>
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label for="select-loja" class="form-label fw-semibold small text-uppercase text-muted">Loja</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-shop"></i></span>
+                            <select id="select-loja" class="form-select border-start-0 ps-0 shadow-none">
+                                <option value="">Carregando lojas...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="dataInicio" class="form-label fw-semibold small text-uppercase text-muted">Data Início</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-calendar-event"></i></span>
+                            <input type="date" id="dataInicio" class="form-control border-start-0 ps-0 shadow-none">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="dataFim" class="form-label fw-semibold small text-uppercase text-muted">Data Fim</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-calendar-check"></i></span>
+                            <input type="date" id="dataFim" class="form-control border-start-0 ps-0 shadow-none">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary w-100 fw-semibold py-2 shadow-sm" onclick="carregarRelatorio()" style="border-radius: 8px;">
+                            <i class="bi bi-search me-1"></i> Gerar
+                        </button>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <label for="dataInicio" class="form-label fw-semibold small text-uppercase text-muted">Data Início</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-calendar-event"></i></span>
-                        <input type="date" id="dataInicio" class="form-control border-start-0 ps-0 shadow-none">
-                    </div>
+            </div>
+        </div>
+
+        <!-- Área Impressível do Relatório -->
+        <div class="relatorio-container" id="relatorioArea">
+            <div class="report-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h3 class="mb-1 text-uppercase fw-bold text-dark tracking-tight">Premiação Geral Resumido</h3>
+                    <p class="mb-0 text-muted fw-semibold small" id="lblPeriodo">
+                        <i class="bi bi-calendar3 me-1"></i> Período de --/--/---- até --/--/----
+                    </p>
                 </div>
-                <div class="col-md-3">
-                    <label for="dataFim" class="form-label fw-semibold small text-uppercase text-muted">Data Fim</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-calendar-check"></i></span>
-                        <input type="date" id="dataFim" class="form-control border-start-0 ps-0 shadow-none">
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <button class="btn btn-primary w-100 fw-semibold py-2 shadow-sm" onclick="carregarRelatorio()" style="border-radius: 8px;">
-                        <i class="bi bi-search me-1"></i> Gerar
+                <div class="text-end d-flex align-items-center gap-3">
+                    <p class="mb-0 text-muted small">
+                        <i class="bi bi-clock-history me-1"></i> <strong>Geração:</strong> <span id="lblGeracao">--/--/---- --:--</span>
+                    </p>
+                    <button class="btn btn-outline-dark btn-sm no-print shadow-sm px-3 py-2 rounded-2" onclick="window.print()">
+                        <i class="bi bi-printer me-1"></i> Imprimir / PDF
                     </button>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Área Impressível do Relatório -->
-    <div class="relatorio-container" id="relatorioArea">
-        <div class="report-header d-flex justify-content-between align-items-center flex-wrap gap-3">
-            <div>
-                <h3 class="mb-1 text-uppercase fw-bold text-dark tracking-tight">Premiação Geral Resumido</h3>
-                <p class="mb-0 text-muted fw-semibold small" id="lblPeriodo">
-                    <i class="bi bi-calendar3 me-1"></i> Período de --/--/---- até --/--/----
-                </p>
+            <div class="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2 bg-light p-3 rounded-3 border">
+                <div>
+                    <h5 id="lblLoja" class="fw-bold text-primary mb-1">Loja: --</h5>
+                    <p class="text-secondary small mb-0"><i class="bi bi-info-circle me-1"></i> Premiações Fechadas no período selecionado</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <span class="badge bg-white text-dark border px-3 py-2 fs-6 shadow-sm d-flex align-items-center gap-1" id="lblTotalOperadores">
+                        <i class="bi bi-people text-primary"></i> Qtd Operadores: 0
+                    </span>
+                    <span class="badge bg-white text-dark border px-3 py-2 fs-6 shadow-sm d-flex align-items-center gap-1" id="lblTotalPaginas">
+                        <i class="bi bi-file-earmark text-secondary"></i> Total de Páginas: 1
+                    </span>
+                </div>
             </div>
-            <div class="text-end d-flex align-items-center gap-3">
-                <p class="mb-0 text-muted small">
-                    <i class="bi bi-clock-history me-1"></i> <strong>Geração:</strong> <span id="lblGeracao">--/--/---- --:--</span>
-                </p>
-                <button class="btn btn-outline-dark btn-sm no-print shadow-sm px-3 py-2 rounded-2" onclick="window.print()">
-                    <i class="bi bi-printer me-1"></i> Imprimir / PDF
-                </button>
-            </div>
-        </div>
 
-        <div class="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2 bg-light p-3 rounded-3 border">
-            <div>
-                <h5 id="lblLoja" class="fw-bold text-primary mb-1">Loja: --</h5>
-                <p class="text-secondary small mb-0"><i class="bi bi-info-circle me-1"></i> Premiações Fechadas no período selecionado</p>
+            <!-- Conteúdo Dinâmico dos Operadores (Modo Resumido) -->
+            <div id="conteudoOperadores">
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-file-earmark-text display-4 d-block mb-3 text-secondary opacity-50"></i>
+                    Selecione a loja, escolha o período desejado e clique em <strong>"Gerar"</strong> para exibir os dados do relatório.
+                </div>
             </div>
-            <div class="d-flex gap-2">
-                <span class="badge bg-white text-dark border px-3 py-2 fs-6 shadow-sm d-flex align-items-center gap-1" id="lblTotalOperadores">
-                    <i class="bi bi-people text-primary"></i> Qtd Operadores: 0
-                </span>
-                <span class="badge bg-white text-dark border px-3 py-2 fs-6 shadow-sm d-flex align-items-center gap-1" id="lblTotalPaginas">
-                    <i class="bi bi-file-earmark text-secondary"></i> Total de Páginas: 1
-                </span>
+
+            <!-- Rodapé Geral Consolidado -->
+            <div class="mt-4 pt-4 border-top text-end" id="divValorGeral" style="display: none;">
+                <div class="total-card d-inline-block text-end shadow-sm">
+                    <span class="text-muted d-block small text-uppercase fw-bold mb-1">
+                        <i class="bi bi-cash-stack text-success me-1"></i> Valor Geral da Premiação
+                    </span>
+                    <h3 class="fw-bold text-success mb-0">R$ <span id="lblValorGeralTotal">0,00</span></h3>
+                </div>
             </div>
         </div>
 
-        <!-- Conteúdo Dinâmico dos Operadores (Modo Resumido) -->
-        <div id="conteudoOperadores">
-            <div class="text-center text-muted py-5">
-                <i class="bi bi-file-earmark-text display-4 d-block mb-3 text-secondary opacity-50"></i>
-                Selecione a loja, escolha o período desejado e clique em <strong>"Gerar"</strong> para exibir os dados do relatório.
-            </div>
-        </div>
-
-        <!-- Rodapé Geral Consolidado -->
-        <div class="mt-4 pt-4 border-top text-end" id="divValorGeral" style="display: none;">
-            <div class="total-card d-inline-block text-end shadow-sm">
-                <span class="text-muted d-block small text-uppercase fw-bold mb-1">
-                    <i class="bi bi-cash-stack text-success me-1"></i> Valor Geral da Premiação
-                </span>
-                <h3 class="fw-bold text-success mb-0">R$ <span id="lblValorGeralTotal">0,00</span></h3>
-            </div>
-        </div>
     </div>
 </div>
 

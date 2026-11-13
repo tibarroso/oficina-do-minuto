@@ -1,10 +1,9 @@
 import { supabase } from "./supabase.js";
 // nao remover linha do supabase pois vai ser utilizada neste arquivo no futuro.
 
-// Configuração dinâmica da URL da API
-const API_URL = (window.location.protocol === 'file:' || window.location.hostname === 'tibarroso.github.io')
-    ? 'http://10.86.1.120:3000'
-    : '';
+// Configuração da URL da API (mesmo padrão do seu código que funciona)
+// const API_URL = 'http://localhost:3000';
+const API_URL = 'http://10.86.1.120:3000';
 
 // =========================================================================
 // 🏢 FUNÇÃO PARA CARREGAR DINAMICAMENTE AS LOJAS DA API
@@ -56,7 +55,6 @@ function formatarDataHora(dataStr) {
 
 function formatarApenasData(dataStr) {
     if (!dataStr) return '';
-    // Ajuste para evitar deslocamento de fuso horário em datas vindas como string YYYY-MM-DD
     const [ano, mes, dia] = dataStr.split('T')[0].split('-');
     if (ano && mes && dia) {
         return `${dia}/${mes}/${ano}`;
@@ -199,6 +197,17 @@ window.carregarRelatorio = async function() {
 };
 
 // Executa a listagem de lojas automaticamente ao carregar a página
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener('DOMContentLoaded', () => {
     carregarSelectLojas();
+
+    // Define datas padrão caso os inputs existam e estejam vazios
+    const inputInicio = document.getElementById('dataInicio');
+    const inputFim = document.getElementById('dataFim');
+
+    if (inputInicio && !inputInicio.value) {
+        inputInicio.value = '2026-10-01';
+    }
+    if (inputFim && !inputFim.value) {
+        inputFim.value = '2026-10-31';
+    }
 });

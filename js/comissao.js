@@ -110,7 +110,7 @@ window.carregarRelatorio = async function() {
         if (lblTotalOp) lblTotalOp.innerText = `Qtd Operadores: 0`;
         
         const lblTotalPag = document.getElementById('lblTotalPaginas');
-        if (lblTotalPag) lblTotalPag.innerText = `Total de Páginas: 1`;
+        if (lblTotalPag) lblTotalPag.innerText = `Total de Páginas: 0`;
 
         const urlRequisicao = `${API_URL}/api/relatorio-comissao?codigoLoja=${codigoLoja}&dataInicio=${dataInicio}&dataFim=${dataFim}`;
         console.log("Requisitando URL:", urlRequisicao);

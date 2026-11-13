@@ -132,20 +132,28 @@
 
         <!-- Área Impressível do Relatório -->
         <div class="relatorio-container" id="relatorioArea">
-            <div class="report-header d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <div>
-                    <h3 class="mb-1 text-uppercase fw-bold text-dark tracking-tight">Premiação Geral Resumido</h3>
-                    <p class="mb-0 text-muted fw-semibold small" id="lblPeriodo">
-                        <i class="bi bi-calendar3 me-1"></i> Período de --/--/---- até --/--/----
-                    </p>
-                </div>
-                <div class="text-end d-flex align-items-center gap-3">
-                    <p class="mb-0 text-muted small">
-                        <i class="bi bi-clock-history me-1"></i> <strong>Geração:</strong> <span id="lblGeracao">--/--/---- --:--</span>
-                    </p>
-                    <button class="btn btn-outline-dark btn-sm no-print shadow-sm px-3 py-2 rounded-2" onclick="window.print()">
-                        <i class="bi bi-printer me-1"></i> Imprimir / PDF
-                    </button>
+            
+            <!-- Cabeçalho do Relatório Modernizado -->
+            <div class="report-header">
+                <div class="row align-items-center gy-3">
+                    <div class="col-md-7">
+                        <h3 class="text-uppercase fw-bold text-dark mb-1 tracking-tight">Premiação Geral Resumido</h3>
+                        <p class="text-muted fw-semibold mb-0" id="lblPeriodo">
+                            <i class="bi bi-calendar3 me-1 text-primary"></i> Período de --/--/---- até --/--/----
+                        </p>
+                    </div>
+                    <div class="col-md-5 text-md-end">
+                        <div class="d-inline-block bg-light px-3 py-2 rounded-2 border mb-2 mb-md-0 text-start shadow-sm">
+                            <span class="d-block text-muted small">
+                                <i class="bi bi-clock-history me-1"></i> <strong>Geração:</strong> <span id="lblGeracao">--/--/---- --:--</span>
+                            </span>
+                        </div>
+                        <div class="mt-2">
+                            <button class="btn btn-outline-dark btn-sm no-print shadow-sm px-3 py-2 rounded-2" onclick="window.print()">
+                                <i class="bi bi-printer me-1"></i> Imprimir / PDF
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 

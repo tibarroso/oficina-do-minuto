@@ -68,14 +68,11 @@
         .operador-section .valores-operador {
             font-size: 1.1rem !important;
         }
-        .total-card {
-            background-color: #f8f9fa;
-            border-left: 5px solid #198754;
-            padding: 15px 25px;
-            border-radius: 8px;
-            border-top: 1px solid #e9ecef;
-            border-right: 1px solid #e9ecef;
-            border-bottom: 1px solid #e9ecef;
+        .total-card-topo {
+            background-color: #ffffff;
+            border-left: 4px solid #198754;
+            padding: 8px 15px;
+            border-radius: 6px;
         }
         @media print {
             .no-print { display: none !important; }
@@ -157,18 +154,26 @@
                 </div>
             </div>
 
-            <div class="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2 bg-light p-3 rounded-3 border">
+            <!-- Faixa de Informações da Loja, Contadores e o Valor Geral -->
+            <div class="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3 bg-light p-3 rounded-3 border">
                 <div>
                     <h5 id="lblLoja" class="fw-bold text-primary mb-1">Loja: --</h5>
                     <p class="text-secondary small mb-0"><i class="bi bi-info-circle me-1"></i> Premiações Fechadas no período selecionado</p>
                 </div>
-                <div class="d-flex gap-2">
+                <div class="d-flex align-items-center flex-wrap gap-2">
                     <span class="badge bg-white text-dark border px-3 py-2 fs-6 shadow-sm d-flex align-items-center gap-1" id="lblTotalOperadores">
                         <i class="bi bi-people text-primary"></i> Qtd Operadores: 0
                     </span>
                     <span class="badge bg-white text-dark border px-3 py-2 fs-6 shadow-sm d-flex align-items-center gap-1" id="lblTotalPaginas">
                         <i class="bi bi-file-earmark text-secondary"></i> Total de Páginas: 1
                     </span>
+                    <!-- Valor Geral movido para o topo -->
+                    <div class="total-card-topo border bg-white shadow-sm" id="divValorGeral" style="display: none;">
+                        <span class="text-muted small text-uppercase fw-bold me-1">
+                            <i class="bi bi-cash-stack text-success"></i> Total:
+                        </span>
+                        <span class="fw-bold text-success fs-5">R$ <span id="lblValorGeralTotal">0,00</span></span>
+                    </div>
                 </div>
             </div>
 
@@ -177,16 +182,6 @@
                 <div class="text-center text-muted py-5">
                     <i class="bi bi-file-earmark-text display-4 d-block mb-3 text-secondary opacity-50"></i>
                     Selecione a loja, escolha o período desejado e clique em <strong>"Gerar"</strong> para exibir os dados do relatório.
-                </div>
-            </div>
-
-            <!-- Rodapé Geral Consolidado (Lado a Lado na mesma linha) -->
-            <div class="mt-4 pt-4 border-top text-end" id="divValorGeral" style="display: none;">
-                <div class="total-card d-inline-block text-end shadow-sm align-middle">
-                    <span class="text-muted small text-uppercase fw-bold me-2">
-                        <i class="bi bi-cash-stack text-success me-1"></i> Valor Geral da Premiação:
-                    </span>
-                    <h3 class="fw-bold text-success d-inline-block mb-0">R$ <span id="lblValorGeralTotal">0,00</span></h3>
                 </div>
             </div>
         </div>

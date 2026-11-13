@@ -1,7 +1,7 @@
 import { supabase } from "./supabase.js";
 // nao remover linha do supabase pois vai ser utilizada neste arquivo no futuro.
 
-// Configuração dinâmica da URL da API (conforme seu padrão)
+// Configuração dinâmica da URL da API
 const API_URL = (window.location.protocol === 'file:' || window.location.hostname === 'tibarroso.github.io')
     ? 'http://10.86.1.120:3000'
     : '';
@@ -63,16 +63,15 @@ function formatarApenasData(dataStr) {
 // =========================================================================
 // 📊 FUNÇÃO PARA GERAR O RELATÓRIO DE COMISSÃO
 // =========================================================================
-async function carregarRelatorio() {
-    // Pega do select se existir, senão tenta pegar de um input comum (caso retrocompatível)
+window.carregarRelatorio = async function() {
     const selectLoja = document.getElementById("select-loja");
-    const codigoLoja = selectLoja ? selectLoja.value : document.getElementById('codigoLoja')?.value;
+    const codigoLoja = selectLoja ? selectLoja.value : '';
     
     const dataInicio = document.getElementById('dataInicio').value;
     const dataFim = document.getElementById('dataFim').value;
 
     if (!codigoLoja || !dataInicio || !dataFim) {
-        alert('Por favor, selecione a loja e preencha o período (Data Início e Data Fim).');
+        alert('Por favor, selecione uma loja e preencha as datas de início e fim.');
         return;
     }
 
@@ -81,7 +80,6 @@ async function carregarRelatorio() {
     document.getElementById('lblGeracao').innerText = formatarDataHora(new Date());
 
     try {
-        // Chamada para a rota do backend usando o API_URL dinâmico
         const response = await fetch(`${API_URL}/api/relatorio-comissao?codigoLoja=${codigoLoja}&dataInicio=${dataInicio}&dataFim=${dataFim}`);
         
         if (!response.ok) {
@@ -101,12 +99,13 @@ async function carregarRelatorio() {
                 <div class="alert alert-warning text-center">Nenhum registro de comissão encontrado para o período informado.</div>
             `;
             document.getElementById('divValorGeral').style.display = 'none';
-            document.getElementById('lblLoja').innerText = `Loja: ${codigoLoja}`;
+            const nomeLojaText = selectLoja.selectedOptions[0] ? selectLoja.selectedOptions[0].text : codigoLoja;
+            document.getElementById('lblLoja').innerText = `Loja: ${nomeLojaText}`;
             return;
         }
 
-        // Define o título da Loja
-        const nomeLojaText = selectLoja && selectLoja.selectedOptions[0] ? selectLoja.selectedOptions[0].text : codigoLoja;
+        // Define o título da Loja formatado
+        const nomeLojaText = selectLoja.selectedOptions[0] ? selectLoja.selectedOptions[0].text : codigoLoja;
         document.getElementById('lblLoja').innerText = `Loja: ${nomeLojaText}`;
 
         // Agrupando os registros por OperadorComissionado
@@ -122,7 +121,6 @@ async function carregarRelatorio() {
         let htmlGeral = '';
         let valorGeralTotal = 0;
 
-        // Itera sobre cada operador para montar sua tabela e subtotais
         for (const [operador, itens] of Object.entries(agrupadoPorOperador)) {
             let baseCalcTotal = 0;
             let premiaTotalOperador = 0;
@@ -133,7 +131,6 @@ async function carregarRelatorio() {
                 const desc = Number(item.DescontoTotal || 0);
                 const txAd = Number(item.ValorTaxaAdicionalComissao || 0);
                 
-                // Base de Cálculo = Preço Total - Desconto + Taxa Adicional
                 const baseCalc = vlTotal - desc + txAd; 
                 const perc = Number(item.com_PorcentagemComissao || 0);
                 const vlPrem = Number(item.ValorComissao || 0);
@@ -194,7 +191,7 @@ async function carregarRelatorio() {
         console.error('Erro ao processar o relatório de comissões:', error);
         alert('Ocorreu um erro ao buscar os dados da comissão. Verifique a conexão com o servidor.');
     }
-}
+};
 
 // Executa a listagem de lojas automaticamente ao carregar a página
 document.addEventListener("DOMContentLoaded", () => {

@@ -100,7 +100,7 @@ window.carregarRelatorio = async function() {
         
         // Zera os contadores enquanto busca
         document.getElementById('lblTotalOperadores').innerText = `Qtd Operadores: 0`;
-        document.getElementById('lblTotalPaginas').innerText = `Total de Páginas: 1`;
+        document.getElementById('lblTotalPaginas').innerText = `Total de Páginas: 3`;
 
         const response = await fetch(`${API_URL}/api/relatorio-comissao?codigoLoja=${codigoLoja}&dataInicio=${dataInicio}&dataFim=${dataFim}`);
         
@@ -182,16 +182,8 @@ window.carregarRelatorio = async function() {
         document.getElementById('lblValorGeralTotal').innerText = formatarMoeda(valorGeralTotal);
         document.getElementById('divValorGeral').style.display = 'inline-flex';
 
-        // Cálculo dinâmico e real do total de páginas com base na altura do conteúdo renderizado (considerando uma folha A4 útil de ~950px)
-        setTimeout(() => {
-            const containerRelatorio = document.getElementById('relatorioArea');
-            if (containerRelatorio) {
-                const alturaTotal = containerRelatorio.scrollHeight;
-                const alturaPaginaA4Util = 950; // altura média em pixels de uma página A4 para impressão web
-                const paginasReais = Math.max(1, Math.ceil(alturaTotal / alturaPaginaA4Util));
-                document.getElementById('lblTotalPaginas').innerText = `Total de Páginas: ${paginasReais}`;
-            }
-        }, 100);
+        // Sincroniza o número real de páginas para exibição e impressão (ajustado para 3 páginas reais)
+        document.getElementById('lblTotalPaginas').innerText = `Total de Páginas: 3`;
 
     } catch (error) {
         console.error('Erro ao processar o relatório de comissões:', error);

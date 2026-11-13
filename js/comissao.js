@@ -1,10 +1,9 @@
 import { supabase } from "./supabase.js";
 // nao remover linha do supabase pois vai ser utilizada neste arquivo no futuro.
 
-// Configuração dinâmica da URL da API baseada no protocolo da página atual para evitar Mixed Content
-const API_URL = window.location.protocol === 'https:' 
-    ? 'http://10.86.1.120:3000' // Nota: se a API não tiver SSL (https), acesse a página via http://
-    : 'http://10.86.1.120:3000';
+// Configuração da URL da API (ambiente local)
+//const API_URL = 'http://localhost:3000';
+  const API_URL = 'http://10.86.1.120:3000';
 
 // =========================================================================
 // 🏢 FUNÇÃO PARA CARREGAR DINAMICAMENTE AS LOJAS DA API

@@ -6,7 +6,7 @@
     <title>Relatório de Premiação / Comissão - Oficina do Minuto</title>
     <!-- Bootstrap 5 CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Ícones Bootstrap (opcional, deixa mais bonito) -->
+    <!-- Ícones Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         body { 
@@ -68,11 +68,11 @@
                 </div>
                 <div class="col-md-3">
                     <label for="dataInicio" class="form-label fw-semibold">Data Início</label>
-                    <input type="date" id="dataInicio" class="form-control shadow-sm" value="2026-10-01">
+                    <input type="date" id="dataInicio" class="form-control shadow-sm">
                 </div>
                 <div class="col-md-3">
                     <label for="dataFim" class="form-label fw-semibold">Data Fim</label>
-                    <input type="date" id="dataFim" class="form-control shadow-sm" value="2026-10-31">
+                    <input type="date" id="dataFim" class="form-control shadow-sm">
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
                     <button class="btn btn-primary w-100 shadow-sm fw-semibold" onclick="carregarRelatorio()">
@@ -107,7 +107,7 @@
         <div id="conteudoOperadores">
             <div class="text-center text-muted py-5">
                 <i class="bi bi-file-earmark-text display-4 d-block mb-3 text-secondary opacity-50"></i>
-                Selecione a loja e clique em "Gerar" para exibir os dados do relatório.
+                Selecione a loja, escolha o período desejado e clique em "Gerar" para exibir os dados do relatório.
             </div>
         </div>
 

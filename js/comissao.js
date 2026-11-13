@@ -143,7 +143,6 @@ window.carregarRelatorio = async function() {
         for (const [operador, itens] of Object.entries(agrupadoPorOperador)) {
             let baseCalcTotal = 0;
             let premiaTotalOperador = 0;
-            let linhasTabela = '';
 
             itens.forEach(item => {
                 const vlTotal = Number(item.PrecoTotal || 0);
@@ -151,41 +150,21 @@ window.carregarRelatorio = async function() {
                 const txAd = Number(item.ValorTaxaAdicionalComissao || 0);
                 
                 const baseCalc = vlTotal - desc + txAd; 
-                const perc = Number(item.com_PorcentagemComissao || 0);
                 const vlPrem = Number(item.ValorComissao || 0);
 
                 baseCalcTotal += baseCalc;
                 premiaTotalOperador += vlPrem;
-
-                linhasTabela += `
-                    <tr>
-                        <td>${formatarApenasData(item.Data)}</td>
-                        <td class="text-end">${formatarMoeda(vlTotal)}</td>
-                        <td class="text-end">${formatarMoeda(desc)}</td>
-                        <td class="text-end">${formatarMoeda(txAd)}</td>
-                        <td class="text-end">${formatarMoeda(baseCalc)}</td>
-                        <td class="text-center">${formatarMoeda(perc)}%</td>
-                        <td class="text-end fw-bold">${formatarMoeda(vlPrem)}</td>
-                    </tr>
-                `;
             });
 
             valorGeralTotal += premiaTotalOperador;
 
-            // HTML ajustado para o formato exato solicitado: Operador e totais em cima, tabela logo abaixo
+            // Exibe apenas o resumo limpo por operador (sem a tabela detalhada de execuções)
             htmlGeral += `
-                <div class="operador-section">
+                <div class="operador-section mb-3 p-3 border rounded bg-white shadow-sm">
                     <h6 class="fw-bold text-primary mb-2">Operador: ${operador}</h6>
-                    <div class="mb-3 text-muted small" style="line-height: 1.6;">
+                    <div class="text-secondary small" style="line-height: 1.6;">
                         <div>Valor Base de Cálculo: <strong>R$ ${formatarMoeda(baseCalcTotal)}</strong></div>
                         <div>Total Geral da Premiação por Operador: <strong class="text-success">R$ ${formatarMoeda(premiaTotalOperador)}</strong></div>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered align-middle mb-0">
-                            <tbody>
-                                ${linhasTabela}
-                            </tbody>
-                        </table>
                     </div>
                 </div>
             `;
